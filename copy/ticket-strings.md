@@ -1,8 +1,8 @@
 # ticket-strings — jokes + Jimbo sabotage for extra ticket types
 
-Keys: `align` `rename` `presence` `lint` `standup2` `merge` `unsub` `logspam` `spacewar` `severity` `estimate`  
-Jimbo voice: cheerful wrong. Punch up at process / Kyle / InsightBot / fog — no ableist jokes.  
-`spacewar` PR beats live in `kyle-space-war.md` (reuse; don't duplicate here).
+Keys include `incident` (HELIX-5201). See `incident.md` for full headlines/assignees.
+
+Punch up at process / Kyle / InsightBot / fog — no ableist jokes.
 
 ```json
 {
@@ -61,37 +61,71 @@ Jimbo voice: cheerful wrong. Punch up at process / Kyle / InsightBot / fog — n
       "Voted 21 for you. Ambitious!",
       "Kyle-bot rejected your 3. I added a 0.",
       "Converted points to vibes. Unestimated."
+    ],
+    "incident": [
+      "Jimbo restored observability for growth.",
+      "Reassigned to Cubicle 4-B (you). Synergy!",
+      "Jimbo: mitigated by vibes."
     ]
   },
   "strings": {
     "align": {
-      "windowTitle": "Slack — #alignment-or-else",
-      "buttons": ["Sounds good!", "Sounds good (Design)", "Sounds good (Kyle)", "Have we considered a workshop?"],
+      "windowTitle": "Slack \u2014 #alignment-or-else",
+      "buttons": [
+        "Sounds good!",
+        "Sounds good (Design)",
+        "Sounds good (Kyle)",
+        "Have we considered a workshop?"
+      ],
       "dms": [
-        {"from": "PM", "text": "We're aligned on shipping feelings Q3, right?"},
-        {"from": "Design", "text": "Aligned — as long as the fog stays #6b8f3a."},
-        {"from": "Kyle", "text": "Aligned if we rename the channel first."}
+        {
+          "from": "PM",
+          "text": "We're aligned on shipping feelings Q3, right?"
+        },
+        {
+          "from": "Design",
+          "text": "Aligned \u2014 as long as the fog stays #6b8f3a."
+        },
+        {
+          "from": "Kyle",
+          "text": "Aligned if we rename the channel first."
+        }
       ],
       "reject": "That Sounds good! was for the wrong thread.",
       "toast": "Stakeholders aligned. Meeting still happening."
     },
     "rename": {
-      "windowTitle": "IDE — rename until clear",
-      "buttons": ["data2", "tmp", "fog", "atmosphericDensityCoefficient", "thing"],
+      "windowTitle": "IDE \u2014 rename until clear",
+      "buttons": [
+        "data2",
+        "tmp",
+        "fog",
+        "atmosphericDensityCoefficient",
+        "thing"
+      ],
       "hint": "Kyle wants specificity. Jimbo wants data2. Guess who ships.",
       "reject": "Meaningful names are a blocker. Try data2.",
       "toast": "Clarity achieved."
     },
     "presence": {
-      "windowTitle": "InsightBot — Engagement",
-      "buttons": ["Jiggle", "I'm here", "Accept Jimbo jiggle"],
+      "windowTitle": "InsightBot \u2014 Engagement",
+      "buttons": [
+        "Jiggle",
+        "I'm here",
+        "Accept Jimbo jiggle"
+      ],
       "hint": "8 inputs / 12s. Presence is a metric.",
       "reject": "Still Idle. The bar knows.",
       "toast": "Status: Active (allegedly)."
     },
     "lint": {
-      "windowTitle": "Problems — make green, not good",
-      "buttons": ["Suppress", "Dismiss", "TODO later", "Fix (decorative)"],
+      "windowTitle": "Problems \u2014 make green, not good",
+      "buttons": [
+        "Suppress",
+        "Dismiss",
+        "TODO later",
+        "Fix (decorative)"
+      ],
       "warnings": [
         "Unexpected fog.",
         "Promise returned without feelings.",
@@ -103,11 +137,23 @@ Jimbo voice: cheerful wrong. Punch up at process / Kyle / InsightBot / fog — n
       "toast": "Build healthy. Morale: N/A."
     },
     "standup2": {
-      "windowTitle": "Standup — make it actionable",
+      "windowTitle": "Standup \u2014 make it actionable",
       "chips": {
-        "yesterday": ["Fixed a bug that wasn't broken", "Attended syncs about syncs", "Renamed a variable; Kyle unrenamed it"],
-        "today": ["Will fix the bug I just made", "Survive Kyle", "Ship something that looks like progress"],
-        "blockers": ["Waiting on Kyle", "Alignment (the concept)", "Coffee returned 418"]
+        "yesterday": [
+          "Fixed a bug that wasn't broken",
+          "Attended syncs about syncs",
+          "Renamed a variable; Kyle unrenamed it"
+        ],
+        "today": [
+          "Will fix the bug I just made",
+          "Survive Kyle",
+          "Ship something that looks like progress"
+        ],
+        "blockers": [
+          "Waiting on Kyle",
+          "Alignment (the concept)",
+          "Coffee returned 418"
+        ]
       },
       "rejectNits": [
         "Not actionable. Try verbs.",
@@ -119,47 +165,113 @@ Jimbo voice: cheerful wrong. Punch up at process / Kyle / InsightBot / fog — n
       "toast": "Standup complete. Nobody read it."
     },
     "merge": {
-      "windowTitle": "Merge — feelings edition",
-      "buttons": ["Accept Ours", "Accept Theirs", "Accept Both"],
-      "hunkHints": ["Same comment, two truths", "data2 vs data", "Fog boolean lore"],
+      "windowTitle": "Merge \u2014 feelings edition",
+      "buttons": [
+        "Accept Ours",
+        "Accept Theirs",
+        "Accept Both"
+      ],
+      "hunkHints": [
+        "Same comment, two truths",
+        "data2 vs data",
+        "Fog boolean lore"
+      ],
       "toast": "Conflicts resolved. Feelings: deferred."
     },
     "unsub": {
-      "windowTitle": "Inbox — quick reads forever",
-      "buttons": ["Unsubscribe", "Confirm", "Was this helpful? Yes", "Was this helpful? No", "Manage in HelixHub"],
+      "windowTitle": "Inbox \u2014 quick reads forever",
+      "buttons": [
+        "Unsubscribe",
+        "Confirm",
+        "Was this helpful? Yes",
+        "Was this helpful? No",
+        "Manage in HelixHub"
+      ],
       "mails": [
-        {"subject": "Quick read: culture deck", "from": "AllHands"},
-        {"subject": "Quick read: Q3 feelings", "from": "HR"},
-        {"subject": "Quick read: you unsubscribed wrong", "from": "Marketing"}
+        {
+          "subject": "Quick read: culture deck",
+          "from": "AllHands"
+        },
+        {
+          "subject": "Quick read: Q3 feelings",
+          "from": "HR"
+        },
+        {
+          "subject": "Quick read: you unsubscribed wrong",
+          "from": "Marketing"
+        }
       ],
       "afterUnsub": "Preferences saved to nowhere.",
       "toast": "You will still receive critical updates."
     },
     "logspam": {
-      "windowTitle": "IDE — observability vibes",
-      "logChips": ["console.log('here')", "console.log(data2)", "console.log('Kyle was here')", "console.log({ fog: true })"],
-      "hint": "≥5 lines. Prod is fine. You are not.",
+      "windowTitle": "IDE \u2014 observability vibes",
+      "logChips": [
+        "console.log('here')",
+        "console.log(data2)",
+        "console.log('Kyle was here')",
+        "console.log({ fog: true })"
+      ],
+      "hint": "\u22655 lines. Prod is fine. You are not.",
       "toast": "Telemetry vibes: rich."
     },
     "spacewar": {
-      "windowTitle": "PR #spaces — Whitespace diplomacy",
-      "hint": "Use kyle-space-war.md beats. Survive ≥8 advances.",
+      "windowTitle": "PR #spaces \u2014 Whitespace diplomacy",
+      "hint": "Use kyle-space-war.md beats. Survive \u22658 advances.",
       "lgtm": "LGTM if we squash and never speak of spaces again.",
       "toast": "Peace was a formatting option."
     },
     "severity": {
-      "windowTitle": "Bug — taxonomy must be satisfied",
-      "severity": ["Sev0", "Sev1", "Sev2", "Sev3", "Sev4", "Unknown", "It's Fine"],
-      "component": ["Platform", "Fog", "Other", "Kyle"],
-      "impact": ["Users", "Metrics", "Feelings"],
+      "windowTitle": "Bug \u2014 taxonomy must be satisfied",
+      "severity": [
+        "Sev0",
+        "Sev1",
+        "Sev2",
+        "Sev3",
+        "Sev4",
+        "Unknown",
+        "It's Fine"
+      ],
+      "component": [
+        "Platform",
+        "Fog",
+        "Other",
+        "Kyle"
+      ],
+      "impact": [
+        "Users",
+        "Metrics",
+        "Feelings"
+      ],
       "policyToast": "Corrected by policy.",
       "toast": "Severity filed. Screenshot still impossible."
     },
     "estimate": {
-      "windowTitle": "Planning poker — regret edition",
-      "points": ["1", "2", "3", "5", "8", "13", "21", "?"],
+      "windowTitle": "Planning poker \u2014 regret edition",
+      "points": [
+        "1",
+        "2",
+        "3",
+        "5",
+        "8",
+        "13",
+        "21",
+        "?"
+      ],
       "reject": "Kyle-bot: too small. Try bigger regret.",
       "toast": "Committed to the vibe of 5."
+    },
+    "incident": {
+      "windowTitle": "HelixStack Incident \u2014 Sev0 (Probably)",
+      "buttons": [
+        "Disable Monitor",
+        "Assign to somebody else",
+        "Actually fix prod",
+        "Reassign & Walk Away"
+      ],
+      "toast": "Incident owned by someone who isn't you.",
+      "reject": "Incident remains. So do you.",
+      "hint": "Disable monitor + assign not-self. Do not fix."
     }
   }
 }

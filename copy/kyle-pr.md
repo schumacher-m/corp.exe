@@ -695,3 +695,7 @@ Tone: edgelord rules-lawyer, weaponized pedantry. **No ableist language / disabi
 - End sequences on the reluctant LGTM / take-it-offline step.
 - Pair with `kyle-space-war.md` for Whitespace diplomacy.
 - Optional: fire `kyle-slack.md` lines mid-minigame.
+
+## Runtime (Dev)
+
+- Deal **5** beats per PR run, sampled at random from this pool. Keep the full bank in copy — do not truncate the file.

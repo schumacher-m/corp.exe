@@ -123,3 +123,7 @@ HARD: no ableist language — comedy is pedantry only.
   "meta": "Blocked · Platform · Pedantry Sev-1"
 }
 ```
+
+## Runtime (Dev)
+
+- Deal **5** beats per PR run, sampled at random from this pool. Keep the full bank in copy — do not truncate the file.
