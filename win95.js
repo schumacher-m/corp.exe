@@ -1,5 +1,5 @@
 /**
- * Win95 virtual desktop — drawn to offscreen canvas for CRT CanvasTexture.
+ * Win95 virtual desktop - drawn to offscreen canvas for CRT CanvasTexture.
  * Specs: WIN95.md + Jimbo / Email / Appear Active (Michael mechanics)
  */
 import * as audio from "./audio.js";
@@ -31,8 +31,8 @@ export const H = 240;
 /** Internal supersample so seated fullscreen text isn't a blown-up postage stamp */
 export const PIXEL_SCALE = 3;
 const TASK_H = 22;
-const IDLE_YELLOW = 6; // seconds → yellow
-const IDLE_AWAY = 11; // seconds → Away
+const IDLE_YELLOW = 6; // seconds -> yellow
+const IDLE_AWAY = 11; // seconds -> Away
 const EMAIL_MIN = 14;
 const EMAIL_MAX = 28;
 
@@ -107,11 +107,11 @@ export function createWin95(copy, hooks) {
   if (!playableTemplates.some((t) => t.type === "incident")) {
     playableTemplates.push({
       id: "HELIX-5201",
-      title: "PROD CRITICAL — Something is on fire",
+      title: "PROD CRITICAL - Something is on fire",
       pts: 4,
       type: "incident",
       dod: "Disable the monitor AND assign to somebody else. Do not fix prod.",
-      meta: "Sev: Critical · Owner: whoever blinks · Runbook: vibes",
+      meta: "Sev: Critical - Owner: whoever blinks - Runbook: vibes",
     });
   }
   let uidCounter = 0;
@@ -137,7 +137,7 @@ export function createWin95(copy, hooks) {
     return playableTemplates.find((t) => t.type === type) || fillerTemplates[0] || playableTemplates[0];
   }
   function rebuildDrawBag() {
-    // Unused types this shuffle — one entry per playable type
+    // Unused types this shuffle - one entry per playable type
     const types = playableTemplates.map((t) => t.type);
     return shuffleInPlace([...new Set(types)]);
   }
@@ -154,9 +154,9 @@ export function createWin95(copy, hooks) {
     unread: Math.max(1, emailCopy.unreadFloor || 1),
     phase: "desktop", // desktop | ticket mechanic type
     closedCount: 0,
-    typesCompleted: {}, // type → count this shift
+    typesCompleted: {}, // type -> count this shift
     drawBag: rebuildDrawBag(),
-    board: (copy.tickets || []).slice(0, 3).map(cloneTicket), // 2–3 active slots
+    board: (copy.tickets || []).slice(0, 3).map(cloneTicket), // 2-3 active slots
     activeTicket: null,
     stub: null, // S-stub minigame progress
     semiPlaced: null,
@@ -185,7 +185,7 @@ export function createWin95(copy, hooks) {
     emailQueue: [],
     emailCooldown: EMAIL_MIN + Math.random() * (EMAIL_MAX - EMAIL_MIN),
     emailEnabled: false,
-    incidentPagerCd: 45 + Math.random() * 45, // first soft window 45–90s
+    incidentPagerCd: 45 + Math.random() * 45, // first soft window 45-90s
     incidentPagerCooldown: 0,
     incidentFromPager: false,
     // Appear Active
@@ -203,13 +203,13 @@ export function createWin95(copy, hooks) {
   const kyleSlackPool = copy.kyleSlack || (copy.slackPool || []).filter((m) => /kyle/i.test(m.name || ""));
   let kyleInterruptCd = 18 + Math.random() * 10;
 
-  /** Full Kyle beat pools stay in copy; each PR run deals ≤5 at random. */
+  /** Full Kyle beat pools stay in copy; each PR run deals <=5 at random. */
   const PR_ROUND_MAX = 5;
 
   function pickPrRound(pool, max = PR_ROUND_MAX) {
     const src = Array.isArray(pool) ? pool.slice() : [];
     if (src.length <= max) return src;
-    // Fisher–Yates partial shuffle
+    // Fisher-Yates partial shuffle
     for (let i = src.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       const tmp = src[i];
@@ -226,15 +226,15 @@ export function createWin95(copy, hooks) {
   }
 
   const wins = {
-    tickets: { id: "tickets", title: "Tickets — HelixStack", x: 8, y: 18, w: 150, h: 140, open: true },
-    slack: { id: "slack", title: "Slack — #general", x: 165, y: 14, w: 145, h: 120, open: true },
-    ide: { id: "ide", title: "IDE — fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
-    pr: { id: "pr", title: "PR #884 — Kyle", x: 30, y: 20, w: 260, h: 175, open: false },
+    tickets: { id: "tickets", title: "Tickets - HelixStack", x: 8, y: 18, w: 150, h: 140, open: true },
+    slack: { id: "slack", title: "Slack - #general", x: 165, y: 14, w: 145, h: 120, open: true },
+    ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
+    pr: { id: "pr", title: "PR #884 - Kyle", x: 30, y: 20, w: 260, h: 175, open: false },
     standup: { id: "standup", title: "Daily Standup", x: 50, y: 40, w: 220, h: 130, open: true },
     meters: { id: "meters", title: "Resource Monitor", x: 200, y: 150, w: 110, h: 55, open: true },
     jimbo: {
       id: "jimbo",
-      title: jimboCopy.windowTitle || "Jimbo — HelixStack AI",
+      title: jimboCopy.windowTitle || "Jimbo - HelixStack AI",
       x: 70,
       y: 22,
       w: 190,
@@ -244,7 +244,7 @@ export function createWin95(copy, hooks) {
     },
     inbox: {
       id: "inbox",
-      title: emailCopy.inboxTitle || "Inbox — Outlook Express",
+      title: emailCopy.inboxTitle || "Inbox - Outlook Express",
       x: 40,
       y: 16,
       w: 240,
@@ -348,7 +348,7 @@ export function createWin95(copy, hooks) {
     bevelRaised(win.x + win.w - 16, win.y + 5, 10, 10, C.face);
     ctx.fillStyle = C.text;
     ctx.font = "bold 8px sans-serif";
-    ctx.fillText("×", win.x + win.w - 14, win.y + 10);
+    ctx.fillText("x", win.x + win.w - 14, win.y + 10);
 
     const cx = win.x + 4;
     const cy = win.y + 20;
@@ -378,7 +378,7 @@ export function createWin95(copy, hooks) {
       if (yy > y + h - 12) break;
     }
     ctx.fillStyle = C.shadow;
-    ctx.fillText(`Closed ${state.closedCount} · Ask Jimbo to submit`, x + 4, y + h - 6);
+    ctx.fillText(`Closed ${state.closedCount} - Ask Jimbo to submit`, x + 4, y + h - 6);
   }
 
   function drawSlack(x, y, w, h) {
@@ -620,7 +620,7 @@ export function createWin95(copy, hooks) {
     ctx.font = "7px 'Courier New', monospace";
     if (st.kind === "rename") {
       st.items.forEach((it, i) => {
-        const label = `${it.id} → ${it.to}`;
+        const label = `${it.id} -> ${it.to}`;
         ctx.fillStyle = it.to === "data2" || it.to === "data2_final_FINAL" ? C.sick : "#c8c4b0";
         ctx.fillText(label.slice(0, 42), x + 4, yy);
         state._stubHits.push({ kind: "rename", i, hit: { x, y: yy - 7, w, h: 10 } });
@@ -629,7 +629,7 @@ export function createWin95(copy, hooks) {
       const n = st.items.filter((it) => it.to === "data2" || it.to === (st.bulk || "data2")).length;
       ctx.fillStyle = C.text;
       ctx.font = "7px Tahoma, sans-serif";
-      ctx.fillText(`Rename ≥${st.need} to data2 (${n}/${st.need})`, x + 4, y + h - 12);
+      ctx.fillText(`Rename >=${st.need} to data2 (${n}/${st.need})`, x + 4, y + h - 12);
       if (n >= st.need) {
         bevelRaised(x + w - 74, y + h - 22, 68, 14, C.jimbo);
         ctx.fillStyle = C.inv;
@@ -641,7 +641,7 @@ export function createWin95(copy, hooks) {
       st.warns.forEach((w, i) => {
         if (w.gone) return;
         ctx.fillStyle = "#c8c4b0";
-        ctx.fillText(`⚠ ${w.w}`.slice(0, Math.max(8, Math.floor((w - 8) / 5))), x + 4, yy);
+        ctx.fillText(`! ${w.w}`.slice(0, Math.max(8, Math.floor((w - 8) / 5))), x + 4, yy);
         yy += 11;
         const labs = ["Suppress", "Dismiss", "TODO", "Fix"];
         let bx = x + 4;
@@ -664,7 +664,7 @@ export function createWin95(copy, hooks) {
       const left = st.warns.filter((w) => !w.gone).length;
       ctx.fillStyle = C.text;
       ctx.font = "7px Tahoma, sans-serif";
-      ctx.fillText(left ? `${left} warnings` : "0 warnings — green", x + 4, y + h - 12);
+      ctx.fillText(left ? `${left} warnings` : "0 warnings - green", x + 4, y + h - 12);
       if (left === 0) {
         bevelRaised(x + w - 74, y + h - 22, 68, 14, C.jimbo);
         ctx.fillStyle = C.inv;
@@ -675,7 +675,7 @@ export function createWin95(copy, hooks) {
     } else if (st.kind === "merge") {
       st.hunks.forEach((hk, i) => {
         ctx.fillStyle = hk.res ? C.sick : "#c8c4b0";
-        ctx.fillText(`${hk.res ? "✓" : "<>"} ${hk.label}`.slice(0, 36), x + 4, yy);
+        ctx.fillText(`${hk.res ? "Y" : "<>"} ${hk.label}`.slice(0, 36), x + 4, yy);
         if (!hk.res) {
           let bx = x + 4;
           yy += 10;
@@ -717,7 +717,7 @@ export function createWin95(copy, hooks) {
       const hasDbg = st.lines.some((l) => String(l.log || "").includes("debugger"));
       ctx.fillStyle = C.text;
       ctx.font = "7px Tahoma, sans-serif";
-      ctx.fillText(`Logs ${n}/${st.need}${hasDbg ? " · remove debugger" : ""}`, x + 4, y + h - 12);
+      ctx.fillText(`Logs ${n}/${st.need}${hasDbg ? " - remove debugger" : ""}`, x + 4, y + h - 12);
       if (n >= st.need && !hasDbg) {
         bevelRaised(x + w - 74, y + h - 22, 68, 14, C.jimbo);
         ctx.fillStyle = C.inv;
@@ -796,7 +796,7 @@ export function createWin95(copy, hooks) {
     }
     if (state.jimboUsedThisTicket) {
       ctx.fillStyle = C.sick;
-      ctx.fillText("✓ Jimbo consulted (this ticket)", x + 4, y + h - 36);
+      ctx.fillText("Y Jimbo consulted (this ticket)", x + 4, y + h - 36);
     } else if (["semi", "comment", "pr"].includes(state.phase)) {
       ctx.fillStyle = C.blood;
       ctx.fillText("Required before submit", x + 4, y + h - 36);
@@ -856,11 +856,11 @@ export function createWin95(copy, hooks) {
       state._mailHits = [];
       let yy = y + 4;
       ctx.fillStyle = C.shadow;
-      ctx.fillText(`Inbox (${unreadCount()} unread∞)`, x + 4, yy + 6);
+      ctx.fillText(`Inbox (${unreadCount()} unreadinf)`, x + 4, yy + 6);
       yy += 12;
       for (const m of state.inbox.slice(0, 10)) {
         ctx.fillStyle = m.read ? C.shadow : C.text;
-        const mark = m.read ? " " : "●";
+        const mark = m.read ? " " : "*";
         ctx.fillText(`${mark} ${m.from}: ${String(m.subject).slice(0, 28)}`, x + 4, yy + 7);
         state._mailHits.push({ id: m.id, hit: { x: x + 2, y: yy, w: w - 4, h: 12 } });
         yy += 12;
@@ -881,7 +881,7 @@ export function createWin95(copy, hooks) {
       yy += 14;
       for (const m of st.mails) {
         ctx.fillStyle = m.done ? C.shadow : C.text;
-        ctx.fillText(`${m.done ? "✓" : "●"} ${m.from}: ${m.subject}`.slice(0, 36), x + 4, yy + 7);
+        ctx.fillText(`${m.done ? "Y" : "*"} ${m.from}: ${m.subject}`.slice(0, 36), x + 4, yy + 7);
         if (!m.done) state._stubHits.push({ kind: "unsub", action: "open", id: m.id, hit: { x: x + 2, y: yy, w: w - 4, h: 12 } });
         yy += 12;
         if (yy > y + h - 8) break;
@@ -910,7 +910,7 @@ export function createWin95(copy, hooks) {
     state._stubHits.push({ kind: "unsub", action: "back", hit: { x: x + w - 44, y: y + 2, w: 40, h: 12 } });
 
     if (st.step === "confirm") {
-      ctx.fillText("Unsubscribe? Preferences → nowhere.", x + 4, yy);
+      ctx.fillText("Unsubscribe? Preferences -> nowhere.", x + 4, yy);
       const by = y + h - 22;
       const bw1 = Math.min(88, Math.floor((w - 12) / 2));
       const bw2 = Math.min(96, w - 12 - bw1 - 6);
@@ -1151,7 +1151,7 @@ export function createWin95(copy, hooks) {
       const budget = maxH - (3 + TITLE_H + 8 + 10 + btnBlockH + PAD);
       const maxLines = Math.max(2, Math.floor(budget / 9));
       bodyLines = lines.slice(0, maxLines);
-      if (lines.length > maxLines) bodyLines[bodyLines.length - 1] = (bodyLines[bodyLines.length - 1] || "").slice(0, -1) + "…";
+      if (lines.length > maxLines) bodyLines[bodyLines.length - 1] = (bodyLines[bodyLines.length - 1] || "").slice(0, -1) + "...";
       mh = 3 + TITLE_H + 8 + bodyLines.length * 9 + 10 + btnBlockH + PAD;
     }
     mh = Math.min(mh, maxH);
@@ -1268,7 +1268,7 @@ export function createWin95(copy, hooks) {
       const btns = S.buttons || ["Sounds good!", "Sounds good (Design)", "Sounds good (Kyle)", "Have we considered a workshop?"];
       const dms = S.dms || [
         { from: "PM", text: "We're aligned on shipping feelings Q3, right?" },
-        { from: "Design", text: "Aligned — as long as the fog stays #6b8f3a." },
+        { from: "Design", text: "Aligned - as long as the fog stays #6b8f3a." },
         { from: "Kyle", text: "Aligned if we rename the channel first." },
       ];
       state.stub = {
@@ -1284,7 +1284,7 @@ export function createWin95(copy, hooks) {
         })),
       };
       if (sab) state.stub.threads.push({ who: "Also Kyle", ask: "Have we considered a workshop?", opts: btns.slice(), correct: 0 });
-      wins.slack.title = S.windowTitle || "Slack — #alignment-or-else";
+      wins.slack.title = S.windowTitle || "Slack - #alignment-or-else";
     } else if (type === "rename") {
       const S = ticketStrings.rename || {};
       const ids = ["fog", "tmp", "unread", "badge", "clockIn"];
@@ -1313,7 +1313,7 @@ export function createWin95(copy, hooks) {
         reject: S.reject || "Still Idle. The bar knows.",
       };
       state.modal = {
-        title: S.windowTitle || "InsightBot — Engagement",
+        title: S.windowTitle || "InsightBot - Engagement",
         body: S.hint || "8 inputs / 12s. Presence is a metric.",
         kind: "presenceTicket",
         buttons: btns,
@@ -1391,7 +1391,7 @@ export function createWin95(copy, hooks) {
         hasDebugger: sab,
         chips,
         toast: S.toast || "Telemetry vibes: rich.",
-        hint: S.hint || "≥5 lines. Prod is fine. You are not.",
+        hint: S.hint || ">=5 lines. Prod is fine. You are not.",
       };
     } else if (type === "estimate") {
       const S = ticketStrings.estimate || {};
@@ -1404,7 +1404,7 @@ export function createWin95(copy, hooks) {
         toast: S.toast || "Committed to the vibe of 5.",
       };
       state.modal = {
-        title: S.windowTitle || "Planning poker — regret edition",
+        title: S.windowTitle || "Planning poker - regret edition",
         body: "Estimate this 'quick' ticket. Kyle-bot rejects your first pick.",
         kind: "estimateTicket",
         buttons: pts.map((v) => ({ label: v, action: "est:" + v })),
@@ -1430,10 +1430,10 @@ export function createWin95(copy, hooks) {
         { label: "Submit", action: "sevSubmit" },
       ];
       state.modal = {
-        title: S.windowTitle || "Bug — taxonomy must be satisfied",
+        title: S.windowTitle || "Bug - taxonomy must be satisfied",
         body: sab
           ? "Jimbo set Sev0 and paged Slack. Downgrade to finish."
-          : "Severity · Component · Impact — taxonomy must be satisfied.",
+          : "Severity - Component - Impact - taxonomy must be satisfied.",
         kind: "severityTicket",
         buttons,
       };
@@ -1478,20 +1478,20 @@ export function createWin95(copy, hooks) {
 
     if (mech === "semi") {
       wins.ide.open = true;
-      wins.ide.title = "IDE — Semicolon Hell";
+      wins.ide.title = "IDE - Semicolon Hell";
       raise("ide");
       ensureSemi();
     } else if (mech === "comment") {
       wins.ide.open = true;
-      wins.ide.title = "IDE — Comment Policy";
+      wins.ide.title = "IDE - Comment Policy";
       raise("ide");
       ensureComment();
     } else if (mech === "pr" || mech === "spacewar") {
       wins.pr.open = true;
       wins.pr.title =
         mech === "spacewar"
-          ? tStr("spacewar", "windowTitle", "PR #spaces — Whitespace diplomacy")
-          : "PR Review — Kyle";
+          ? tStr("spacewar", "windowTitle", "PR #spaces - Whitespace diplomacy")
+          : "PR Review - Kyle";
       raise("pr");
       state.prStep = 0;
       const pool = mech === "spacewar" ? (copy.spaceWarScript || copy.prScript) : copy.prScript;
@@ -1508,7 +1508,7 @@ export function createWin95(copy, hooks) {
     } else if (mech === "standup2") {
       initStub(mech);
       wins.standup.open = true;
-      wins.standup.title = tStr("standup2", "windowTitle", "Standup — Rewrite Feelings");
+      wins.standup.title = tStr("standup2", "windowTitle", "Standup - Rewrite Feelings");
       raise("standup");
     } else if (mech === "unsub") {
       initStub(mech);
@@ -1518,12 +1518,12 @@ export function createWin95(copy, hooks) {
     } else if (["rename", "lint", "merge", "logspam"].includes(mech)) {
       initStub(mech);
       wins.ide.open = true;
-      wins.ide.title = tStr(mech, "windowTitle", "IDE — " + (tk.title || mech));
+      wins.ide.title = tStr(mech, "windowTitle", "IDE - " + (tk.title || mech));
       raise("ide");
     } else if (["presence", "estimate", "severity", "incident", "filler"].includes(mech)) {
       initStub(mech);
     } else {
-      // Unknown → treat as filler micro-stub
+      // Unknown -> treat as filler micro-stub
       state.phase = "filler";
       initStub("filler");
     }
@@ -1568,7 +1568,7 @@ export function createWin95(copy, hooks) {
         pts: 1,
         type: "filler",
         dod: "One-click close so the board never softlocks.",
-        meta: "Filler · Never empty",
+        meta: "Filler - Never empty",
       };
       return cloneTicket(ft);
     }
@@ -1594,7 +1594,7 @@ export function createWin95(copy, hooks) {
   }
 
   function spawnTicket({ forceFiller = false } = {}) {
-    // Active slots: keep 2–3 visible
+    // Active slots: keep 2-3 visible
     if (state.board.length >= 3) return;
     const inst = drawFromDeck(forceFiller);
     if (!inst) return;
@@ -1631,7 +1631,7 @@ export function createWin95(copy, hooks) {
     // Immediately draw 1 unused type; never leave board empty
     spawnTicket();
     if (state.board.length === 0) spawnTicket({ forceFiller: true });
-    // Top up toward 2–3
+    // Top up toward 2-3
     while (state.board.length < 2) spawnTicket();
     hooks.onTicketDone?.(type, pts);
     audio.playBgm("bgmDesk");
@@ -1657,7 +1657,7 @@ export function createWin95(copy, hooks) {
     const note = pick(sab) || "Jimbo helped!";
     state.jimboLine = pick(jimboCopy.responses) || note;
     if (state.jimboSabotaged[type]) {
-      // already sabotaged this open — soft nudge only
+      // already sabotaged this open - soft nudge only
       toast(note, { jimbo: true });
       hitSanity(3);
       return;
@@ -1671,7 +1671,7 @@ export function createWin95(copy, hooks) {
         // wipe alternate placed semis visually (logic still counts placed)
       }
       if (mode === "guide") {
-        // invent style guide — flip need on one unused line mid-task
+        // invent style guide - flip need on one unused line mid-task
         const idx = copy.semiLines.findIndex((l, i) => !l.need && !(state.semiPlaced && state.semiPlaced[i]));
         if (idx >= 0) copy.semiLines[idx].need = true;
       }
@@ -1679,16 +1679,16 @@ export function createWin95(copy, hooks) {
       const nonsense = [
         "// como un AI, este linea hace cosas",
         "// As an AI language model, I affirm this line.",
-        "// TODO: gratitude wall — thank the fog, Kyle, coffee",
-        "// これは間違った言語です",
+        "// TODO: gratitude wall - thank the fog, Kyle, coffee",
+        "// wrong language on purpose",
         "// business synergy alignment (wrong codebase)",
         "// increments the wrong thing cheerfully",
-        "// required by Jimbo Policy §∞",
+        "// required by Jimbo Policy Sinf",
       ];
       state.commentOverrides = copy.commentLines.map((_, i) => nonsense[i % nonsense.length]);
     } else if (type === "pr") {
       const nits = [
-        "Agree with Kyle. Also rename fog→data2.",
+        "Agree with Kyle. Also rename fog->data2.",
         "Nit+: alphabetize the blank lines. Blocking.",
         "Jimbo+Kyle: extract 47 to DATA2_CONSTANT.",
         "LGTM if we invent four more nits first.",
@@ -1717,7 +1717,7 @@ export function createWin95(copy, hooks) {
       refreshIncidentModal();
       hitSanity(4);
     } else if (type === "unsub" && state.stub?.kind === "unsub") {
-      // Comedy spam — do NOT wipe completed unsubs (that softlocked the ticket)
+      // Comedy spam - do NOT wipe completed unsubs (that softlocked the ticket)
       const extra = [
         { id: "u" + (state.stub.mails.length + 1), from: "HelixHub", subject: "404 Synergy", done: false },
         { id: "u" + (state.stub.mails.length + 2), from: "Marketing", subject: "You unsubscribed wrong", done: false },
@@ -1752,7 +1752,7 @@ export function createWin95(copy, hooks) {
         hitSanity(3);
       }
       if (state.pendingFinish && state.jimboUsedThisTicket) {
-        // Work already done — complete after Jimbo gate
+        // Work already done - complete after Jimbo gate
         const pf = state.pendingFinish;
         finishTicket(pf.type, pf.pts, { toastMsg: pf.toastMsg, sanHit: pf.sanHit });
       }
@@ -1770,7 +1770,7 @@ export function createWin95(copy, hooks) {
     if (!mail) return;
     audio.playSfx("newMail", { volume: 0.55 });
     state.unread = unreadCount();
-    // bump unread tray conceptually — never clear
+    // bump unread tray conceptually - never clear
     state.unread = Math.max(state.unread, emailCopy.unreadFloor || 1) + 1;
     openInbox(mail);
     wins.inbox.open = true;
@@ -1783,7 +1783,7 @@ export function createWin95(copy, hooks) {
       state.emailQueue.push(mail);
       state.unread = Math.max(1, state.unread + 1);
       audio.playSfx("newMail", { volume: 0.35 });
-      toast("Mail queued…");
+      toast("Mail queued...");
     } else {
       deliverDoomMail(mail);
     }
@@ -1811,7 +1811,7 @@ export function createWin95(copy, hooks) {
     state.presenceForced = true;
     state.presence = "away";
     state.modal = {
-      title: "Mandatory — Appear Active",
+      title: "Mandatory - Appear Active",
       body: `${mail.from}: ${mail.subject}. ${mail.body}`,
       kind: "presence",
       mail,
@@ -1834,7 +1834,7 @@ export function createWin95(copy, hooks) {
       state.stub.tLeft -= dt;
       if (state.modal?.kind === "presenceTicket") {
         const pct = Math.min(1, state.stub.jiggles / state.stub.need);
-        state.modal.body = `Engagement ${Math.floor(pct * 100)}% · ${state.stub.jiggles}/${state.stub.need} · ${Math.max(0, Math.ceil(state.stub.tLeft))}s`;
+        state.modal.body = `Engagement ${Math.floor(pct * 100)}% - ${state.stub.jiggles}/${state.stub.need} - ${Math.max(0, Math.ceil(state.stub.tLeft))}s`;
       }
       if (state.stub.tLeft <= 0 && state.stub.jiggles < state.stub.need) {
         state.stub.failed = true;
@@ -1857,8 +1857,8 @@ export function createWin95(copy, hooks) {
         if (msg) {
           pushSlack({ ...msg });
           wins.slack.open = true;
-          // don't steal focus from PR/IDE hard — toast is enough
-          toast(`DM: Kyle — ${String(msg.text).slice(0, 28)}`);
+          // don't steal focus from PR/IDE hard - toast is enough
+          toast(`DM: Kyle - ${String(msg.text).slice(0, 28)}`);
         }
       }
     }
@@ -1886,7 +1886,7 @@ export function createWin95(copy, hooks) {
       }
     }
 
-    // Random incident pager (GD incidents.md) — never stacks two modals
+    // Random incident pager (GD incidents.md) - never stacks two modals
     if (state.incidentPagerCooldown > 0) state.incidentPagerCooldown -= dt;
     if (
       state.emailEnabled &&
@@ -1898,7 +1898,7 @@ export function createWin95(copy, hooks) {
       state.incidentPagerCd -= dt;
       if (state.incidentPagerCd <= 0) {
         state.incidentPagerCd = 40; // check cadence
-        // Soft: can fire before first close (lower chance); denser after ≥1 ticket
+        // Soft: can fire before first close (lower chance); denser after >=1 ticket
         const chance = (state.closedCount || 0) >= 1 ? 0.15 : 0.08;
         if (Math.random() < chance) {
           openIncident({ fromTicket: false });
@@ -1966,7 +1966,7 @@ export function createWin95(copy, hooks) {
               state.stub.sev0 = false;
               if (state.modal) {
                 state.modal.body =
-                  "Severity · Component · Impact — taxonomy must be satisfied.";
+                  "Severity - Component - Impact - taxonomy must be satisfied.";
               }
             }
           }
@@ -2006,7 +2006,7 @@ export function createWin95(copy, hooks) {
             } else {
               state.stub.assignee = who;
               state.stub.pickingAssign = false;
-              toast((state.stub.toastAssign || "Ownership transferred.") + " → " + who);
+              toast((state.stub.toastAssign || "Ownership transferred.") + " -> " + who);
               refreshIncidentModal();
               tryFinishIncident();
             }
@@ -2021,11 +2021,13 @@ export function createWin95(copy, hooks) {
             toast("Disable monitor AND assign to somebody else first.");
           }
           audio.playSfx("click");
+        } else if (action === "incidentDismissFail") {
+          dismissIncidentFail();
         } else if (action === "incidentFix") {
           hitSanity(4);
           toast(state.stub?.toastFix || "Heroism rejected. Try negligence.");
           audio.playSfx("error");
-          // keep modal open — wrong cultural answer
+          // keep modal open - wrong cultural answer
         } else if (action === "fillerDone") {
           state.modal = null;
           requestFinish({ toastMsg: "Documented. Loop continues.", sanHit: 1 });
@@ -2050,18 +2052,18 @@ export function createWin95(copy, hooks) {
     state.stub.jiggles += n;
     const pct = Math.min(1, state.stub.jiggles / state.stub.need);
     if (state.modal) {
-      state.modal.body = `Engagement ${Math.floor(pct * 100)}% · ${state.stub.jiggles}/${state.stub.need} · ${Math.ceil(state.stub.tLeft)}s`;
+      state.modal.body = `Engagement ${Math.floor(pct * 100)}% - ${state.stub.jiggles}/${state.stub.need} - ${Math.ceil(state.stub.tLeft)}s`;
     }
     if (state.stub.jiggles >= state.stub.need) {
       state.modal = null;
       if (!requestFinish({ toastMsg: "Status: Active (allegedly).", sanHit: 1 })) {
         state.modal = {
-          title: "InsightBot — Appear Active",
+          title: "InsightBot - Appear Active",
           body: "Bar full. Ask Jimbo, then submit.",
           kind: "presenceTicket",
           buttons: [{ label: "SUBMIT", action: "fillerDone" }],
         };
-        // fillerDone reuses requestFinish path — remap:
+        // fillerDone reuses requestFinish path - remap:
         state.modal.buttons = [{ label: "SUBMIT", action: "presenceSubmit" }];
       }
     }
@@ -2079,13 +2081,13 @@ export function createWin95(copy, hooks) {
     st.picks++;
     if (st.picks === 1) {
       st.first = num;
-      if (state.modal) state.modal.body = `Kyle-bot rejected ${v}. Pick again (≥ first).`;
+      if (state.modal) state.modal.body = `Kyle-bot rejected ${v}. Pick again (>= first).`;
       toast(st.reject || "Kyle-bot: too optimistic.");
       return;
     }
     if (num < (st.first || 0)) {
       hitSanity(2);
-      toast("Scope creep theater: go ≥ first pick.");
+      toast("Scope creep theater: go >= first pick.");
       return;
     }
     state.modal = null;
@@ -2133,7 +2135,7 @@ export function createWin95(copy, hooks) {
         mechanic: "incident",
         uid: makeUid(),
         dod: S.ticket?.dod || "Disable monitor + assign away. Do not fix prod.",
-        meta: "Pager · Interrupt",
+        meta: "Pager - Interrupt",
         toast: S.ticket?.toast || S.toast,
       };
       state.phase = "incident";
@@ -2155,7 +2157,7 @@ export function createWin95(copy, hooks) {
       toastSelf: S.toastSelf || "Cannot assign to yourself. That would be accountability.",
     };
     state.modal = {
-      title: S.windowTitle || "HelixStack Incident — Sev0 (Probably)",
+      title: S.windowTitle || "HelixStack Incident - Sev0 (Probably)",
       body: incidentBody(S),
       kind: "incidentTicket",
       buttons: incidentButtons(S),
@@ -2178,20 +2180,11 @@ export function createWin95(copy, hooks) {
     const st = state.stub;
     const mon = st?.monitorOff ? "Observability: Off" : "Observability: On (dangerous)";
     const who = st?.assignee ? `Owner: ${st.assignee}` : "Owner: you (unfortunate)";
-    const head = st?.headline ? `● LIVE  ${st.headline}
-
-` : "";
+    const head = st?.headline ? `* LIVE  ${st.headline}\n\n` : "";
     const base =
       S.body ||
-      "Pro moves (both required):
-1) Disable monitor
-2) Assign to somebody else
-
-Do not fix it.";
-    return `${head}${base}
-
-${mon}
-${who}`;
+      "Pro moves (both required):\n1) Disable monitor\n2) Assign to somebody else\n\nDo not fix it.";
+    return `${head}${base}\n\n${mon}\n${who}`;
   }
 
   function incidentButtons(S) {
@@ -2201,7 +2194,6 @@ ${who}`;
       btns.push({ label: S.disableLabel || "Disable monitor", action: "incidentDisable" });
     }
     if (!st?.assignee || /\byou\b/i.test(String(st.assignee))) {
-      // picking phase: show assignee chips
       if (st?.pickingAssign) {
         for (const a of st.assignees || []) {
           const name = typeof a === "string" ? a : (a.label || a.id || "Someone");
@@ -2215,6 +2207,8 @@ ${who}`;
     btns.push({ label: S.fixLabel || "Actually fix prod", action: "incidentFix" });
     if (st?.monitorOff && st?.assignee && !/\byou\b/i.test(String(st.assignee))) {
       btns.unshift({ label: S.submitLabel || "Walk away", action: "incidentDone" });
+    } else {
+      btns.push({ label: S.dismissLabel || "X - leave it burning", action: "incidentDismissFail" });
     }
     return btns;
   }
@@ -2222,18 +2216,46 @@ ${who}`;
   function refreshIncidentModal(S) {
     S = S || ticketStrings.incident || {};
     if (!state.modal || state.modal.kind !== "incidentTicket") {
-      state.modal = { title: S.windowTitle || "HelixStack Incident — Sev0 (Probably)", kind: "incidentTicket" };
+      state.modal = { title: S.windowTitle || "HelixStack Incident - Sev0 (Probably)", kind: "incidentTicket" };
     }
     state.modal.body = incidentBody(S);
     state.modal.buttons = incidentButtons(S);
+  }
+
+  function armIncidentPagerCooldown() {
+    state.incidentPagerCooldown = 90;
+    state.incidentPagerCd = 40 + Math.random() * 20;
+  }
+
+  function dismissIncidentFail() {
+    const S = ticketStrings.incident || {};
+    state.modal = null;
+    state.stub = null;
+    if (state.incidentFromPager) {
+      state.activeTicket = null;
+      state.phase = "desktop";
+    }
+    hitSanity(5);
+    toast(S.toastDismiss || "Incident remains. So do you.");
+    armIncidentPagerCooldown();
+    audio.playSfx("error", { volume: 0.35 });
   }
 
   function tryFinishIncident() {
     const st = state.stub;
     if (!st || st.kind !== "incident") return false;
     if (!st.monitorOff || !st.assignee || /\byou\b/i.test(String(st.assignee))) return false;
+    let san = 3;
+    if (/kyle/i.test(String(st.assignee))) san = 5;
     state.modal = null;
-    requestFinish({ toastMsg: st.toast || "Incident owned by someone who isn't you.", sanHit: 3 });
+    armIncidentPagerCooldown();
+    const lol = (ticketStrings.incident || {}).assigneeSlack || (copy.incident || {}).assigneeSlack;
+    if (lol && state.slackMsgs) {
+      const line = typeof lol === "object" ? (lol[st.assignee] || lol.default || "lol") : "lol";
+      state.slackMsgs.unshift({ name: st.assignee, color: "#a05030", text: String(line) });
+      if (state.slackMsgs.length > 12) state.slackMsgs.length = 12;
+    }
+    requestFinish({ toastMsg: st.toast || "Incident owned by someone who isn't you.", sanHit: san });
     return true;
   }
 
@@ -2245,12 +2267,12 @@ ${who}`;
       return;
     }
     // Only block while CURRENT severity is still Sev0 (Jimbo may have set it).
-    // Picking Sev1+ clears sev0 — do not force Sev0 back or the ticket softlocks.
+    // Picking Sev1+ clears sev0 - do not force Sev0 back or the ticket softlocks.
     if (st.sev === "Sev0") {
       hitSanity(4);
       st.sev0 = true;
       if (state.modal) state.modal.body = "Sev0 paged Slack. Pick Sev1+ to finish.";
-      toast("Company paged. Downgrade required — pick a lower severity.");
+      toast("Company paged. Downgrade required - pick a lower severity.");
       return;
     }
     let msg = st.toast || "Severity filed. Screenshot still impossible.";
@@ -2345,7 +2367,7 @@ ${who}`;
         mail.read = true;
         hitSanity(mail.sanity || 5);
       } else {
-        // close without reading — smaller hit, Jimbo marks read
+        // close without reading - smaller hit, Jimbo marks read
         mail.read = true;
         hitSanity(Math.max(2, Math.floor((mail.sanity || 5) / 2)));
         toast(jimboCopy.markedRead || "Marked as read by Jimbo");
@@ -2354,7 +2376,7 @@ ${who}`;
     state.openMailId = null;
     state.mailReadFully = false;
     state.unread = Math.max(emailCopy.unreadFloor || 1, unreadCount());
-    // never fully clear — bump ghost unread
+    // never fully clear - bump ghost unread
     if (state.unread <= (emailCopy.unreadFloor || 1)) {
       state.unread = (emailCopy.unreadFloor || 1) + 1;
     }
@@ -2364,7 +2386,7 @@ ${who}`;
   function deniedToast(item) {
     const line = pick(deniedPool);
     if (line) toast(line);
-    else toast((item.submenu?.[0] || item.label || "Denied") + " — denied");
+    else toast((item.submenu?.[0] || item.label || "Denied") + " - denied");
     audio.playSfx("error");
   }
 
@@ -2386,7 +2408,7 @@ ${who}`;
       const conf =
         copy.dialogs?.confirms?.find((c) => /clock/i.test(c.title || "")) ||
         copy.dialogs?.confirms?.[0];
-      toast((conf && conf.body) || "Clocking out…");
+      toast((conf && conf.body) || "Clocking out...");
       setTimeout(() => hooks.onClockOut?.(), 500);
     } else if (id === "ide" || /notepad|corp\.exe/i.test(label)) {
       wins.ide.open = true;
@@ -2457,7 +2479,7 @@ ${who}`;
           if (it.to !== "data2" && it.to !== (st.bulk || "data2")) {
             it.to = st.bulk || "data2";
           } else if (it.to !== "data2") {
-            // already bulk name — still counts
+            // already bulk name - still counts
           }
           return true;
         }
@@ -2505,7 +2527,7 @@ ${who}`;
           if (st.fields.b === "the fog") {
             hitSanity(5);
             st.rejected = true;
-            toast("Fog submit rejected — rewrite");
+            toast("Fog submit rejected - rewrite");
             return true;
           }
           st.submits++;
@@ -2542,7 +2564,7 @@ ${who}`;
         }
         if (h.action === "trap") {
           hitSanity(2);
-          toast("404 Synergy — preferences lost");
+          toast("404 Synergy - preferences lost");
           // Stay on confirm so Unsubscribe remains reachable
           return true;
         }
@@ -2679,7 +2701,7 @@ ${who}`;
       if (state.jimboUsedThisTicket) finishTicket("semi", pts);
       else {
         state.pendingFinish = { type: "semi", pts };
-        toast("Work done — Ask Jimbo to submit");
+        toast("Work done - Ask Jimbo to submit");
       }
     }
   }
@@ -2703,7 +2725,7 @@ ${who}`;
       if (state.jimboUsedThisTicket) finishTicket("comment", pts);
       else {
         state.pendingFinish = { type: "comment", pts };
-        toast("Work done — Ask Jimbo to submit");
+        toast("Work done - Ask Jimbo to submit");
       }
     }
   }
