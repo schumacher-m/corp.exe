@@ -796,6 +796,10 @@ export function createWin95(copy, hooks) {
     bevelSunken(x, y, w, h, C.white);
     ctx.font = "7px Tahoma, sans-serif";
     if (state.phase === "unsub" && state.stub?.kind === "unsub") {
+      // Don't let stale Outlook hits steal Unsub clicks
+      state._mailHits = null;
+      state._mailCloseBtn = null;
+      state.openMailId = null;
       drawUnsubStub(x, y, w, h);
       return;
     }
@@ -867,25 +871,41 @@ export function createWin95(copy, hooks) {
     ctx.fillStyle = C.text;
     ctx.fillText(String(m?.subject || "").slice(0, 36), x + 4, yy);
     yy += 16;
+    // Back always available so the flow can't softlock
+    bevelRaised(x + w - 44, y + 2, 40, 12, C.face);
+    ctx.fillStyle = C.text;
+    ctx.font = "bold 7px Tahoma, sans-serif";
+    ctx.fillText("Back", x + w - 34, y + 10);
+    state._stubHits.push({ kind: "unsub", action: "back", hit: { x: x + w - 44, y: y + 2, w: 40, h: 12 } });
+
     if (st.step === "confirm") {
       ctx.fillText("Unsubscribe? Preferences → nowhere.", x + 4, yy);
-      bevelRaised(x + 4, y + h - 22, 80, 14, C.face);
+      const by = y + h - 22;
+      const bw1 = Math.min(88, Math.floor((w - 12) / 2));
+      const bw2 = Math.min(96, w - 12 - bw1 - 6);
+      bevelRaised(x + 4, by, bw1, 14, C.face);
       ctx.font = "bold 8px Tahoma, sans-serif";
-      ctx.fillText("Unsubscribe", x + 10, y + h - 13);
-      state._stubHits.push({ kind: "unsub", action: "confirm", hit: { x: x + 4, y: y + h - 22, w: 80, h: 14 } });
-      bevelRaised(x + 90, y + h - 22, 100, 14, C.face);
-      ctx.fillText("HelixHub 404", x + 96, y + h - 13);
-      state._stubHits.push({ kind: "unsub", action: "trap", hit: { x: x + 90, y: y + h - 22, w: 100, h: 14 } });
+      ctx.fillStyle = C.text;
+      ctx.fillText("Unsubscribe", x + 8, by + 10);
+      state._stubHits.push({ kind: "unsub", action: "confirm", hit: { x: x + 4, y: by, w: bw1, h: 14 } });
+      bevelRaised(x + 4 + bw1 + 6, by, bw2, 14, C.face);
+      ctx.fillText("HelixHub 404", x + 8 + bw1 + 6, by + 10);
+      state._stubHits.push({ kind: "unsub", action: "trap", hit: { x: x + 4 + bw1 + 6, y: by, w: bw2, h: 14 } });
     } else if (st.step === "helpful") {
       ctx.fillText("Was this helpful? (Required)", x + 4, yy);
+      const labs = ["Yes", "No", "Synergy"];
+      const by = y + h - 22;
+      const gap = 4;
+      const bw = Math.max(36, Math.floor((w - 8 - gap * (labs.length - 1)) / labs.length));
       let bx = x + 4;
-      for (const lab of ["Yes", "No", "Synergy"]) {
-        bevelRaised(bx, y + h - 22, 50, 14, C.face);
+      for (const lab of labs) {
+        const tw = Math.min(bw, x + w - 4 - bx);
+        bevelRaised(bx, by, tw, 14, C.face);
         ctx.font = "bold 8px Tahoma, sans-serif";
         ctx.fillStyle = C.text;
-        ctx.fillText(lab, bx + 10, y + h - 13);
-        state._stubHits.push({ kind: "unsub", action: "helpful", hit: { x: bx, y: y + h - 22, w: 50, h: 14 } });
-        bx += 56;
+        ctx.fillText(lab, bx + Math.max(4, (tw - lab.length * 5) / 2), by + 10);
+        state._stubHits.push({ kind: "unsub", action: "helpful", hit: { x: bx, y: by, w: tw, h: 14 } });
+        bx += tw + gap;
       }
     }
     state._submitBtn = null;
@@ -1325,12 +1345,7 @@ export function createWin95(copy, hooks) {
         toast: S.toast || "You will still receive critical updates.",
         afterUnsub: S.afterUnsub || "Preferences saved to nowhere.",
       };
-      if (sab) {
-        state.stub.mails.push(
-          { id: "u4", from: "HelixHub", subject: "404 Synergy", done: false },
-          { id: "u5", from: "HelixHub", subject: "Preferences nowhere", done: false }
-        );
-      }
+      // Jimbo spam is applied in applySabotage without resetting progress
     } else if (type === "logspam") {
       const S = ticketStrings.logspam || {};
       const chips = S.logChips || ["console.log('here')", "console.log(data2)", "console.log('Kyle was here')"];
@@ -1654,6 +1669,17 @@ export function createWin95(copy, hooks) {
       state.prBubbles.push({ who: "jimbo", t: state.prJimboNit });
       // Optionally inject an extra beat by repeating current kyle line flavor
       hitSanity(5);
+    } else if (type === "unsub" && state.stub?.kind === "unsub") {
+      // Comedy spam — do NOT wipe completed unsubs (that softlocked the ticket)
+      const extra = [
+        { id: "u" + (state.stub.mails.length + 1), from: "HelixHub", subject: "404 Synergy", done: false },
+        { id: "u" + (state.stub.mails.length + 2), from: "Marketing", subject: "You unsubscribed wrong", done: false },
+      ];
+      state.stub.mails.push(...extra);
+      state.stub.need = Math.min(state.stub.need || 3, 3); // still only need 3 done
+      state.stub.step = "list";
+      state.stub.open = null;
+      hitSanity(4);
     } else if (STUB_TYPES.includes(type) || type === "filler") {
       // Re-init stub with sabotage flavor (keys ready for Writer strings)
       initStub(type);
@@ -2234,6 +2260,11 @@ export function createWin95(copy, hooks) {
       for (const h of state._stubHits) {
         if (!hit(h.hit, x, y)) continue;
         audio.playSfx("click");
+        if (h.action === "back") {
+          st.open = null;
+          st.step = "list";
+          return true;
+        }
         if (h.action === "open") {
           st.open = h.id;
           st.step = "confirm";
@@ -2242,6 +2273,7 @@ export function createWin95(copy, hooks) {
         if (h.action === "trap") {
           hitSanity(2);
           toast("404 Synergy — preferences lost");
+          // Stay on confirm so Unsubscribe remains reachable
           return true;
         }
         if (h.action === "confirm") {
@@ -2282,7 +2314,10 @@ export function createWin95(copy, hooks) {
         return;
       }
     }
-    if (win.id === "inbox") {
+    if (win.id === "inbox" && state.phase === "unsub" && state.stub?.kind === "unsub") {
+      if (handleStubClick(win, x, y)) return;
+    }
+    if (win.id === "inbox" && !(state.phase === "unsub" && state.stub?.kind === "unsub")) {
       if (state.openMailId && hit(state._mailCloseBtn, x, y)) {
         // treat as read if they've had it open (clicking close after open = read)
         state.mailReadFully = true;
