@@ -189,7 +189,24 @@ export function createWin95(copy, hooks) {
   const kyleSlackPool = copy.kyleSlack || (copy.slackPool || []).filter((m) => /kyle/i.test(m.name || ""));
   let kyleInterruptCd = 18 + Math.random() * 10;
 
+  /** Full Kyle beat pools stay in copy; each PR run deals ≤5 at random. */
+  const PR_ROUND_MAX = 5;
+
+  function pickPrRound(pool, max = PR_ROUND_MAX) {
+    const src = Array.isArray(pool) ? pool.slice() : [];
+    if (src.length <= max) return src;
+    // Fisher–Yates partial shuffle
+    for (let i = src.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = src[i];
+      src[i] = src[j];
+      src[j] = tmp;
+    }
+    return src.slice(0, max);
+  }
+
   function activePrScript() {
+    if (state.prRoundScript && state.prRoundScript.length) return state.prRoundScript;
     if (state.phase === "spacewar") return copy.spaceWarScript || copy.prScript || [];
     return copy.prScript || [];
   }
@@ -1461,7 +1478,9 @@ export function createWin95(copy, hooks) {
           : "PR Review — Kyle";
       raise("pr");
       state.prStep = 0;
-      const script = mech === "spacewar" ? (copy.spaceWarScript || copy.prScript) : copy.prScript;
+      const pool = mech === "spacewar" ? (copy.spaceWarScript || copy.prScript) : copy.prScript;
+      state.prRoundScript = pickPrRound(pool, PR_ROUND_MAX);
+      const script = state.prRoundScript;
       state.prBubbles = [{ who: "kyle", t: (script && script[0] && script[0].kyle) || "Nit?" }];
       hooks.onPrOpen?.();
       audio.playBgm("bgmPr");
@@ -1583,6 +1602,7 @@ export function createWin95(copy, hooks) {
     audio.playSfx("ticket");
     wins.ide.open = false;
     wins.pr.open = false;
+    state.prRoundScript = null;
     if (type === "standup2") {
       wins.standup.open = false;
       wins.standup.title = "Standup";
@@ -1888,7 +1908,17 @@ export function createWin95(copy, hooks) {
           handleEstimatePick(action.slice(4));
           audio.playSfx("click");
         } else if (typeof action === "string" && action.startsWith("sev:")) {
-          if (state.stub) state.stub.sev = action.slice(4);
+          if (state.stub) {
+            state.stub.sev = action.slice(4);
+            // Downgrade clears the Sev0 lock so Submit can finish
+            if (state.stub.sev !== "Sev0") {
+              state.stub.sev0 = false;
+              if (state.modal) {
+                state.modal.body =
+                  "Severity · Component · Impact — taxonomy must be satisfied.";
+              }
+            }
+          }
           toast("Severity: " + action.slice(4));
           audio.playSfx("click");
         } else if (typeof action === "string" && action.startsWith("comp:")) {
@@ -1975,12 +2005,13 @@ export function createWin95(copy, hooks) {
       toast("Fill Severity, Component, Impact.");
       return;
     }
-    if (st.sev === "Sev0" || st.sev0) {
-      hitSanity(8);
+    // Only block while CURRENT severity is still Sev0 (Jimbo may have set it).
+    // Picking Sev1+ clears sev0 — do not force Sev0 back or the ticket softlocks.
+    if (st.sev === "Sev0") {
+      hitSanity(4);
       st.sev0 = true;
-      st.sev = "Sev0";
-      if (state.modal) state.modal.body = "Sev0 paged Slack. Downgrade to finish.";
-      toast("Company paged. Downgrade required.");
+      if (state.modal) state.modal.body = "Sev0 paged Slack. Pick Sev1+ to finish.";
+      toast("Company paged. Downgrade required — pick a lower severity.");
       return;
     }
     let msg = st.toast || "Severity filed. Screenshot still impossible.";
