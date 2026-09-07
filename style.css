@@ -692,3 +692,10 @@ html, body {
   gap: 8px;
 }
 #statusbar .clock { color: var(--amber); }
+
+#btn-sit {
+  pointer-events: auto !important;
+  font-size: 10px;
+  padding: 4px 10px;
+  z-index: 20;
+}

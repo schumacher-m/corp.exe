@@ -128,9 +128,10 @@ OfficeRoot.name = "OfficeRoot";
 scene.add(OfficeRoot);
 
 const nodes = {};
-const SEAT = new THREE.Vector3(0.15, 0, 0.55); // chair spot (XZ only used for sit check)
+const SEAT = new THREE.Vector3(0.0, 0, 0.4); // chair spot (XZ)
 const SIT_CAM = new THREE.Vector3(0.15, 1.2, 0.55);
 const SIT_LOOK = new THREE.Vector3(0.0, 1.05, -0.55);
+const SIT_RADIUS = 3.2; // almost whole cubicle — E should work once you see the CRT
 
 function forceNearest(root) {
   root.traverse((o) => {
@@ -349,6 +350,10 @@ async function loadOffice() {
   console.info("[corp.exe] office ready", Object.keys(by));
 }
 
+/* CRT pointer helpers (hoisted for sit raycast) */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
 /* —— Movement / sit —— */
 const clock = new THREE.Clock();
 let footAcc = 0;
@@ -378,20 +383,43 @@ function updateWalk(dt) {
   camera.rotation.y = G.yaw;
   camera.rotation.x = G.lookY;
 
-  // player.pos.y is eye height — only XZ matters for "near chair"
+  // player.pos.y is eye height — only XZ matters
   const dist = Math.hypot(player.pos.x - SEAT.x, player.pos.z - SEAT.z);
-  G.canSit = dist < 1.6;
+  // also allow sit if CRT is in view (ray from camera center)
+  let lookingAtDesk = false;
+  if (screenMesh) {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const hits = raycaster.intersectObject(screenMesh, true);
+    lookingAtDesk = hits.length > 0;
+  }
+  G.canSit = dist < SIT_RADIUS || lookingAtDesk || player.pos.z < 1.8;
+  const sitBtn = $("btn-sit");
+  if (sitBtn) {
+    sitBtn.hidden = !G.canSit;
+    sitBtn.style.pointerEvents = G.canSit ? "auto" : "none";
+  }
   setPrompt(
     G.canSit
-      ? "E / Space / click — Sit at Cubicle 4-B"
-      : "WASD move · mouse look · walk up to your desk"
+      ? "E / Space / SIT — Cubicle 4-B"
+      : "WASD · walk toward the glowing CRT"
   );
+  // soft auto-sit if basically on the chair
+  if (dist < 0.85) {
+    G._autoSitT = (G._autoSitT || 0) + dt;
+    if (G._autoSitT > 0.45) beginSit();
+  } else {
+    G._autoSitT = 0;
+  }
 }
 
 function beginSit() {
+  if (G.phase !== "walk") return;
   G.phase = "sit";
+  G.canSit = false;
+  const sitBtn = $("btn-sit");
+  if (sitBtn) sitBtn.hidden = true;
   setPrompt("Sitting…");
-  audio.playSfx("sit");
+  try { audio.playSfx("sit"); } catch (_) {}
   G.sitT = 0;
 }
 
@@ -444,9 +472,6 @@ function updateSeated(dt) {
   crtTex.needsUpdate = true;
 }
 
-/* CRT pointer: map stage mouse → Win95 UV via raycast */
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
 
 function stagePointer(e) {
   const rect = canvas3d.getBoundingClientRect();
@@ -539,10 +564,27 @@ function clockOut() {
 
 /* —— Input —— */
 window.addEventListener("keydown", (e) => {
-  G.keys[e.key.toLowerCase()] = true;
-  if (G.phase === "walk" && G.canSit && (e.key === "e" || e.key === "E" || e.key === " " || e.code === "Space")) {
+  const k = (e.key || "").toLowerCase();
+  G.keys[k] = true;
+  if (e.code) G.keys[e.code.toLowerCase()] = true;
+  const sitKey =
+    e.code === "KeyE" ||
+    e.code === "Space" ||
+    k === "e" ||
+    k === " " ||
+    k === "enter" ||
+    e.code === "Enter";
+  if (G.phase === "walk" && sitKey) {
     e.preventDefault();
-    beginSit();
+    // If somehow canSit false but they're past the doorway, still sit
+    if (!G.canSit && player.pos.z < 2.2) G.canSit = true;
+    if (G.canSit) beginSit();
+    else toast("Get closer to your desk (walk toward the CRT)");
+  }
+  if (e.key === "m" || e.key === "M") {
+    G.muted = !G.muted;
+    audio.setMuted(G.muted);
+    toast(G.muted ? "Muted" : "Unmuted", true);
   }
   if (G.phase === "seated") win95.onKey(e);
 });
@@ -628,15 +670,16 @@ $("btn-clock-in").addEventListener("click", () => {
 $("btn-again").addEventListener("click", () => {
   location.reload();
 });
+const sitBtnEl = $("btn-sit");
+if (sitBtnEl) {
+  sitBtnEl.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (G.phase === "walk") beginSit();
+  });
+}
 
-/* mute via M */
-window.addEventListener("keydown", (e) => {
-  if (e.key === "m" || e.key === "M") {
-    G.muted = !G.muted;
-    audio.setMuted(G.muted);
-    toast(G.muted ? "Muted" : "Unmuted", true);
-  }
-});
+
 
 /* —— Loop —— */
 function frame() {
