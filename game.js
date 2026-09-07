@@ -363,7 +363,9 @@ async function loadOffice() {
   const hasBay = !!by.neighbor_bay;
   for (let ix = -10; ix <= 10; ix++) {
     for (let iz = -8; iz <= 4; iz++) {
-      if (ix === 0 && iz === 0) continue;
+      // Skip player home bay AND the aisle cell between spawn and desk
+      // (iz=+1 @ z=2.6) so a neighbor CRT can't eclipse the player's screen at walk start.
+      if (ix === 0 && (iz === 0 || iz === 1)) continue;
       const x = ix * PITCH_X;
       const z = iz * PITCH_Z;
       let bay;

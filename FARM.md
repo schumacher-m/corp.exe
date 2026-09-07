@@ -18,6 +18,8 @@ Do **not** keep the old 3-bay layout (`±6.2m`). That reads as an empty warehous
 
 Player collision / sit stay local to the home bay. Neighbors are visual only (no colliders).
 
+**Spawn visibility:** skip neighbor at `(0, +1)` as well as `(0, 0)` — that aisle cell sits between walk-start (`z≈3.2`) and the player CRT and otherwise eclipses it with a green screen.
+
 ### Pseudocode
 
 ```js
