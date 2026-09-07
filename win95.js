@@ -2176,15 +2176,27 @@ export function createWin95(copy, hooks) {
     return state.stub;
   }
 
-    function incidentBody(S) {
+  function incidentBody(S) {
     const st = state.stub;
-    const mon = st?.monitorOff ? "Observability: Off" : "Observability: On (dangerous)";
-    const who = st?.assignee ? `Owner: ${st.assignee}` : "Owner: you (unfortunate)";
-    const head = st?.headline ? `* LIVE  ${st.headline}\n\n` : "";
+    const mon = st && st.monitorOff ? "Observability: Off" : "Observability: On (dangerous)";
+    const who = st && st.assignee ? ("Owner: " + st.assignee) : "Owner: you (unfortunate)";
+    const head = st && st.headline ? ("* LIVE  " + st.headline) : "";
     const base =
-      S.body ||
-      "Pro moves (both required):\n1) Disable monitor\n2) Assign to somebody else\n\nDo not fix it.";
-    return `${head}${base}\n\n${mon}\n${who}`;
+      (S && S.body) ||
+      [
+        "Pro moves (both required):",
+        "1) Disable monitor",
+        "2) Assign to somebody else",
+        "",
+        "Do not fix it.",
+      ].join("\n");
+    const parts = [];
+    if (head) parts.push(head);
+    parts.push(base);
+    parts.push("");
+    parts.push(mon);
+    parts.push(who);
+    return parts.join("\n");
   }
 
   function incidentButtons(S) {
