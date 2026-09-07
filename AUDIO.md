@@ -127,13 +127,13 @@ All original synth. Away tick is intentionally quiet (−8 dBFS) — do not boos
 
 ## Exhausted cubicle farm (ambience bed + tired one-shots)
 
-Low-energy fluorescent farm for **cubicle walk** (and optionally **seated** while still “in the farm”). Depressed humans, HVAC, fluorescent ballast — **not** horror stingers, **not** melodic happy BGM. Can sit under or replace walk BGM.
+Low-energy fluorescent farm for **cubicle walk** (and optionally **seated** while still “in the farm”). Dense farm (~272 bays / hundreds of seated neighbors): overlapping muffled human energy + unsynced keyboard mush baked into the loop bed — oppressed tiredness, **not** horror stingers, **not** melodic happy BGM. Can sit under or replace walk BGM.
 
 ### Loop bed
 
 | File | `FILES` key | When | Loop | Suggested vol |
 |------|-------------|------|------|---------------|
-| `audio/amb-cubicle-exhausted.ogg` | `ambExhausted` | Cubicle walk / farm presence | Yes (~78 s) | **0.28–0.35** (~−8…−10 dBFS peak asset) |
+| `audio/amb-cubicle-exhausted.ogg` | `ambExhausted` | Cubicle walk / farm presence | Yes (~82 s) | **0.28–0.35** (~−8…−10 dBFS peak asset) |
 
 Helpers:
 - `playAmbExhausted({ volume })` — loop the bed only
@@ -155,8 +155,10 @@ Dev wiring (call sites in game logic — not auto-wired):
 | `audio/sfx-chair-creak-tired.wav` | `creakTired` | Slow lean/shift creak (≠ sit) | No | 0.35–0.45 |
 | `audio/sfx-ugh.wav` | `ugh` | Muffled distant “ugh” | No | 0.25–0.35 |
 | `audio/sfx-key-dead-01.wav` … `05` | `keyDead1`…`keyDead5` | Mushy/dead keyboard clacks | No | 0.2–0.3 |
+| `audio/sfx-murmur-distant.wav` | `murmurDistant` | Quiet distant murmur mush (no words) | No | 0.25–0.35 |
+| `audio/sfx-keys-far.wav` | `keysFar` | Far unsynced mushy key burst | No | 0.2–0.3 |
 
-`exhaustedOneShot()` picks randomly from grunt / sigh / creakTired / ugh / keyDead1–5 (quieter for ugh + dead keys). Used internally by `startExhaustedBed`.
+`exhaustedOneShot()` picks randomly from grunt / sigh / creakTired / ugh / keyDead1–5 / murmurDistant / keysFar (quieter for ugh, murmur, dead/far keys). Used internally by `startExhaustedBed`.
 
 ```js
 import {
@@ -188,6 +190,6 @@ stopExhaustedBed();
 
 ## Aesthetic reminder
 
-Fluorescent hell, HVAC drone, cheap carpet, tracker/MOD grit, 8–12-bit crunch, exhausted cubicle-farm bed (muffled workers, dead keys). Dark humor. Not Hollywood orchestra.
+Fluorescent hell, HVAC drone, cheap carpet, tracker/MOD grit, 8–12-bit crunch, exhausted dense cubicle-farm bed (~272 bays; muffled workers, keyboard mush, dead keys). Dark humor. Not Hollywood orchestra.
 
 Assets are **original synth only**. If something sounds wrong after a pull, regenerate with `python3 audio/generate_audio.py`.

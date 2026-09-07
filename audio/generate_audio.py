@@ -753,88 +753,184 @@ def sfx_away_tick():
 # Exhausted cubicle farm ambience + tired human one-shots
 # ---------------------------------------------------------------------------
 
-def muffled_worker_murmur(n, sr=SR):
-    """Sparse distant tired-human energy — no intelligible speech."""
+def muffled_worker_murmur(n, sr=SR, density=1.0):
+    """Distant tired-human energy — no intelligible speech.
+
+    density~1 = sparse; density~6+ = dense cubicle farm (~hundreds of bodies).
+    Overlapping muffled formant mush, not chatter or words.
+    """
     out = np.zeros(n)
-    t = int(RNG.uniform(1.5, 4.0) * sr)
-    while t < n - int(0.4 * sr):
-        dur = int(RNG.uniform(0.25, 1.1) * sr)
-        dur = min(dur, n - t)
-        # formant-ish band of noise + slow AM (murmur contour)
-        base = noise(dur, "pink")
-        f_lo = RNG.uniform(180, 320)
-        f_hi = RNG.uniform(700, 1400)
-        mur = bandpass(base, f_lo, f_hi, sr)
-        # second formant bump
-        mur += bandpass(noise(dur, "pink"), RNG.uniform(900, 1400), RNG.uniform(1600, 2400), sr) * 0.35
-        # pitch-ish soft sine wobble (not a melody)
-        f0 = RNG.uniform(110, 190)
-        mur += sine(f0, dur, sr) * 0.08 * env_adsr(dur, 0.05, 0.15, 0.4, 0.3, sr)
-        # syllable-ish AM
-        am_rate = RNG.uniform(3.5, 7.5)
-        am = 0.35 + 0.65 * (0.5 + 0.5 * sine(am_rate, dur, sr, phase=RNG.uniform(0, 6)))
-        # occasional slower breath contour
-        breath = 0.7 + 0.3 * sine(RNG.uniform(0.4, 1.2), dur, sr)
-        mur = mur * am * breath
-        mur = one_pole_lp(mur, RNG.uniform(900, 1600), sr)
-        # distance: heavy LP + quiet
-        mur *= RNG.uniform(0.012, 0.035)
-        # very soft stereo-ish dullness via extra LP sometimes
-        if RNG.random() < 0.5:
-            mur = one_pole_lp(mur, 700, sr)
-        out[t : t + dur] += mur
-        # long quiet gaps — sparse farm, not chatter
-        t += dur + int(RNG.uniform(2.5, 8.5) * sr)
+    # Multiple independent lanes so neighbors overlap like a full farm.
+    n_lanes = max(1, int(round(2 * density)))
+    for _lane in range(n_lanes):
+        t = int(RNG.uniform(0.2, 3.5) * sr)
+        while t < n - int(0.25 * sr):
+            dur = int(RNG.uniform(0.35, 1.6) * sr)
+            dur = min(dur, n - t)
+            base = noise(dur, "pink")
+            f_lo = RNG.uniform(160, 300)
+            f_hi = RNG.uniform(650, 1300)
+            mur = bandpass(base, f_lo, f_hi, sr)
+            mur += bandpass(
+                noise(dur, "pink"),
+                RNG.uniform(850, 1350),
+                RNG.uniform(1500, 2300),
+                sr,
+            ) * RNG.uniform(0.25, 0.45)
+            # soft pitch undertone (not melodic)
+            f0 = RNG.uniform(95, 185)
+            mur += sine(f0, dur, sr) * RNG.uniform(0.05, 0.1) * env_adsr(
+                dur, 0.05, 0.15, 0.4, 0.3, sr
+            )
+            am_rate = RNG.uniform(3.0, 8.0)
+            am = 0.3 + 0.7 * (0.5 + 0.5 * sine(am_rate, dur, sr, phase=RNG.uniform(0, 6)))
+            breath = 0.65 + 0.35 * sine(RNG.uniform(0.35, 1.4), dur, sr)
+            mur = mur * am * breath
+            # distance muffling — farther lanes duller/quieter
+            dist = RNG.uniform(0.0, 1.0)
+            lp = 1600 - 900 * dist
+            mur = one_pole_lp(mur, lp, sr)
+            if dist > 0.45:
+                mur = one_pole_lp(mur, 750, sr)
+            # quiet; slightly louder when denser so mush reads as crowd energy
+            mur *= RNG.uniform(0.008, 0.022) * (0.85 + 0.15 * min(density, 8) / 8)
+            out[t : t + dur] += mur
+            # short gaps when dense — overlapping farm, not sparse office
+            gap = RNG.uniform(0.15, 1.1) if density >= 3 else RNG.uniform(2.5, 8.5)
+            t += dur + int(gap * sr)
     return out
 
 
-def distant_keyboard_clacks(n, sr=SR):
-    """Very sparse distant mushy key energy under the bed."""
+def distant_keyboard_clacks(n, sr=SR, density=1.0):
+    """Unsycned distant mushy key energy — many overlapping typists when dense."""
     out = np.zeros(n)
-    t = int(RNG.uniform(2.0, 5.0) * sr)
-    while t < n - int(0.05 * sr):
-        burst = int(RNG.integers(1, 5))
-        for i in range(burst):
-            kn = int(RNG.uniform(0.03, 0.07) * sr)
-            if t + kn >= n:
-                break
-            click = one_pole_lp(noise(kn), RNG.uniform(600, 1200), sr)
-            click += sine(RNG.uniform(140, 220), kn) * 0.25
-            click *= env_adsr(kn, 0.001, 0.008, 0.15, 0.02, sr) * RNG.uniform(0.008, 0.02)
-            out[t : t + kn] += click
-            t += int(RNG.uniform(0.05, 0.14) * sr)
-        t += int(RNG.uniform(4.0, 12.0) * sr)
+    n_lanes = max(1, int(round(3 * density)))
+    for _lane in range(n_lanes):
+        t = int(RNG.uniform(0.1, 2.5) * sr)
+        while t < n - int(0.04 * sr):
+            # longer typing bursts from "neighbors"
+            burst = int(RNG.integers(3, 14 if density >= 3 else 5))
+            for _i in range(burst):
+                kn = int(RNG.uniform(0.025, 0.065) * sr)
+                if t + kn >= n:
+                    break
+                click = one_pole_lp(noise(kn), RNG.uniform(500, 1100), sr)
+                click += sine(RNG.uniform(120, 210), kn) * 0.22
+                # mush / rubber-dome dullness
+                click = one_pole_lp(click, RNG.uniform(700, 1400), sr)
+                click *= env_adsr(kn, 0.001, 0.008, 0.15, 0.02, sr) * RNG.uniform(
+                    0.004, 0.014
+                )
+                out[t : t + kn] += click
+                t += int(RNG.uniform(0.04, 0.12) * sr)
+            # unsynced: short pauses between bursts when dense
+            pause = RNG.uniform(0.2, 1.8) if density >= 3 else RNG.uniform(4.0, 12.0)
+            t += int(pause * sr)
+    return out
+
+
+def baked_chair_and_sigh_energy(n, sr=SR, count_scrape=18, count_sigh=10):
+    """Occasional distant chair scrapes + breathy sigh energy baked into the loop bed."""
+    out = np.zeros(n)
+    dur_s = n / sr
+    for _ in range(count_scrape):
+        at = int(RNG.uniform(1.0, max(2.0, dur_s - 1.5)) * sr)
+        cn = int(RNG.uniform(0.18, 0.6) * sr)
+        if at + cn > n:
+            continue
+        scrape = bandpass(noise(cn), 180, 950, sr)
+        scrape += sine(RNG.uniform(130, 200), cn) * 0.08
+        scrape *= env_adsr(cn, 0.04, 0.12, 0.35, 0.25, sr) * RNG.uniform(0.008, 0.02)
+        scrape = one_pole_lp(scrape, RNG.uniform(600, 1200), sr)
+        out[at : at + cn] += scrape
+    for _ in range(count_sigh):
+        at = int(RNG.uniform(1.5, max(3.0, dur_s - 2.0)) * sr)
+        sn = int(RNG.uniform(0.45, 1.1) * sr)
+        if at + sn > n:
+            continue
+        breath = noise(sn, "pink")
+        bright = bandpass(breath, 350, 3800, sr)
+        dull = one_pole_lp(breath, 800, sr)
+        w = np.linspace(0.8, 0.2, sn)
+        body = bright * w + dull * (1 - w)
+        t = np.arange(sn) / sr
+        f0 = RNG.uniform(120, 170) * np.exp(-t * RNG.uniform(0.8, 1.4))
+        phase = 2 * np.pi * np.cumsum(f0) / sr
+        tone = np.sin(phase) * 0.08 * np.linspace(1.0, 0.25, sn)
+        sigh = (body * 0.45 + tone) * env_adsr(sn, 0.06, 0.2, 0.4, 0.35, sr)
+        sigh = one_pole_lp(sigh, RNG.uniform(1400, 2400), sr)
+        sigh *= RNG.uniform(0.006, 0.016)
+        out[at : at + sn] += sigh
     return out
 
 
 def gen_amb_cubicle_exhausted():
-    """Low-energy fluorescent cubicle farm bed — tired humans, not horror."""
-    dur = 78.0  # mid 60–90s
+    """Dense fluorescent cubicle farm bed — ~272 bays / hundreds of tired seated neighbors.
+
+    Overlapping muffled human energy + unsynced keyboard mush + occasional chair/sigh
+    baked into the loop. Oppressive tiredness, not horror. Quiet peak for under walk BGM.
+    """
+    dur = 82.0  # mid 60–90s, slightly longer for dense mash
     n = int(dur * SR)
+    # density tuned for "hundreds of seated neighbors" without becoming intelligible speech
+    farm_density = 6.5
     mix = (
-        hvac_drone(n) * 1.15
-        + fluorescent_hum(n) * 1.25
-        + muffled_worker_murmur(n) * 1.0
-        + distant_keyboard_clacks(n) * 1.0
+        hvac_drone(n) * 1.05
+        + fluorescent_hum(n) * 1.15
+        + muffled_worker_murmur(n, density=farm_density) * 1.35
+        + distant_keyboard_clacks(n, density=farm_density) * 1.45
+        + baked_chair_and_sigh_energy(n, count_scrape=22, count_sigh=12) * 1.0
     )
-    # soft brown-air bed
-    air = one_pole_lp(noise(n, "brown"), 220, SR) * 0.06
-    # occasional far chair scrape (very quiet)
-    for _ in range(5):
-        at = int(RNG.uniform(3, dur - 2) * SR)
-        cn = int(RNG.uniform(0.2, 0.55) * SR)
-        if at + cn > n:
-            continue
-        scrape = bandpass(noise(cn), 200, 900, SR)
-        scrape *= env_adsr(cn, 0.04, 0.12, 0.35, 0.25, SR) * RNG.uniform(0.01, 0.025)
-        mix[at : at + cn] += scrape
-    mix = mix + air
+    # soft brown-air + very quiet continuous pink mush (crowd floor)
+    air = one_pole_lp(noise(n, "brown"), 220, SR) * 0.055
+    crowd_floor = one_pole_lp(
+        bandpass(noise(n, "pink"), 200, 1600, SR), 1100, SR
+    ) * 0.018
+    crowd_floor *= 0.75 + 0.25 * sine(0.06, n)
+    mix = mix + air + crowd_floor
     # mild PS1 grit, keep soft
     mix = bitcrush(mix, bits=12, rate_div=1)
-    mix = soft_limit(mix * 0.85)
-    mix = make_loopable(mix, fade_ms=150)
-    # quiet enough to sit under / replace walk BGM
+    mix = soft_limit(mix * 0.82)
+    mix = make_loopable(mix, fade_ms=160)
+    # quiet enough to sit under / replace walk BGM (~−8…−10 dBFS)
     return normalize(mix, peak_db=-9.0)
+
+
+def sfx_murmur_distant():
+    """Quiet distant murmur one-shot — formant mush, no words."""
+    n = int(RNG.uniform(0.55, 0.95) * SR)
+    base = noise(n, "pink")
+    mur = bandpass(base, RNG.uniform(180, 280), RNG.uniform(800, 1300), SR)
+    mur += bandpass(noise(n, "pink"), 900, 2000, SR) * 0.3
+    f0 = RNG.uniform(110, 170)
+    mur += sine(f0, n) * 0.07 * env_adsr(n, 0.05, 0.15, 0.4, 0.3, SR)
+    am = 0.35 + 0.65 * (0.5 + 0.5 * sine(RNG.uniform(4.0, 7.0), n))
+    mur = one_pole_lp(mur * am, 1200, SR)
+    mur = one_pole_lp(mur, 850, SR)
+    out = mur * env_adsr(n, 0.04, 0.15, 0.4, 0.3, SR)
+    out = bitcrush(out, bits=10, rate_div=2)
+    return normalize(fade_edges(out, 10), peak_db=-7.0)
+
+
+def sfx_keys_far():
+    """Quiet far mushy key burst — unsynced neighbor typing."""
+    n = int(0.55 * SR)
+    out = np.zeros(n)
+    t = int(0.02 * SR)
+    burst = int(RNG.integers(5, 11))
+    for _i in range(burst):
+        kn = int(RNG.uniform(0.03, 0.06) * SR)
+        if t + kn >= n:
+            break
+        click = one_pole_lp(noise(kn), RNG.uniform(550, 1000), SR)
+        click += sine(RNG.uniform(130, 200), kn) * 0.2
+        click = one_pole_lp(click, 1100, SR)
+        click *= env_adsr(kn, 0.001, 0.008, 0.15, 0.02, SR) * RNG.uniform(0.35, 0.55)
+        out[t : t + kn] += click
+        t += int(RNG.uniform(0.045, 0.11) * SR)
+    out = one_pole_lp(out, 1400, SR)
+    out = bitcrush(out, bits=9, rate_div=2)
+    return normalize(fade_edges(out, 6), peak_db=-6.5)
 
 
 def sfx_grunt():
@@ -1021,6 +1117,8 @@ def main():
         ("sfx-key-dead-03.wav", lambda: sfx_key_dead(2)),
         ("sfx-key-dead-04.wav", lambda: sfx_key_dead(3)),
         ("sfx-key-dead-05.wav", lambda: sfx_key_dead(4)),
+        ("sfx-murmur-distant.wav", sfx_murmur_distant),
+        ("sfx-keys-far.wav", sfx_keys_far),
     ]
     for name, fn in sfx:
         print(f"  {name}...")

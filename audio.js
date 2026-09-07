@@ -1,7 +1,7 @@
 /**
  * corp.exe audio — no-op stubs when files missing; gated on muted flag.
  * Expected under audio/: bgm-*.ogg, amb-cubicle-exhausted.ogg,
- * sfx-*.wav one-shots (incl. tired farm: grunt/sigh/creak/ugh/key-dead),
+ * sfx-*.wav one-shots (incl. tired farm: grunt/sigh/creak/ugh/key-dead/murmur/keys-far),
  * sfx-win95-*, sfx-key-01..03, sfx-mouse-click, sfx-slack-ping, etc.
  */
 const BASE = "audio/";
@@ -41,6 +41,8 @@ const FILES = {
   keyDead3: "sfx-key-dead-03.wav",
   keyDead4: "sfx-key-dead-04.wav",
   keyDead5: "sfx-key-dead-05.wav",
+  murmurDistant: "sfx-murmur-distant.wav",
+  keysFar: "sfx-keys-far.wav",
 };
 
 const EXHAUSTED_ONESHOTS = [
@@ -53,6 +55,8 @@ const EXHAUSTED_ONESHOTS = [
   "keyDead3",
   "keyDead4",
   "keyDead5",
+  "murmurDistant",
+  "keysFar",
 ];
 
 let muted = false;
@@ -161,8 +165,8 @@ export function exhaustedOneShot({ volume = 0.4 } = {}) {
   const name = EXHAUSTED_ONESHOTS[Math.floor(Math.random() * EXHAUSTED_ONESHOTS.length)];
   // ugh + distant keys stay quieter; sighs a touch louder
   let vol = volume;
-  if (name === "ugh") vol *= 0.7;
-  else if (name.startsWith("keyDead")) vol *= 0.55;
+  if (name === "ugh" || name === "murmurDistant") vol *= 0.7;
+  else if (name.startsWith("keyDead") || name === "keysFar") vol *= 0.55;
   else if (name === "sigh") vol *= 0.85;
   playSfx(name, { volume: vol });
 }
