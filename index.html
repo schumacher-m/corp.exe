@@ -30,6 +30,16 @@
       font-size: 8px; padding: 8px; white-space: pre-wrap; line-height: 1.35;
     }
     #boot-overlay.show { display: block; }
+    #desktop-overlay {
+      display: none; position: absolute; inset: 0; z-index: 15;
+      background: #008080; pointer-events: auto;
+    }
+    #desktop-overlay.show { display: block; }
+    #desktop-overlay canvas {
+      width: 100% !important; height: 100% !important;
+      image-rendering: pixelated; image-rendering: crisp-edges;
+      cursor: crosshair;
+    }
 
     #file-gate {
       display: none; position: fixed; inset: 0; z-index: 99999;
@@ -92,6 +102,9 @@ http://127.0.0.1:8765/</pre>
         </div>
       </div>
 
+      <div id="desktop-overlay" hidden>
+        <!-- win95 canvas moved here when seated for readable fullscreen desktop -->
+      </div>
       <div id="hud">
         <button type="button" class="btn primary" id="btn-sit" hidden style="pointer-events:auto;align-self:center;margin-bottom:6px;z-index:5">SIT DOWN</button>
         <div class="prompt" id="hud-prompt" hidden></div>

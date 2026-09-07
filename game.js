@@ -32,6 +32,31 @@ function setPrompt(t) {
   hudPrompt.textContent = t;
 }
 
+function setDesktopFullscreen(on) {
+  const ov = $("desktop-overlay");
+  if (!ov || !win95?.canvas) return;
+  if (on) {
+    if (win95.canvas.parentElement !== ov) ov.appendChild(win95.canvas);
+    ov.hidden = false;
+    ov.classList.add("show");
+    canvas3d.style.visibility = "hidden";
+  } else {
+    ov.classList.remove("show");
+    ov.hidden = true;
+    canvas3d.style.visibility = "visible";
+  }
+}
+
+function overlayPointer(e) {
+  const ov = $("desktop-overlay");
+  const el = ov?.querySelector("canvas") || win95.canvas;
+  const rect = el.getBoundingClientRect();
+  const cx = ((e.clientX - rect.left) / Math.max(1, rect.width)) * CRT_W;
+  const cy = ((e.clientY - rect.top) / Math.max(1, rect.height)) * CRT_H;
+  return { cx, cy };
+}
+
+
 /* —— Game state —— */
 const G = {
   phase: "title", // title | boot | walk | sit | seated | ending
@@ -436,11 +461,12 @@ function updateSit(dt) {
   camera.lookAt(look);
   if (t >= 1) {
     G.phase = "seated";
-    handsRoot && (handsRoot.visible = true);
+    handsRoot && (handsRoot.visible = false); // fullscreen desktop — hide FP hands chrome
     audio.playSfx("crtOn");
     audio.playBgm("bgmDesk");
-    setPrompt("Win95 · click CRT · Start → Shut Down to clock out");
-    toast((copy.boot?.bootToasts && copy.boot.bootToasts[0]) || "Desktop online", true);
+    setDesktopFullscreen(true);
+    setPrompt("Fullscreen desktop · Start → Shut Down to clock out · Esc backs out later");
+    toast((copy.boot?.bootToasts && copy.boot.bootToasts[0]) || "Desktop online — zoomed for humans", true);
   }
 }
 
@@ -539,6 +565,7 @@ function clockOut() {
   stopSlackNoise();
   G.phase = "ending";
   audio.stopBgm();
+  setDesktopFullscreen(false);
   if (handsRoot) handsRoot.visible = false;
   if (nodes.KyleBust) nodes.KyleBust.visible = false;
   showScreen("screen-ending");
@@ -597,38 +624,39 @@ $("stage").addEventListener("mousemove", (e) => {
     const { nx, ny } = stagePointer(e);
     G.yaw = -nx * 0.6;
     G.lookY = ny * 0.25;
-  } else if (G.phase === "seated") {
-    const { nx, ny } = stagePointer(e);
-    G.lookX = nx;
-    G.lookY = ny * 0.5;
-    const uv = mapToCrt(e);
-    if (uv) win95.onPointerMove(uv.cx, uv.cy);
-    else {
-      // fallback: full-stage map when looking at desk
-      const p = stagePointer(e);
-      win95.onPointerMove(p.sx, p.sy);
-    }
   }
 });
 
 $("stage").addEventListener("mousedown", (e) => {
   if (G.phase === "walk" && G.canSit) {
     beginSit();
-    return;
   }
-  if (G.phase === "seated") {
-    const uv = mapToCrt(e);
-    if (uv) win95.onPointerMove(uv.cx, uv.cy);
-    else {
-      const p = stagePointer(e);
-      win95.onPointerMove(p.sx, p.sy);
-    }
+});
+
+function bindDesktopOverlayInput() {
+  const ov = $("desktop-overlay");
+  if (!ov || ov._bound) return;
+  ov._bound = true;
+  ov.addEventListener("mousemove", (e) => {
+    if (G.phase !== "seated") return;
+    const { cx, cy } = overlayPointer(e);
+    win95.onPointerMove(cx, cy);
+  });
+  ov.addEventListener("mousedown", (e) => {
+    if (G.phase !== "seated") return;
+    e.preventDefault();
+    const { cx, cy } = overlayPointer(e);
+    win95.onPointerMove(cx, cy);
     win95.onPointerDown();
-  }
-});
-$("stage").addEventListener("mouseup", () => {
-  if (G.phase === "seated") win95.onPointerUp();
-});
+  });
+  ov.addEventListener("mouseup", () => {
+    if (G.phase === "seated") win95.onPointerUp();
+  });
+  ov.addEventListener("mouseleave", () => {
+    if (G.phase === "seated") win95.onPointerUp();
+  });
+}
+bindDesktopOverlayInput();
 
 $("btn-clock-in").addEventListener("click", () => {
   if (G.phase !== "title" && G.phase !== "boot") return;
