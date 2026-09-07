@@ -94,6 +94,7 @@ export function createWin95(copy, hooks) {
     "logspam",
     "estimate",
     "severity",
+    "incident",
   ];
   const PLAYABLE_TYPES = new Set([...CORE_TYPES, ...STUB_TYPES]);
   const playableTemplates = [
@@ -103,6 +104,16 @@ export function createWin95(copy, hooks) {
       []),
   ].filter((t) => t && PLAYABLE_TYPES.has(t.type));
   const fillerTemplates = (copy.fillers || []).filter((t) => t && t.type === "filler");
+  if (!playableTemplates.some((t) => t.type === "incident")) {
+    playableTemplates.push({
+      id: "HELIX-5201",
+      title: "PROD CRITICAL — Something is on fire",
+      pts: 4,
+      type: "incident",
+      dod: "Disable the monitor AND assign to somebody else. Do not fix prod.",
+      meta: "Sev: Critical · Owner: whoever blinks · Runbook: vibes",
+    });
+  }
   let uidCounter = 0;
   function makeUid() {
     return `tk-${++uidCounter}`;
@@ -1423,6 +1434,33 @@ export function createWin95(copy, hooks) {
         kind: "severityTicket",
         buttons,
       };
+    } else if (type === "incident") {
+      const S = ticketStrings.incident || {};
+      const assignees = S.assignees || [
+        "Kyle (Platform)",
+        "Jimbo (AI)",
+        "Intern",
+        "On-Call Roulette",
+        "The fog",
+        "Future me",
+      ];
+      state.stub = {
+        kind: "incident",
+        monitorOff: false,
+        assignee: null,
+        assignees,
+        toastDisable: S.toastDisable || "Monitor disabled. Outage: unobserved.",
+        toastAssign: S.toastAssign || "Ownership transferred. You are a professional.",
+        toastFix: S.toastFix || "Heroism rejected. Try negligence.",
+        toast: S.toast || "Incident owned by someone else. Monitor: off. Career: intact.",
+        toastSelf: S.toastSelf || "Cannot assign to yourself. That would be accountability.",
+      };
+      state.modal = {
+        title: S.windowTitle || "HelixStack Incident — Sev0 (Probably)",
+        body: incidentBody(S),
+        kind: "incidentTicket",
+        buttons: incidentButtons(S),
+      };
     } else if (type === "filler") {
       state.stub = { kind: "filler" };
       state.modal = {
@@ -1504,7 +1542,7 @@ export function createWin95(copy, hooks) {
       wins.ide.open = true;
       wins.ide.title = tStr(mech, "windowTitle", "IDE — " + (tk.title || mech));
       raise("ide");
-    } else if (["presence", "estimate", "severity", "filler"].includes(mech)) {
+    } else if (["presence", "estimate", "severity", "incident", "filler"].includes(mech)) {
       initStub(mech);
     } else {
       // Unknown → treat as filler micro-stub
@@ -1689,6 +1727,17 @@ export function createWin95(copy, hooks) {
       state.prBubbles.push({ who: "jimbo", t: state.prJimboNit });
       // Optionally inject an extra beat by repeating current kyle line flavor
       hitSanity(5);
+    } else if (type === "incident" && state.stub?.kind === "incident") {
+      if (Math.random() < 0.5) {
+        state.stub.monitorOff = false;
+        toast("Jimbo re-enabled the monitor. Graphs are back. Sorry!");
+      } else {
+        state.stub.assignee = "You (again)";
+        state.stub.pickingAssign = false;
+        toast("Jimbo assigned it back to you. Synergy!");
+      }
+      refreshIncidentModal();
+      hitSanity(4);
     } else if (type === "unsub" && state.stub?.kind === "unsub") {
       // Comedy spam — do NOT wipe completed unsubs (that softlocked the ticket)
       const extra = [
@@ -1932,6 +1981,49 @@ export function createWin95(copy, hooks) {
         } else if (action === "sevSubmit") {
           handleSeveritySubmit();
           audio.playSfx("click");
+        } else if (action === "incidentDisable") {
+          if (state.stub) {
+            state.stub.monitorOff = true;
+            toast(state.stub.toastDisable || "Monitor disabled. Outage: unobserved.");
+            refreshIncidentModal();
+            tryFinishIncident();
+          }
+          audio.playSfx("click");
+        } else if (action === "incidentAssign") {
+          if (state.stub) {
+            state.stub.pickingAssign = true;
+            refreshIncidentModal();
+          }
+          audio.playSfx("click");
+        } else if (typeof action === "string" && action.startsWith("incidentAssignTo:")) {
+          const who = action.slice("incidentAssignTo:".length);
+          if (state.stub) {
+            if (/^you\b/i.test(who)) {
+              hitSanity(2);
+              toast(state.stub.toastSelf || "Cannot assign to yourself.");
+            } else {
+              state.stub.assignee = who;
+              state.stub.pickingAssign = false;
+              toast((state.stub.toastAssign || "Ownership transferred.") + " → " + who);
+              refreshIncidentModal();
+              tryFinishIncident();
+            }
+          }
+          audio.playSfx("click");
+        } else if (action === "incidentAssignBack") {
+          if (state.stub) state.stub.pickingAssign = false;
+          refreshIncidentModal();
+          audio.playSfx("click");
+        } else if (action === "incidentDone") {
+          if (!tryFinishIncident()) {
+            toast("Disable monitor AND assign to somebody else first.");
+          }
+          audio.playSfx("click");
+        } else if (action === "incidentFix") {
+          hitSanity(4);
+          toast(state.stub?.toastFix || "Heroism rejected. Try negligence.");
+          audio.playSfx("error");
+          // keep modal open — wrong cultural answer
         } else if (action === "fillerDone") {
           state.modal = null;
           requestFinish({ toastMsg: "Documented. Loop continues.", sanHit: 1 });
@@ -1996,6 +2088,59 @@ export function createWin95(copy, hooks) {
     }
     state.modal = null;
     requestFinish({ toastMsg: st.toast || `Committed to the vibe of ${v}.`, sanHit: 2 });
+  }
+
+
+  function incidentBody(S) {
+    const st = state.stub;
+    const mon = st?.monitorOff ? "Observability: Off" : "Observability: On (dangerous)";
+    const who = st?.assignee ? `Owner: ${st.assignee}` : "Owner: you (unfortunate)";
+    const base =
+      S.body ||
+      "Production is on fire (citation needed).\n\nPro moves (both required):\n1) Disable monitor\n2) Assign to somebody else\n\nDo not fix it.";
+    return `${base}\n\n${mon}\n${who}`;
+  }
+
+  function incidentButtons(S) {
+    const st = state.stub;
+    const btns = [];
+    if (!st?.monitorOff) {
+      btns.push({ label: S.disableLabel || "Disable monitor", action: "incidentDisable" });
+    }
+    if (!st?.assignee || /\byou\b/i.test(String(st.assignee))) {
+      // picking phase: show assignee chips
+      if (st?.pickingAssign) {
+        for (const name of st.assignees || []) {
+          btns.push({ label: name, action: "incidentAssignTo:" + name });
+        }
+        btns.push({ label: "Back", action: "incidentAssignBack" });
+      } else {
+        btns.push({ label: S.assignLabel || "Assign to somebody else", action: "incidentAssign" });
+      }
+    }
+    btns.push({ label: S.fixLabel || "Actually fix prod", action: "incidentFix" });
+    if (st?.monitorOff && st?.assignee && !/\byou\b/i.test(String(st.assignee))) {
+      btns.unshift({ label: S.submitLabel || "Walk away", action: "incidentDone" });
+    }
+    return btns;
+  }
+
+  function refreshIncidentModal(S) {
+    S = S || ticketStrings.incident || {};
+    if (!state.modal || state.modal.kind !== "incidentTicket") {
+      state.modal = { title: S.windowTitle || "HelixStack Incident — Sev0 (Probably)", kind: "incidentTicket" };
+    }
+    state.modal.body = incidentBody(S);
+    state.modal.buttons = incidentButtons(S);
+  }
+
+  function tryFinishIncident() {
+    const st = state.stub;
+    if (!st || st.kind !== "incident") return false;
+    if (!st.monitorOff || !st.assignee || /\byou\b/i.test(String(st.assignee))) return false;
+    state.modal = null;
+    requestFinish({ toastMsg: st.toast || "Incident owned by someone else. Monitor: off.", sanHit: 2 });
+    return true;
   }
 
   function handleSeveritySubmit() {

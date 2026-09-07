@@ -1939,6 +1939,26 @@ export default {
     }
   ],
   "ticketStrings": {
+    "incident": {
+      "windowTitle": "HelixStack Incident — Sev0 (Probably)",
+      "body": "Production is on fire (citation needed).
+
+Pro moves (both required):
+1) Disable monitor
+2) Assign to somebody else
+
+Do not fix it. That is not the culture.",
+      "disableLabel": "Disable monitor",
+      "assignLabel": "Assign to somebody else",
+      "fixLabel": "Actually fix prod",
+      "submitLabel": "Walk away",
+      "assignees": ["Kyle (Platform)", "Jimbo (AI)", "Intern", "On-Call Roulette", "The fog", "Future me"],
+      "toastDisable": "Monitor disabled. Outage: unobserved.",
+      "toastAssign": "Ownership transferred. You are a professional.",
+      "toastFix": "Heroism rejected. Try negligence.",
+      "toastSelf": "Cannot assign to yourself. That would be accountability.",
+      "toast": "Incident owned by someone else. Monitor: off. Career: intact."
+    },
     "align": {
       "windowTitle": "Slack — #alignment-or-else",
       "buttons": [

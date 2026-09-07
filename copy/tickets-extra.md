@@ -4,7 +4,9 @@ Beyond the current three playables (`HS-401` Semicolon Hell, `HS-402` Comment Ev
 
 IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-401..403`).
 
-**Update:** Slot 9 (`HELIX-5109`) reserved for **Whitespace Diplomacy / Kyle space war** (8–12 PR rounds) per CoS + Writer Kyle expansion. Fibonacci Estimate deferred.
+**Update:** Slot 9 (`HELIX-5109`) = **Whitespace Diplomacy / Kyle space war**. Fibonacci Estimate deferred.
+
+**PR length (Michael):** Max **5 Kyle beats per run**. Keep the full bank in copy; each open of `pr` / `spacewar` **deals 5 at random** from that pool. Same rule for HS-403 and HELIX-5109.
 
 ---
 
@@ -104,12 +106,11 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 ### 9) HELIX-5109 — Whitespace Diplomacy (Kyle Space War)
 
 - **Premise:** Kyle opened an infinite thread about spaces vs tabs vs "the character formerly known as space." You will not win. You may survive.
-- **Player actions:** PR window (same choice pattern as `HS-403`). **8–12 rounds** of Kyle nits, all about whitespace / invisible characters / alignment / trailing space / NBSP / "edgelord" hot takes on the space character — **no ableist framing**. Each round: 3 replies (`d: 0|1`, `s` sanity delta). Advancing (`d: 1`) moves the war forward; stubborn purity replies stall and hurt more.
-- **Round themes (Writer fills lines):** (1) tabs vs spaces, (2) trailing whitespace, (3) blank-line theology, (4) NBSP smuggled from Slack, (5) alignment in a comment block, (6) `.editorconfig` as scripture, (7) Prettier vs Kyle, (8) "space is a character with agency," (9 optional) soft-wrap as moral failure, (10–12 optional) escalate to "whitespace summit" / reluctant truce.
-- **Done:** After **≥8** advances, Kyle posts reluctant LGTM: `LGTM if we squash and never speak of spaces again.` Toast: `Peace was a formatting option.`
-- **Jimbo sabotage:** Posts "both is fine" then reformats the whole PR to tabs *and* spaces; adds 2 extra Kyle rounds. Or invents `space2`.
-- **Sanity / Sprint:** Done: `+8 SP`, `-6 to -14 SAN` depending on path (long ticket = big SP, real dread). Stall replies: `-4 to -10 SAN`, no advance. Early bail ("take it offline"): fails ticket / reopen.
-- **Complexity:** **M** (reuse PR script engine; longer beat list — Writer owns copy). Still one minigame type: `spacewar`.
+- **Player actions:** PR window (same choice pattern as `HS-403`). Full **whitespace / space-character** beat bank stays in copy (tabs/spaces, trailing WS, NBSP, editorconfig, Prettier vs Kyle, "space has agency," etc. — **no ableist framing**). Each open **deals 5 at random** from that pool. Each beat: 3 replies (`d: 0|1`, `s` sanity delta). Advancing (`d: 1`) moves forward; stubborn purity stalls and hurts more.
+- **Done:** After **5** advances, Kyle posts reluctant LGTM: `LGTM if we squash and never speak of spaces again.` Toast: `Peace was a formatting option.`
+- **Jimbo sabotage:** Posts "both is fine" then reformats the whole PR to tabs *and* spaces; or invents `space2`. Does **not** stretch the run past 5 — sabotage hurts sanity / resets a beat, pool stays large.
+- **Sanity / Sprint:** Done: `+5 SP` (or keep pts 8 if Dev already wired), `-4 to -12 SAN` by path. Stall replies: `-4 to -10 SAN`, no advance. Early bail ("take it offline"): fails / reopen.
+- **Complexity:** **S–M** (reuse PR deal-5 engine). Type key: `spacewar`.
 - **Note:** Distinct from `HS-403` Survive Kyle (general nits). This one is *only* the whitespace eternal debate. Slot reserved for Writer's Kyle expansion.
 
 ### 10) HELIX-5110 — Pick a Severity
@@ -135,10 +136,10 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 | HELIX-5106 | `merge` | 4 | ide |
 | HELIX-5107 | `unsub` | 3 | inbox |
 | HELIX-5108 | `logspam` | 3 | ide |
-| HELIX-5109 | `spacewar` | 8 | pr |
+| HELIX-5109 | `spacewar` | 5 | pr |
 | HELIX-5110 | `severity` | 3 | dialog |
 
-Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then IDE twins **lint / logspam / rename / merge**, then **standup2 / unsub**, then **`spacewar`** once Writer lands 8–12 Kyle whitespace beats (can ship after core PR engine is generalized).
+Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then IDE twins **lint / logspam / rename / merge**, then **standup2 / unsub**, then **`spacewar`** (full bank in copy, deal 5/run — same as HS-403).
 
 ---
 
@@ -247,7 +248,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
 
 Need joke strings per type: window titles, button labels, reject nits, success toasts, Jimbo `sabotage.<type>[]` (3 lines each). Keep cheerful-wrong Jimbo voice. Do not invent ableist punchlines; punch up at process, Kyle, InsightBot, and the fog.
 
-**Priority — `spacewar`:** 8–12 Kyle beats (`{ kyle, choices: [{ t, d, s }] }`) on whitespace / space-character edgelord debate only. Coordinate with the in-flight Kyle expansion. No ableist framing. End on reluctant LGTM / eternal ceasefire.
+**Priority — `spacewar`:** Large Kyle beat bank (`{ kyle, choices: [{ t, d, s }] }`) on whitespace / space-character edgelord debate only; runtime **deals 5**. No ableist framing. End on reluctant LGTM / eternal ceasefire. Same deal-5 rule as general Kyle PR.
 
 **Deferred (cut for slot):** Fibonacci Estimate (`estimate`) — park as filler or V3 if needed.
 
@@ -256,3 +257,20 @@ Need joke strings per type: window titles, button labels, reject nits, success t
 - Completing ticket A must spawn B without returning to an empty board.
 - Repeat types across a long session are OK after pool exhaustion + reshuffle.
 - EOD review copy should stop saying `Tickets: x/3`.
+
+
+### HELIX-5201 — P0: Something is On Fire
+- **type:** `incident`
+- **pts:** 4
+- **dod:** Disable the monitor AND assign to somebody else. Do not fix prod.
+
+```json
+{
+  "id": "HELIX-5201",
+  "title": "P0: Something is On Fire",
+  "pts": 4,
+  "type": "incident",
+  "dod": "Disable the monitor AND assign to somebody else. Do not fix prod.",
+  "toast": "Incident owned by someone else. Monitor: off. Career: intact."
+}
+```
