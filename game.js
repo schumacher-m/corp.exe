@@ -127,10 +127,10 @@ postScene.add(
           return m[i]/16.;
         }
         void main(){
-          vec2 uv=vUv; uv.x += sin(uv.y*32.+uTime)*.5/uRes.x;
+          vec2 uv=vUv;
+          // light affine wobble only — no Bayer checker / posterize on the frame
+          uv.x += sin(uv.y*32.+uTime)*.35/uRes.x;
           vec4 c=texture2D(tDiffuse,uv);
-          c.rgb += (bayer(gl_FragCoord.xy)-.5)/31.;
-          c.rgb = floor(c.rgb*31.+.5)/31.;
           gl_FragColor=c;
         }`,
     })

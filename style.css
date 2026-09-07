@@ -53,18 +53,7 @@ html, body {
   line-height: 1.2;
 }
 
-/* Ordered dither — PS1 crunch */
-#dither {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 9000;
-  opacity: 0.22;
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAG0lEQVQIW2NkYGD4z8DAwMgABXAGNgGwSgwVAFbmAgXQdISfAAAAAElFTkSuQmCC");
-  background-size: 4px 4px;
-  image-rendering: pixelated;
-  mix-blend-mode: multiply;
-}
+/* dither overlay removed */
 
 .bevel {
   border-top: 1px solid var(--edge);
