@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head>
+<script type="importmap">
+{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head><body>
+<pre id="out">loading...</pre>
+<script type="module">
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+const out = document.getElementById("out");
+const loader = new GLTFLoader();
+try {
+  const g = await loader.loadAsync("assets/models/cubicle.glb");
+  out.textContent = "OK children="+g.scene.children.length;
+} catch (e) {
+  out.textContent = "FAIL "+e+" "+(e.stack||"");
+}
+</script>
+</body></html>

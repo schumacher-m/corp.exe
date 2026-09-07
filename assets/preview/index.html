@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>corp.exe — PS1 asset preview</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    #hud {
+      position: fixed; left: 8px; top: 8px; z-index: 2;
+      color: #8fb85a; font: 12px "Courier New", monospace;
+      text-shadow: 1px 1px 0 #000;
+    }
+    canvas { display: block; image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+  <div id="hud">corp.exe asset preview — 320×240 nearest · drag orbit</div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+    const W = 320, H = 240;
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(1);
+    renderer.domElement.style.width = "100vw";
+    renderer.domElement.style.height = "100vh";
+    renderer.domElement.style.objectFit = "contain";
+    renderer.domElement.style.imageRendering = "pixelated";
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1814);
+    scene.fog = new THREE.Fog(0x1a1814, 4, 14);
+
+    const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 40);
+    camera.position.set(2.8, 2.2, 4.2);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.9, -0.5);
+    controls.update();
+
+    scene.add(new THREE.AmbientLight(0x6a6860, 0.85));
+    const key = new THREE.DirectionalLight(0xc8c4b0, 0.65);
+    key.position.set(2, 5, 3);
+    scene.add(key);
+    const fluo = new THREE.PointLight(0xc8c8a0, 0.5, 8);
+    fluo.position.set(0, 2.2, -1);
+    scene.add(fluo);
+
+    function forceNearest(root) {
+      root.traverse((o) => {
+        if (o.isMesh && o.material) {
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          for (const m of mats) {
+            if (m.map) {
+              m.map.magFilter = THREE.NearestFilter;
+              m.map.minFilter = THREE.NearestFilter;
+              m.map.generateMipmaps = false;
+              m.map.needsUpdate = true;
+            }
+            m.flatShading = true;
+            m.needsUpdate = true;
+          }
+        }
+      });
+    }
+
+    const loader = new GLTFLoader();
+    const base = "../models/";
+
+    async function load(name, pos = [0, 0, 0], parent = scene) {
+      const gltf = await loader.loadAsync(base + name);
+      forceNearest(gltf.scene);
+      gltf.scene.position.set(...pos);
+      parent.add(gltf.scene);
+      return gltf.scene;
+    }
+
+    function findAnchor(root, name) {
+      let hit = null;
+      root.traverse((o) => { if (o.name === name) hit = o; });
+      return hit;
+    }
+
+    await load("cubicle.glb");
+    const desk = await load("desk_set.glb", [0, 0, -0.6]);
+
+    const screenA = findAnchor(desk, "screen_anchor");
+    const keyA = findAnchor(desk, "keyboard_anchor");
+    const mouseA = findAnchor(desk, "mouse_anchor");
+
+    if (screenA) await load("screen_quad.glb", [0, 0, 0], screenA);
+    else await load("screen_quad.glb", [0, 1.02, -0.5]);
+
+    if (keyA) await load("keyboard.glb", [0, 0, 0], keyA);
+    else await load("keyboard.glb", [0, 0.77, -0.35]);
+
+    if (mouseA) await load("mouse.glb", [0, 0, 0], mouseA);
+    else await load("mouse.glb", [0.45, 0.77, -0.4]);
+
+    await load("hands.glb", [0, 1.1, 0.9]);
+    await load("slack_panel.glb", [-1.1, 1.15, -0.2]);
+    await load("prop_mug.glb", [0.45, 0.77, -0.35]);
+    await load("prop_stickies.glb", [-0.5, 0.77, -0.2]);
+    await load("prop_dead_plant.glb", [0.7, 0.77, 0.15]);
+    await load("prop_ticket.glb", [-0.2, 0.78, -0.05]);
+    await load("kyle_bust.glb", [1.6, 0.9, 0.8]);
+
+    function frame() {
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  </script>
+</body>
+</html>
