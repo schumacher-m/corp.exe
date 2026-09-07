@@ -6,6 +6,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import copy from "./copy-data.js";
 import { createWin95, W as CRT_W, H as CRT_H } from "./win95.js";
 import * as audio from "./audio.js";
+/* exhausted bed: audio.startExhaustedBed / stopExhaustedBed */
 
 const $ = (id) => document.getElementById(id);
 const canvas3d = $("game-canvas");
@@ -317,9 +318,24 @@ async function loadOffice() {
     return g;
   }
 
-  function prepNeighborBay(root) {
+  function prepNeighborBay(root, ix, iz) {
+    const far = Math.abs(ix) > 6 || iz < -5;
+    const glowHex = far ? 0x2a6030 : (ix + iz) % 2 === 0 ? 0x5ecf4a : 0x3ec8b0;
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
+      const name = (o.name || o.material.name || "").toLowerCase();
+      const looksCrt =
+        /crt|screen|monitor|glow|display/.test(name) ||
+        (o.geometry && o.geometry.type === "PlaneGeometry") ||
+        (o.geometry && o.geometry.attributes?.position?.count <= 8);
+      if (looksCrt) {
+        // FARM.md: Basic + toneMapped false so fog doesn’t kill the sea of CRTs
+        o.material = new THREE.MeshBasicMaterial({
+          color: glowHex,
+          toneMapped: false,
+        });
+        return;
+      }
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
         if (m.map) {
@@ -328,8 +344,9 @@ async function loadOffice() {
           m.map.generateMipmaps = false;
         }
         if ("emissive" in m) {
-          m.emissive = new THREE.Color(0x5ecf4a);
-          m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 1.0);
+          m.emissive = new THREE.Color(glowHex);
+          m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 1.1);
+          m.toneMapped = false;
         }
         m.needsUpdate = true;
       }
@@ -352,7 +369,7 @@ async function loadOffice() {
       let bay;
       if (hasBay) {
         bay = by.neighbor_bay.clone();
-        prepNeighborBay(bay);
+        prepNeighborBay(bay, ix, iz);
       } else {
         bay = makeNeighborProxy(ix, iz);
       }
@@ -550,6 +567,7 @@ function updateSit(dt) {
     G.phase = "seated";
     handsRoot && (handsRoot.visible = false); // fullscreen desktop — hide FP hands chrome
     audio.playSfx("crtOn");
+    audio.stopExhaustedBed();
     audio.playBgm("bgmDesk");
     setDesktopFullscreen(true);
     setPrompt("Fullscreen desktop · Start → Shut Down to clock out · Esc backs out later");
@@ -643,6 +661,7 @@ async function runBoot() {
   $("screen-title").classList.remove("active");
   G.phase = "walk";
   audio.playBgm("bgmWalk");
+  audio.startExhaustedBed({ volume: 0.32 });
   player.pos.set(0, 1.55, 3.2);
   G.yaw = 0;
   setPrompt("WASD · find Cubicle 4-B · E to sit");

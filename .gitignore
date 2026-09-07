@@ -2,8 +2,4 @@ __pycache__/
 *.pyc
 .DS_Store
 *.bak
-__pycache__/
-*.pyc
-.DS_Store
-*.bak
-.github/
+dist/
