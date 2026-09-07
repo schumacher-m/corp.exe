@@ -85,14 +85,14 @@ const RT_H = 240;
 const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: false, powerPreference: "low-power" });
 renderer.setSize(RT_W, RT_H, false);
 renderer.setPixelRatio(1);
-renderer.setClearColor(0x2a2824, 1);
+renderer.setClearColor(0x2a2820, 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a2824);
-scene.fog = new THREE.Fog(0x2a2824, 10, 28);
+scene.background = new THREE.Color(0x2a2820);
+scene.fog = new THREE.Fog(0x3a3830, 8, 28);
 
-const camera = new THREE.PerspectiveCamera(60, RT_W / RT_H, 0.08, 40);
+const camera = new THREE.PerspectiveCamera(60, RT_W / RT_H, 0.08, 60);
 const player = {
   pos: new THREE.Vector3(0, 1.55, 3.2),
   eye: 1.55,
@@ -137,16 +137,22 @@ postScene.add(
   )
 );
 
-scene.add(new THREE.AmbientLight(0xb0aea0, 1.6));
-const keyL = new THREE.DirectionalLight(0xe8e4d0, 1.35);
-keyL.position.set(2, 5, 3);
+/* FARM.md lighting — bright, still PS1 */
+scene.add(new THREE.AmbientLight(0x8a8680, 1.35));
+const keyL = new THREE.DirectionalLight(0xd0c8b0, 0.95);
+keyL.position.set(2, 8, 4);
 scene.add(keyL);
-const fluo = new THREE.PointLight(0xf0f0c0, 2.2, 12);
-fluo.position.set(0, 2.2, -1);
+const fluo = new THREE.PointLight(0xe8e4c8, 1.2, 8);
+fluo.position.set(0, 2.4, -1);
 scene.add(fluo);
-const fill = new THREE.PointLight(0xa0c0ff, 0.7, 10);
-fill.position.set(-1.5, 1.8, 1.5);
-scene.add(fill);
+/* fluorescents every ~2–3 cells along Z */
+for (let iz = -8; iz <= 4; iz += 2) {
+  for (const ix of [-8, -4, 0, 4, 8]) {
+    const fl = new THREE.PointLight(0xe8e4c8, 0.5, 5.5);
+    fl.position.set(ix * 2.2, 2.45, iz * 2.6);
+    scene.add(fl);
+  }
+}
 
 const OfficeRoot = new THREE.Group();
 OfficeRoot.name = "OfficeRoot";
@@ -247,6 +253,7 @@ async function loadOffice() {
   } catch {
     paths = [
       "assets/models/cubicle.glb",
+      "assets/models/neighbor_bay.glb",
       "assets/models/desk_set.glb",
       "assets/models/hands.glb",
       "assets/models/keyboard.glb",
@@ -264,24 +271,104 @@ async function loadOffice() {
   await Promise.all(
     paths.map(async (p) => {
       const name = p.split("/").pop().replace(/\.glb$/i, "");
-      by[name] = await loadModel(p);
+      try {
+        by[name] = await loadModel(p);
+      } catch (err) {
+        console.warn("[corp.exe] skip model", p, err?.message || err);
+      }
     })
   );
 
-  // Cubicle farm: player cubicle + two neighbors
+  // Cubicle farm hellscape — FARM.md (2.2×2.6, ≥200 neighbor CRTs)
   const farm = new THREE.Group();
   farm.name = "CubicleFarm";
+  const PITCH_X = 2.2;
+  const PITCH_Z = 2.6;
+  const crtGreen = new THREE.MeshBasicMaterial({ color: 0x5ecf4a, toneMapped: false });
+  const crtTeal = new THREE.MeshBasicMaterial({ color: 0x3ec8b0, toneMapped: false });
+  const crtDim = new THREE.MeshBasicMaterial({ color: 0x2a6030, toneMapped: false });
+  const deskMat = new THREE.MeshBasicMaterial({ color: 0x2a2820 });
+  const wallMat = new THREE.MeshBasicMaterial({ color: 0x3d3a32 });
+  const crtGeo = new THREE.PlaneGeometry(0.36, 0.26);
+  const deskGeo = new THREE.BoxGeometry(1.0, 0.05, 0.5);
+  const wallGeo = new THREE.BoxGeometry(2.0, 1.2, 0.06);
+
+  function makeNeighborProxy(ix, iz) {
+    const g = new THREE.Group();
+    g.name = `Neighbor_${ix}_${iz}`;
+    const back = new THREE.Mesh(wallGeo, wallMat);
+    back.position.set(0, 0.7, -0.9);
+    g.add(back);
+    const side = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 1.2, 1.6),
+      wallMat
+    );
+    side.position.set(-0.95, 0.7, -0.2);
+    g.add(side);
+    const deskProxy = new THREE.Mesh(deskGeo, deskMat);
+    deskProxy.position.set(0, 0.74, -0.35);
+    g.add(deskProxy);
+    const far = Math.abs(ix) > 6 || iz < -5;
+    const mat = far ? crtDim : (ix + iz) % 2 === 0 ? crtGreen : crtTeal;
+    const glow = new THREE.Mesh(crtGeo, mat);
+    glow.position.set(0, 1.02, -0.58);
+    glow.rotation.y = Math.PI; // face +Z aisle
+    g.add(glow);
+    return g;
+  }
+
+  function prepNeighborBay(root) {
+    root.traverse((o) => {
+      if (!o.isMesh || !o.material) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats) {
+        if (m.map) {
+          m.map.magFilter = THREE.NearestFilter;
+          m.map.minFilter = THREE.NearestFilter;
+          m.map.generateMipmaps = false;
+        }
+        if ("emissive" in m) {
+          m.emissive = new THREE.Color(0x5ecf4a);
+          m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 1.0);
+        }
+        m.needsUpdate = true;
+      }
+    });
+  }
+
+  // player home bay — full cubicle only
   const c0 = by.cubicle.clone();
   c0.name = "Cubicle";
+  c0.position.set(0, 0, 0);
   farm.add(c0);
-  const cL = by.cubicle.clone();
-  cL.position.set(-6.2, 0, 0);
-  farm.add(cL);
-  const cR = by.cubicle.clone();
-  cR.position.set(6.2, 0, 0);
-  farm.add(cR);
+
+  let neighborCount = 0;
+  const hasBay = !!by.neighbor_bay;
+  for (let ix = -10; ix <= 10; ix++) {
+    for (let iz = -8; iz <= 4; iz++) {
+      if (ix === 0 && iz === 0) continue;
+      const x = ix * PITCH_X;
+      const z = iz * PITCH_Z;
+      let bay;
+      if (hasBay) {
+        bay = by.neighbor_bay.clone();
+        prepNeighborBay(bay);
+      } else {
+        bay = makeNeighborProxy(ix, iz);
+      }
+      bay.position.set(x, 0, z);
+      farm.add(bay);
+      neighborCount++;
+    }
+  }
   OfficeRoot.add(farm);
   forceNearest(farm);
+  console.info(
+    "[corp.exe] farm neighbors",
+    neighborCount,
+    hasBay ? "(neighbor_bay.glb)" : "(proxy until neighbor_bay.glb lands)"
+  );
+
 
   const desk = by.desk_set;
   desk.name = "DeskSet";
@@ -394,9 +481,9 @@ function updateWalk(dt) {
     const rz = -Math.sin(ang);
     player.pos.x += (fx * forward + rx * strafe) * player.speed * dt;
     player.pos.z += (fz * forward + rz * strafe) * player.speed * dt;
-    // soft bounds inside farm
-    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -2.5, 2.5);
-    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -0.2, 3.5);
+    // soft bounds — match dense 7×5 @ 2.5m farm
+    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -7.5, 7.5);
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -4.5, 6.0);
     footAcc += dt;
     if (footAcc > 0.38) {
       footAcc = 0;
@@ -583,7 +670,7 @@ function clockOut() {
     Sprint Points: <span style="color:var(--amber)">${sp}</span><br/>
     Sanity: <span style="color:var(--sick)">${san}</span><br/>
     Unread: <span style="color:var(--blood)">${unr}</span><br/>
-    Tickets: ${Object.values(win95.state.ticketsDone).filter(Boolean).length}/3
+    Tickets closed this shift: ${win95.state.closedCount || 0}
   `;
   $("ending-review").innerHTML = `<strong style="color:var(--jira)">${grade}</strong><br/>${note}<br/><br/>${closer}`;
   setPrompt("");

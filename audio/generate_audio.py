@@ -748,6 +748,225 @@ def sfx_away_tick():
     return normalize(fade_edges(out, 3), peak_db=-8.0)
 
 
+
+# ---------------------------------------------------------------------------
+# Exhausted cubicle farm ambience + tired human one-shots
+# ---------------------------------------------------------------------------
+
+def muffled_worker_murmur(n, sr=SR):
+    """Sparse distant tired-human energy — no intelligible speech."""
+    out = np.zeros(n)
+    t = int(RNG.uniform(1.5, 4.0) * sr)
+    while t < n - int(0.4 * sr):
+        dur = int(RNG.uniform(0.25, 1.1) * sr)
+        dur = min(dur, n - t)
+        # formant-ish band of noise + slow AM (murmur contour)
+        base = noise(dur, "pink")
+        f_lo = RNG.uniform(180, 320)
+        f_hi = RNG.uniform(700, 1400)
+        mur = bandpass(base, f_lo, f_hi, sr)
+        # second formant bump
+        mur += bandpass(noise(dur, "pink"), RNG.uniform(900, 1400), RNG.uniform(1600, 2400), sr) * 0.35
+        # pitch-ish soft sine wobble (not a melody)
+        f0 = RNG.uniform(110, 190)
+        mur += sine(f0, dur, sr) * 0.08 * env_adsr(dur, 0.05, 0.15, 0.4, 0.3, sr)
+        # syllable-ish AM
+        am_rate = RNG.uniform(3.5, 7.5)
+        am = 0.35 + 0.65 * (0.5 + 0.5 * sine(am_rate, dur, sr, phase=RNG.uniform(0, 6)))
+        # occasional slower breath contour
+        breath = 0.7 + 0.3 * sine(RNG.uniform(0.4, 1.2), dur, sr)
+        mur = mur * am * breath
+        mur = one_pole_lp(mur, RNG.uniform(900, 1600), sr)
+        # distance: heavy LP + quiet
+        mur *= RNG.uniform(0.012, 0.035)
+        # very soft stereo-ish dullness via extra LP sometimes
+        if RNG.random() < 0.5:
+            mur = one_pole_lp(mur, 700, sr)
+        out[t : t + dur] += mur
+        # long quiet gaps — sparse farm, not chatter
+        t += dur + int(RNG.uniform(2.5, 8.5) * sr)
+    return out
+
+
+def distant_keyboard_clacks(n, sr=SR):
+    """Very sparse distant mushy key energy under the bed."""
+    out = np.zeros(n)
+    t = int(RNG.uniform(2.0, 5.0) * sr)
+    while t < n - int(0.05 * sr):
+        burst = int(RNG.integers(1, 5))
+        for i in range(burst):
+            kn = int(RNG.uniform(0.03, 0.07) * sr)
+            if t + kn >= n:
+                break
+            click = one_pole_lp(noise(kn), RNG.uniform(600, 1200), sr)
+            click += sine(RNG.uniform(140, 220), kn) * 0.25
+            click *= env_adsr(kn, 0.001, 0.008, 0.15, 0.02, sr) * RNG.uniform(0.008, 0.02)
+            out[t : t + kn] += click
+            t += int(RNG.uniform(0.05, 0.14) * sr)
+        t += int(RNG.uniform(4.0, 12.0) * sr)
+    return out
+
+
+def gen_amb_cubicle_exhausted():
+    """Low-energy fluorescent cubicle farm bed — tired humans, not horror."""
+    dur = 78.0  # mid 60–90s
+    n = int(dur * SR)
+    mix = (
+        hvac_drone(n) * 1.15
+        + fluorescent_hum(n) * 1.25
+        + muffled_worker_murmur(n) * 1.0
+        + distant_keyboard_clacks(n) * 1.0
+    )
+    # soft brown-air bed
+    air = one_pole_lp(noise(n, "brown"), 220, SR) * 0.06
+    # occasional far chair scrape (very quiet)
+    for _ in range(5):
+        at = int(RNG.uniform(3, dur - 2) * SR)
+        cn = int(RNG.uniform(0.2, 0.55) * SR)
+        if at + cn > n:
+            continue
+        scrape = bandpass(noise(cn), 200, 900, SR)
+        scrape *= env_adsr(cn, 0.04, 0.12, 0.35, 0.25, SR) * RNG.uniform(0.01, 0.025)
+        mix[at : at + cn] += scrape
+    mix = mix + air
+    # mild PS1 grit, keep soft
+    mix = bitcrush(mix, bits=12, rate_div=1)
+    mix = soft_limit(mix * 0.85)
+    mix = make_loopable(mix, fade_ms=150)
+    # quiet enough to sit under / replace walk BGM
+    return normalize(mix, peak_db=-9.0)
+
+
+def sfx_grunt():
+    """Short tired human grunt — synth vocal tract, not a sample."""
+    n = int(0.38 * SR)
+    # glottal-ish pulse + noise through formants
+    t = np.arange(n) / SR
+    f0 = 105 * np.exp(-t * 1.8)  # pitch drop of exhaustion
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    glot = np.sin(phase) * 0.55 + np.sin(2 * phase) * 0.18
+    # buzzier square-ish component
+    glot += 0.2 * np.sign(np.sin(phase))
+    noise_part = bandpass(noise(n, "pink"), 200, 1800, SR) * 0.35
+    body = glot + noise_part
+    # formants ~F1/F2 for "uh"
+    body = bandpass(body, 280, 900, SR) * 0.7 + bandpass(body, 700, 1600, SR) * 0.4
+    body = one_pole_lp(body, 2200, SR)
+    e = env_adsr(n, 0.015, 0.08, 0.45, 0.18, SR)
+    out = body * e
+    out = bitcrush(soft_limit(out * 1.1), bits=10)
+    return normalize(fade_edges(out, 6), peak_db=-3.0)
+
+
+def sfx_sigh():
+    """Exhausted sigh — long breathy exhale."""
+    n = int(0.85 * SR)
+    t = np.arange(n) / SR
+    # breath noise with falling brightness
+    breath = noise(n, "pink")
+    # sweep LP cutoff down (air leaving lungs)
+    # approximate with staged filters
+    bright = bandpass(breath, 400, 4500, SR)
+    dull = one_pole_lp(breath, 900, SR)
+    mix_w = np.linspace(0.85, 0.15, n)
+    body = bright * mix_w + dull * (1 - mix_w)
+    # soft pitch undertone dropping
+    f0 = 160 * np.exp(-t * 1.2)
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    tone = np.sin(phase) * 0.12 * np.linspace(1.0, 0.2, n)
+    out = body * 0.55 + tone
+    # inhale-ish tiny lead-in then long exhale
+    e = np.ones(n)
+    atk = int(0.08 * SR)
+    e[:atk] = np.linspace(0, 1, atk) ** 0.7
+    # slow release
+    rel = int(0.45 * SR)
+    e[-rel:] *= np.linspace(1, 0, rel) ** 1.4
+    # mid sustain dip for tiredness
+    e *= 0.75 + 0.25 * sine(1.1, n)
+    out = out * e * 0.7
+    out = one_pole_lp(out, 3200, SR)
+    out = bitcrush(out, bits=11)
+    return normalize(fade_edges(out, 12), peak_db=-4.0)
+
+
+def sfx_chair_creak_tired():
+    """Slow tired chair creak — lean/shift, not sit-thump."""
+    n = int(0.75 * SR)
+    out = np.zeros(n)
+    # no big sit thump — just slow wood strain
+    creak_n = int(0.65 * SR)
+    t = np.arange(creak_n) / SR
+    # slower sweep than sfx_chair_sit
+    creak_f = 140 + 55 * t + 25 * np.sin(2 * math.pi * 2.2 * t)
+    phase = 2 * np.pi * np.cumsum(creak_f) / SR
+    creak = np.sin(phase) * 0.4
+    creak += np.sin(2 * phase) * 0.12
+    creak += one_pole_bp_noise(creak_n, 300, 1600) * 0.22
+    # stuttering friction
+    creak *= 0.55 + 0.45 * (0.5 + 0.5 * square(7.5, creak_n, duty=0.6))
+    e = env_adsr(creak_n, 0.06, 0.18, 0.4, 0.35, SR)
+    # softer secondary creak later
+    out[:creak_n] += creak * e * 0.85
+    st2 = int(0.28 * SR)
+    n2 = int(0.35 * SR)
+    if st2 + n2 <= n:
+        t2 = np.arange(n2) / SR
+        f2 = 200 + 40 * t2 + 15 * np.sin(2 * math.pi * 4 * t2)
+        ph2 = 2 * np.pi * np.cumsum(f2) / SR
+        c2 = np.sin(ph2) * 0.25 + one_pole_bp_noise(n2, 400, 1800) * 0.15
+        c2 *= env_adsr(n2, 0.04, 0.1, 0.35, 0.2, SR)
+        out[st2 : st2 + n2] += c2 * 0.55
+    out = one_pole_lp(out, 2800, SR)
+    out = fade_edges(soft_limit(out), 10)
+    return normalize(out, peak_db=-3.5)
+
+
+def sfx_ugh():
+    """Muffled distant 'ugh' — filtered, no clear words."""
+    n = int(0.42 * SR)
+    t = np.arange(n) / SR
+    f0 = 95 * np.exp(-t * 2.0)
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    glot = np.sin(phase) * 0.5 + np.sin(phase * 2.01) * 0.2
+    glot += bandpass(noise(n, "pink"), 150, 1200, SR) * 0.4
+    # "ugh" formants — dark
+    body = bandpass(glot, 200, 600, SR) * 0.8 + bandpass(glot, 500, 1100, SR) * 0.35
+    # heavy muffling / distance
+    body = one_pole_lp(body, 900, SR)
+    body = one_pole_lp(body, 700, SR)
+    e = env_adsr(n, 0.02, 0.1, 0.4, 0.22, SR)
+    out = body * e
+    # quiet + bitcrush for far cubicle
+    out = bitcrush(out * 0.7, bits=9, rate_div=2)
+    return normalize(fade_edges(out, 8), peak_db=-6.0)
+
+
+def sfx_key_dead(variant=0):
+    """Dead/mushy keyboard clack — flatter and duller than sfx_key."""
+    # longer, softer, low-passed — rubber-dome death
+    n = int((0.07 + 0.01 * (variant % 3)) * SR)
+    # much lower click freqs than live keys (2100/2400/1850)
+    f0 = [780, 920, 650, 840, 700][variant]
+    thud_f = [160, 145, 175, 155, 168][variant]
+    # soft noise clack, heavily filtered
+    click = one_pole_lp(noise(n), 1400 - 80 * (variant % 3), SR)
+    click *= env_adsr(n, 0.001, 0.012, 0.2, 0.03, SR)
+    # dull mid thunk instead of bright square
+    tone = sine(f0, n) * env_adsr(n, 0.0008, 0.01, 0.15, 0.025, SR) * 0.35
+    # bottom-out mush
+    thud_n = int(0.035 * SR)
+    thud = sine(thud_f, thud_n) * env_adsr(thud_n, 0.001, 0.012, 0.25, 0.015, SR)
+    out = click * 0.55 + tone * 0.5
+    out[:thud_n] += thud * 0.55
+    # extra dulling
+    out = one_pole_lp(out, 1800 - 100 * (variant % 3), SR)
+    out = bitcrush(out, bits=7 + (variant % 2), rate_div=2)
+    # slightly quieter / flatter peaks
+    return normalize(fade_edges(out, 2), peak_db=-5.0)
+
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -793,11 +1012,32 @@ def main():
         ("sfx-jimbo-fail.wav", sfx_jimbo_fail),
         ("sfx-new-mail.wav", sfx_new_mail),
         ("sfx-away-tick.wav", sfx_away_tick),
+        ("sfx-grunt.wav", sfx_grunt),
+        ("sfx-sigh.wav", sfx_sigh),
+        ("sfx-chair-creak-tired.wav", sfx_chair_creak_tired),
+        ("sfx-ugh.wav", sfx_ugh),
+        ("sfx-key-dead-01.wav", lambda: sfx_key_dead(0)),
+        ("sfx-key-dead-02.wav", lambda: sfx_key_dead(1)),
+        ("sfx-key-dead-03.wav", lambda: sfx_key_dead(2)),
+        ("sfx-key-dead-04.wav", lambda: sfx_key_dead(3)),
+        ("sfx-key-dead-05.wav", lambda: sfx_key_dead(4)),
     ]
     for name, fn in sfx:
         print(f"  {name}...")
         audio = fn()
         write_wav(OUT / name, audio)
+        print(f"    -> {(OUT / name).stat().st_size} bytes")
+
+    print("Generating exhausted cubicle ambience...")
+    amb_specs = [
+        ("amb-cubicle-exhausted.ogg", gen_amb_cubicle_exhausted),
+    ]
+    for name, fn in amb_specs:
+        print(f"  {name}...")
+        audio = fn()
+        wav_path = TMP / (name.replace(".ogg", ".wav"))
+        write_wav(wav_path, audio)
+        wav_to_ogg(wav_path, OUT / name, bitrate="96k")
         print(f"    -> {(OUT / name).stat().st_size} bytes")
 
     # cleanup temp wavs
