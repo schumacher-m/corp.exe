@@ -954,12 +954,12 @@ function stopSlackNoise() {
 }
 
 async function runBoot() {
-  // BIOS overlay removed — Michael found it distracting; go straight into the farm.
-  const boot = $("boot-overlay");
-  if (boot) boot.classList.remove("show");
+  /* BIOS loading screen killed (Michael) — skip overlay, go straight to walk */
+  G.phase = "walk";
   showScreen("screen-title");
   $("screen-title").classList.remove("active");
-  G.phase = "walk";
+  const boot = $("boot-overlay");
+  if (boot) boot.classList.remove("show");
   audio.playBgm("bgmWalk");
   audio.startExhaustedBed({ volume: 0.32 });
   player.pos.set(0, 1.55, 3.2);

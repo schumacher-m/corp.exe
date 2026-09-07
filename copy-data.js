@@ -1,13 +1,7 @@
 /* Auto-baked from copy/*.md — re-run bake_copy.py */
 export default {
   "boot": {
-    "biosLines": [
-      "HelixStack BIOS 4.7b · Cubicle firmware OK",
-      "Memory check: 640K ought to be enough for anyone",
-      "Detecting fog... found",
-      "Loading corp.exe...",
-      "Press any key to pretend you have a choice"
-    ],
+    "biosLines": [],
     "titleTagline": "HelixStack · Cubicle 4-B · Please clock in. The fog does not clock out.",
     "clockInButton": "CLOCK IN",
     "bootToasts": [

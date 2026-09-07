@@ -28,6 +28,13 @@ if rest.endswith(";"):
     rest = rest[:-1]
 data = json.loads(rest)
 
+# Boot flavor (biosLines may be [] — BIOS overlay removed)
+boot_path = COPY / "boot.md"
+if boot_path.exists():
+    boot = fence(boot_path)
+    if isinstance(boot, dict):
+        data["boot"] = {**(data.get("boot") or {}), **boot}
+
 for key, fname in [("startDenied", "start-denied.md"), ("jimbo", "jimbo.md"), ("emails", "emails.md")]:
     p = COPY / fname
     if p.exists():
