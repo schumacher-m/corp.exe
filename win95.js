@@ -610,22 +610,24 @@ export function createWin95(copy, hooks) {
       st.warns.forEach((w, i) => {
         if (w.gone) return;
         ctx.fillStyle = "#c8c4b0";
-        ctx.fillText(`⚠ ${w.w}`.slice(0, 28), x + 4, yy);
-        const btns = ["Suppress", "Dismiss", "TODO"];
-        let bx = x + 120;
-        btns.forEach((lab) => {
-          bevelRaised(bx, yy - 8, 40, 10, C.face);
-          ctx.fillStyle = C.text;
+        ctx.fillText(`⚠ ${w.w}`.slice(0, Math.max(8, Math.floor((w - 8) / 5))), x + 4, yy);
+        yy += 11;
+        const labs = ["Suppress", "Dismiss", "TODO", "Fix"];
+        let bx = x + 4;
+        const right = x + w - 4;
+        for (const lab of labs) {
+          const bw = lab === "Fix" ? 28 : 40;
+          if (bx + bw > right) {
+            bx = x + 4;
+            yy += 12;
+          }
+          bevelRaised(bx, yy - 8, bw, 10, C.face);
+          ctx.fillStyle = lab === "Fix" ? C.blood : C.text;
           ctx.font = "6px Tahoma, sans-serif";
           ctx.fillText(lab.slice(0, 7), bx + 2, yy - 1);
-          state._stubHits.push({ kind: "lint", i, action: lab, hit: { x: bx, y: yy - 8, w: 40, h: 10 } });
-          bx += 44;
-        });
-        // fake Fix
-        bevelRaised(bx, yy - 8, 28, 10, C.face);
-        ctx.fillStyle = C.blood;
-        ctx.fillText("Fix", bx + 4, yy - 1);
-        state._stubHits.push({ kind: "lint", i, action: "Fix", hit: { x: bx, y: yy - 8, w: 28, h: 10 } });
+          state._stubHits.push({ kind: "lint", i, action: lab, hit: { x: bx, y: yy - 8, w: bw, h: 10 } });
+          bx += bw + 4;
+        }
         yy += 12;
       });
       const left = st.warns.filter((w) => !w.gone).length;
@@ -1035,38 +1037,112 @@ export function createWin95(copy, hooks) {
     if (!m) return;
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.fillRect(0, 0, W, H - TASK_H);
-    const mw = 220;
-    const lines = wrap(m.body || "", 34);
-    const mh = 48 + lines.length * 9 + 24;
+
+    const PAD = 8;
+    const BTN_H = 16;
+    const BTN_GAP = 6;
+    const ROW_GAP = 4;
+    const TITLE_H = 14;
+    const MAX_W = W - 16;
+    const MIN_W = 160;
+
+    const btns = (m.buttons || [{ label: "OK", action: "ok" }]).map((b) => {
+      const label = String(typeof b === "string" ? b : b.label ?? "OK");
+      const action = typeof b === "string" ? "ok" : b.action;
+      // Measure with the font we actually draw
+      ctx.font = "bold 8px Tahoma, sans-serif";
+      const tw = Math.ceil(ctx.measureText(label).width);
+      const bw = Math.min(MAX_W - PAD * 2, Math.max(36, tw + 12));
+      return { label, action, bw };
+    });
+
+    // Prefer a readable width; grow for long body, then fit button rows inside.
+    let mw = Math.min(MAX_W, Math.max(MIN_W, 220));
+    const layoutButtons = (width) => {
+      const inner = width - PAD * 2;
+      const rows = [];
+      let row = [];
+      let used = 0;
+      for (const b of btns) {
+        const need = b.bw + (row.length ? BTN_GAP : 0);
+        if (row.length && used + need > inner) {
+          rows.push(row);
+          row = [b];
+          used = b.bw;
+        } else {
+          row.push(b);
+          used += need;
+        }
+      }
+      if (row.length) rows.push(row);
+      return rows;
+    };
+
+    // If a single button is wider than current mw, widen the dialog.
+    const widest = btns.reduce((a, b) => Math.max(a, b.bw), 0);
+    mw = Math.min(MAX_W, Math.max(mw, widest + PAD * 2));
+
+    let rows = layoutButtons(mw);
+    // If many chips (poker / severity), use full width so fewer spill rows.
+    if (rows.length > 2 || btns.length > 4) {
+      mw = MAX_W;
+      rows = layoutButtons(mw);
+    }
+
+    const charsPerLine = Math.max(18, Math.floor((mw - PAD * 2) / 5.5));
+    const lines = wrap(m.body || "", charsPerLine);
+    const btnBlockH = rows.length * BTN_H + Math.max(0, rows.length - 1) * ROW_GAP;
+    let mh = 3 + TITLE_H + 8 + lines.length * 9 + 10 + btnBlockH + PAD;
+    const maxH = H - TASK_H - 8;
+    // If still too tall, trim body lines (keep buttons).
+    let bodyLines = lines;
+    if (mh > maxH) {
+      const budget = maxH - (3 + TITLE_H + 8 + 10 + btnBlockH + PAD);
+      const maxLines = Math.max(2, Math.floor(budget / 9));
+      bodyLines = lines.slice(0, maxLines);
+      if (lines.length > maxLines) bodyLines[bodyLines.length - 1] = (bodyLines[bodyLines.length - 1] || "").slice(0, -1) + "…";
+      mh = 3 + TITLE_H + 8 + bodyLines.length * 9 + 10 + btnBlockH + PAD;
+    }
+    mh = Math.min(mh, maxH);
+
     const mx = (W - mw) / 2;
-    const my = 40;
+    const my = Math.max(4, Math.min(40, (H - TASK_H - mh) / 2));
     bevelRaised(mx, my, mw, mh, C.face);
     ctx.fillStyle = m.kind === "jimbo" ? C.jimboBar : C.title;
-    ctx.fillRect(mx + 3, my + 3, mw - 6, 14);
+    ctx.fillRect(mx + 3, my + 3, mw - 6, TITLE_H);
     ctx.fillStyle = C.inv;
     ctx.font = "bold 9px Tahoma, sans-serif";
-    ctx.fillText(String(m.title || "Alert").slice(0, 30), mx + 8, my + 12);
+    const title = String(m.title || "Alert");
+    const maxTitle = Math.max(8, Math.floor((mw - 16) / 5.5));
+    ctx.fillText(title.slice(0, maxTitle), mx + 8, my + 12);
     ctx.fillStyle = C.text;
     ctx.font = "7px Tahoma, sans-serif";
-    let yy = my + 28;
-    for (const ln of lines) {
-      ctx.fillText(ln, mx + 8, yy);
+    let yy = my + 3 + TITLE_H + 12;
+    for (const ln of bodyLines) {
+      ctx.fillText(ln, mx + PAD, yy);
       yy += 9;
     }
-    const btns = m.buttons || [{ label: "OK", action: "ok" }];
+
     state._modalBtns = [];
-    let bx = mx + 8;
-    btns.forEach((b) => {
-      const label = typeof b === "string" ? b : b.label;
-      const action = typeof b === "string" ? "ok" : b.action;
-      const bw = Math.max(48, label.length * 6 + 12);
-      bevelRaised(bx, my + mh - 22, bw, 16, C.face);
-      ctx.fillStyle = C.text;
-      ctx.font = "bold 8px Tahoma, sans-serif";
-      ctx.fillText(label, bx + 6, my + mh - 12);
-      state._modalBtns.push({ hit: { x: bx, y: my + mh - 22, w: bw, h: 16 }, action });
-      bx += bw + 8;
-    });
+    let by = my + mh - PAD - btnBlockH;
+    for (const row of rows) {
+      const rowW =
+        row.reduce((s, b) => s + b.bw, 0) + BTN_GAP * Math.max(0, row.length - 1);
+      let bx = mx + Math.max(PAD, Math.floor((mw - rowW) / 2));
+      for (const b of row) {
+        // Clamp into dialog face
+        if (bx + b.bw > mx + mw - PAD) bx = mx + mw - PAD - b.bw;
+        if (bx < mx + PAD) bx = mx + PAD;
+        bevelRaised(bx, by, b.bw, BTN_H, C.face);
+        ctx.fillStyle = C.text;
+        ctx.font = "bold 8px Tahoma, sans-serif";
+        const tw = ctx.measureText(b.label).width;
+        ctx.fillText(b.label, bx + Math.max(4, (b.bw - tw) / 2), by + 11);
+        state._modalBtns.push({ hit: { x: bx, y: by, w: b.bw, h: BTN_H }, action: b.action });
+        bx += b.bw + BTN_GAP;
+      }
+      by += BTN_H + ROW_GAP;
+    }
   }
 
   function drawCursor() {
