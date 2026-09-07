@@ -28,6 +28,8 @@ const C = {
 
 export const W = 320;
 export const H = 240;
+/** Internal supersample so seated fullscreen text isn't a blown-up postage stamp */
+export const PIXEL_SCALE = 3;
 const TASK_H = 22;
 const IDLE_YELLOW = 6; // seconds → yellow
 const IDLE_AWAY = 11; // seconds → Away
@@ -47,10 +49,12 @@ function loadImg(src) {
 
 export function createWin95(copy, hooks) {
   const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = W * PIXEL_SCALE;
+  canvas.height = H * PIXEL_SCALE;
   const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
+  // Smooth text at supersample; CRT texture still looks chunky at distance
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   const jimboCopy = copy.jimbo || {};
   const emailCopy = copy.emails || { messages: [], unreadFloor: 1 };
@@ -224,18 +228,18 @@ export function createWin95(copy, hooks) {
     if (win.jimboChrome && imgs.j16.complete && imgs.j16.naturalWidth) {
       ctx.drawImage(imgs.j16, win.x + 5, win.y + 4, 12, 12);
       ctx.fillStyle = C.inv;
-      ctx.font = "bold 12px Tahoma, 'MS Sans Serif', sans-serif";
+      ctx.font = "bold 13px Tahoma, 'MS Sans Serif', sans-serif";
       ctx.textBaseline = "middle";
       ctx.fillText(win.title.slice(0, 24), win.x + 20, win.y + 10);
     } else {
       ctx.fillStyle = C.inv;
-      ctx.font = "bold 12px Tahoma, 'MS Sans Serif', sans-serif";
+      ctx.font = "bold 13px Tahoma, 'MS Sans Serif', sans-serif";
       ctx.textBaseline = "middle";
       ctx.fillText(win.title.slice(0, 28), win.x + 6, win.y + 10);
     }
     bevelRaised(win.x + win.w - 16, win.y + 5, 10, 10, C.face);
     ctx.fillStyle = C.text;
-    ctx.font = "bold 11px sans-serif";
+    ctx.font = "bold 12px sans-serif";
     ctx.fillText("×", win.x + win.w - 14, win.y + 10);
 
     const cx = win.x + 4;
@@ -254,7 +258,7 @@ export function createWin95(copy, hooks) {
 
   function drawTickets(x, y, w, h) {
     bevelSunken(x, y, w, h, C.white);
-    ctx.font = "12px Tahoma, sans-serif";
+    ctx.font = "13px Tahoma, sans-serif";
     let yy = y + 4;
     for (const tk of copy.tickets) {
       const done = state.ticketsDone[tk.type];
@@ -272,7 +276,7 @@ export function createWin95(copy, hooks) {
 
   function drawSlack(x, y, w, h) {
     bevelSunken(x, y, w, h, C.white);
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     let yy = y + 3;
     const msgs = state.slackMsgs.slice(0, 8);
     for (const m of msgs) {
@@ -294,7 +298,7 @@ export function createWin95(copy, hooks) {
   }
 
   function drawMeters(x, y, w, h) {
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     const rows = [
       ["SAN", state.sanity / 100, state.sanity < 30 ? C.blood : C.sick],
       ["SP", Math.min(1, state.sprint / 20), C.amber],
@@ -320,7 +324,7 @@ export function createWin95(copy, hooks) {
     const yest = state._standupPick.y;
     const tod = state._standupPick.t;
     const blk = state._standupPick.b;
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     ctx.fillStyle = C.text;
     const lines = ["Yesterday: " + yest, "Today: " + tod, "Blockers: " + blk];
     let yy = y + 10;
@@ -333,7 +337,7 @@ export function createWin95(copy, hooks) {
     }
     bevelRaised(x + w / 2 - 40, y + h - 18, 80, 14, C.face);
     ctx.fillStyle = C.text;
-    ctx.font = "bold 11px Tahoma, sans-serif";
+    ctx.font = "bold 12px Tahoma, sans-serif";
     ctx.fillText("ACKNOWLEDGE", x + w / 2 - 32, y + h - 9);
     state._standupBtn = { x: x + w / 2 - 40, y: y + h - 18, w: 80, h: 14 };
   }
@@ -350,7 +354,7 @@ export function createWin95(copy, hooks) {
 
   function drawIde(x, y, w, h) {
     bevelSunken(x, y, w, h - 28, "#000000");
-    ctx.font = "12px 'Courier New', monospace";
+    ctx.font = "13px 'Courier New', monospace";
     if (state.phase === "semi") {
       ensureSemi();
       let yy = y + 8;
@@ -373,7 +377,7 @@ export function createWin95(copy, hooks) {
       ctx.fillStyle = C.face;
       ctx.fillRect(x, y + h - 28, w, 28);
       ctx.fillStyle = C.text;
-      ctx.font = "11px Tahoma, sans-serif";
+      ctx.font = "12px Tahoma, sans-serif";
       const hint = state.semiStyle?.note
         ? String(state.semiStyle.note).slice(0, 42)
         : "Click lines missing ;  or press ;";
@@ -381,7 +385,7 @@ export function createWin95(copy, hooks) {
       if (state.pendingFinish?.type === "semi") {
         bevelRaised(x + w - 74, y + h - 22, 68, 14, C.jimbo);
         ctx.fillStyle = C.inv;
-        ctx.font = "bold 11px Tahoma, sans-serif";
+        ctx.font = "bold 12px Tahoma, sans-serif";
         ctx.fillText("SUBMIT", x + w - 62, y + h - 13);
         state._submitBtn = { x: x + w - 74, y: y + h - 22, w: 68, h: 14 };
       } else state._submitBtn = null;
@@ -406,7 +410,7 @@ export function createWin95(copy, hooks) {
       ctx.fillRect(x, y + h - 28, w, 28);
       bevelRaised(x + 4, y + h - 22, 70, 14, C.face);
       ctx.fillStyle = C.text;
-      ctx.font = "bold 11px Tahoma, sans-serif";
+      ctx.font = "bold 12px Tahoma, sans-serif";
       ctx.fillText("ACCEPT //", x + 10, y + h - 13);
       state._cmtBtn = { x: x + 4, y: y + h - 22, w: 70, h: 14 };
       if (state.pendingFinish?.type === "comment") {
@@ -426,7 +430,7 @@ export function createWin95(copy, hooks) {
     bevelSunken(x, y, w, h, C.white);
     const step = state.prStep;
     const script = copy.prScript;
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     let yy = y + 10;
     ctx.fillStyle = "#800000";
     ctx.fillText("Kyle:", x + 4, yy);
@@ -469,7 +473,7 @@ export function createWin95(copy, hooks) {
         yy += 12;
         bevelRaised(x + 4, yy, 80, 14, C.jimbo);
         ctx.fillStyle = C.inv;
-        ctx.font = "bold 11px Tahoma, sans-serif";
+        ctx.font = "bold 12px Tahoma, sans-serif";
         ctx.fillText("SUBMIT PR", x + 12, yy + 10);
         state._submitBtn = { x: x + 4, y: yy, w: 80, h: 14 };
       }
@@ -481,7 +485,7 @@ export function createWin95(copy, hooks) {
     if (imgs.jban.complete && imgs.jban.naturalWidth) {
       ctx.drawImage(imgs.jban, x + w - 100, y + 4, 96, 48);
     }
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     ctx.fillStyle = C.text;
     let yy = y + 12;
     for (const ln of wrap(state.jimboLine || "", 28).slice(0, 5)) {
@@ -501,13 +505,13 @@ export function createWin95(copy, hooks) {
       ctx.drawImage(imgs.jtb, x + 8, y + h - 25, 12, 12);
     }
     ctx.fillStyle = C.inv;
-    ctx.font = "bold 11px Tahoma, sans-serif";
+    ctx.font = "bold 12px Tahoma, sans-serif";
     ctx.fillText(jimboCopy.askLabel || "Ask Jimbo", x + 22, y + h - 16);
     state._jimboAskBtn = { x: x + 4, y: y + h - 28, w: 88, h: 18 };
     // Skip
     bevelRaised(x + 98, y + h - 28, 50, 18, C.face);
     ctx.fillStyle = C.text;
-    ctx.font = "12px Tahoma, sans-serif";
+    ctx.font = "13px Tahoma, sans-serif";
     ctx.fillText("Skip", x + 112, y + h - 16);
     state._jimboSkipBtn = { x: x + 98, y: y + h - 28, w: 50, h: 18 };
   }
@@ -519,7 +523,7 @@ export function createWin95(copy, hooks) {
 
   function drawInbox(x, y, w, h) {
     bevelSunken(x, y, w, h, C.white);
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     const mail = state.openMailId ? state.inbox.find((m) => m.id === state.openMailId) : null;
     if (mail) {
       ctx.fillStyle = C.title;
@@ -533,7 +537,7 @@ export function createWin95(copy, hooks) {
       }
       bevelRaised(x + 4, y + h - 18, 60, 14, C.face);
       ctx.fillStyle = C.text;
-      ctx.font = "bold 11px Tahoma, sans-serif";
+      ctx.font = "bold 12px Tahoma, sans-serif";
       ctx.fillText("Close", x + 18, y + h - 9);
       state._mailCloseBtn = { x: x + 4, y: y + h - 18, w: 60, h: 14 };
       state._mailHits = null;
@@ -583,7 +587,7 @@ export function createWin95(copy, hooks) {
         ctx.fillText(String(Math.min(99, u)), bx + 32, by + 10);
       }
       ctx.fillStyle = C.inv;
-      ctx.font = "11px Tahoma, sans-serif";
+      ctx.font = "12px Tahoma, sans-serif";
       ctx.fillText(ic.label, bx + 4, by + 42);
       state._deskIconHits.push({ id: ic.id, hit: { x: bx, y: by, w: 48, h: 48 } });
     }
@@ -607,7 +611,7 @@ export function createWin95(copy, hooks) {
     if (pressed) bevelSunken(3, y + 3, 42, 16, C.face);
     else bevelRaised(3, y + 3, 42, 16, C.face);
     ctx.fillStyle = C.text;
-    ctx.font = "bold 12px Tahoma, sans-serif";
+    ctx.font = "bold 13px Tahoma, sans-serif";
     ctx.fillText(copy.startMenu?.startLabel || "Start", 8, y + 14);
     state._startBtn = { x: 3, y: y + 3, w: 42, h: 16 };
 
@@ -626,7 +630,7 @@ export function createWin95(copy, hooks) {
       const win = wins[id];
       if (!win.open) continue;
       bevelRaised(tx, y + 3, 36, 16, C.face);
-      ctx.font = "11px Tahoma, sans-serif";
+      ctx.font = "12px Tahoma, sans-serif";
       ctx.fillStyle = C.text;
       ctx.fillText(win.title.slice(0, 5), tx + 3, y + 13);
       win._taskHit = { x: tx, y: y + 3, w: 36, h: 16 };
@@ -640,12 +644,12 @@ export function createWin95(copy, hooks) {
     ctx.fillStyle = presenceColor();
     ctx.fillRect(px + 3, y + 7, 6, 6);
     ctx.fillStyle = C.text;
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     ctx.fillText(presenceLabel(), px + 12, y + 13);
 
     const trayX = W - 54;
     bevelSunken(trayX, y + 3, 50, 16, C.face);
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     ctx.fillStyle = C.text;
     const hh = String(Math.floor(state.clockMinutes / 60)).padStart(2, "0");
     const mm = String(state.clockMinutes % 60).padStart(2, "0");
@@ -665,7 +669,7 @@ export function createWin95(copy, hooks) {
     items.forEach((it, i) => {
       const iy = y + 4 + i * 16;
       ctx.fillStyle = C.text;
-      ctx.font = "12px Tahoma, sans-serif";
+      ctx.font = "13px Tahoma, sans-serif";
       const lab = it.label || it.id || String(it);
       if (it.id === "jimbo" || lab === "Jimbo") {
         if (imgs.j16.complete && imgs.j16.naturalWidth) {
@@ -710,10 +714,10 @@ export function createWin95(copy, hooks) {
     ctx.fillStyle = m.kind === "jimbo" ? C.jimboBar : C.title;
     ctx.fillRect(mx + 3, my + 3, mw - 6, 14);
     ctx.fillStyle = C.inv;
-    ctx.font = "bold 12px Tahoma, sans-serif";
+    ctx.font = "bold 13px Tahoma, sans-serif";
     ctx.fillText(String(m.title || "Alert").slice(0, 30), mx + 8, my + 12);
     ctx.fillStyle = C.text;
-    ctx.font = "11px Tahoma, sans-serif";
+    ctx.font = "12px Tahoma, sans-serif";
     let yy = my + 28;
     for (const ln of lines) {
       ctx.fillText(ln, mx + 8, yy);
@@ -728,7 +732,7 @@ export function createWin95(copy, hooks) {
       const bw = Math.max(48, label.length * 6 + 12);
       bevelRaised(bx, my + mh - 22, bw, 16, C.face);
       ctx.fillStyle = C.text;
-      ctx.font = "bold 11px Tahoma, sans-serif";
+      ctx.font = "bold 12px Tahoma, sans-serif";
       ctx.fillText(label, bx + 6, my + mh - 12);
       state._modalBtns.push({ hit: { x: bx, y: my + mh - 22, w: bw, h: 16 }, action });
       bx += bw + 8;
@@ -753,6 +757,8 @@ export function createWin95(copy, hooks) {
   }
 
   function render() {
+    ctx.setTransform(PIXEL_SCALE, 0, 0, PIXEL_SCALE, 0, 0);
+    ctx.imageSmoothingEnabled = true;
     ctx.fillStyle = C.desktop;
     ctx.fillRect(0, 0, W, H);
     drawDeskIcons();
@@ -771,7 +777,7 @@ export function createWin95(copy, hooks) {
         bevelRaised(W / 2 - 90, 4, 180, 18, C.face);
       }
       ctx.fillStyle = C.text;
-      ctx.font = "12px Tahoma, sans-serif";
+      ctx.font = "13px Tahoma, sans-serif";
       ctx.fillText(String(state.toast).slice(0, 40), W / 2 - 84, 16);
     }
     drawModal();
