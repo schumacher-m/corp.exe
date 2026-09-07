@@ -91,7 +91,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2a2820);
-scene.fog = new THREE.Fog(0x3a3830, 8, 28);
+scene.fog = new THREE.Fog(0x3a3830, 8, 22);
 
 const camera = new THREE.PerspectiveCamera(60, RT_W / RT_H, 0.08, 60);
 const player = {
@@ -160,6 +160,7 @@ OfficeRoot.name = "OfficeRoot";
 scene.add(OfficeRoot);
 
 const nodes = {};
+const farmWorkers = []; // neighbor seated proxies (fidget)
 const SEAT = new THREE.Vector3(0.0, 0, 0.4); // chair spot (XZ)
 const SIT_CAM = new THREE.Vector3(0.15, 1.2, 0.55);
 const SIT_LOOK = new THREE.Vector3(0.0, 1.05, -0.55);
@@ -255,6 +256,8 @@ async function loadOffice() {
     paths = [
       "assets/models/cubicle.glb",
       "assets/models/neighbor_bay.glb",
+      "assets/models/neighbor_crt.glb",
+      "assets/models/crt_glow.glb",
       "assets/models/desk_set.glb",
       "assets/models/hands.glb",
       "assets/models/keyboard.glb",
@@ -266,6 +269,8 @@ async function loadOffice() {
       "assets/models/prop_ticket.glb",
       "assets/models/screen_quad.glb",
       "assets/models/slack_panel.glb",
+      "assets/models/worker_seated.glb",
+      "assets/models/worker_seated_b.glb",
     ];
   }
   const by = {};
@@ -280,19 +285,205 @@ async function loadOffice() {
     })
   );
 
-  // Cubicle farm hellscape — FARM.md (2.2×2.6, ≥200 neighbor CRTs)
+  // Prefetch Designer farm assets (soft-fail if missing / not in manifest)
+  for (const extra of [
+    "assets/models/neighbor_crt.glb",
+    "assets/models/worker_seated.glb",
+    "assets/models/worker_seated_b.glb",
+    "assets/models/crt_glow.glb",
+  ]) {
+    const name = extra.split("/").pop().replace(/\.glb$/i, "");
+    if (by[name]) continue;
+    try {
+      by[name] = await loadModel(extra);
+    } catch (_) {
+      /* soft-fail */
+    }
+  }
+
+  // Cubicle farm hellscape — FARM.md (2.2×2.6, real CRT meshes + fidget workers)
   const farm = new THREE.Group();
   farm.name = "CubicleFarm";
   const PITCH_X = 2.2;
   const PITCH_Z = 2.6;
-  const crtGreen = new THREE.MeshBasicMaterial({ color: 0x5ecf4a, toneMapped: false });
-  const crtTeal = new THREE.MeshBasicMaterial({ color: 0x3ec8b0, toneMapped: false });
-  const crtDim = new THREE.MeshBasicMaterial({ color: 0x2a6030, toneMapped: false });
+  farmWorkers.length = 0;
+
+  const texLoader = new THREE.TextureLoader();
+  function loadNearestTex(url) {
+    try {
+      const t = texLoader.load(url);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.generateMipmaps = false;
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    } catch (_) {
+      return null;
+    }
+  }
+  const crtGlowMap = loadNearestTex("assets/textures/crt_glow.png");
+  const skinMap = loadNearestTex("assets/textures/skin.png");
+  const shirtMap = loadNearestTex("assets/textures/shirt.png");
+  const hairMap = loadNearestTex("assets/textures/hair.png");
+
+  // Shared CRT materials (desk_set-style bezel + glowing screen — not flat hero planes)
+  const plasticMat = new THREE.MeshLambertMaterial({ color: 0x59584e, flatShading: true });
+  const crtBaseMats = {
+    green: new THREE.MeshBasicMaterial({
+      color: 0x5ecf4a,
+      map: crtGlowMap,
+      toneMapped: false,
+    }),
+    teal: new THREE.MeshBasicMaterial({
+      color: 0x3ec8b0,
+      map: crtGlowMap,
+      toneMapped: false,
+    }),
+    dim: new THREE.MeshBasicMaterial({
+      color: 0x2a6030,
+      map: crtGlowMap,
+      toneMapped: false,
+    }),
+  };
+  // desk_set CRT proportions: body 0.55×0.45×0.45, screen 0.42×0.32
+  const crtBodyGeo = new THREE.BoxGeometry(0.52, 0.42, 0.40);
+  const crtScreenGeo = new THREE.PlaneGeometry(0.40, 0.30);
+  const crtNeckGeo = new THREE.BoxGeometry(0.32, 0.08, 0.28);
+  const crtRimGeo = new THREE.BoxGeometry(0.46, 0.36, 0.05);
   const deskMat = new THREE.MeshBasicMaterial({ color: 0x2a2820 });
   const wallMat = new THREE.MeshBasicMaterial({ color: 0x3d3a32 });
-  const crtGeo = new THREE.PlaneGeometry(0.36, 0.26);
   const deskGeo = new THREE.BoxGeometry(1.0, 0.05, 0.5);
   const wallGeo = new THREE.BoxGeometry(2.0, 1.2, 0.06);
+  const sideGeo = new THREE.BoxGeometry(0.06, 1.2, 1.6);
+
+  // Shared worker geos/mats (PS1 blocky seated proxy)
+  const shirtMat = new THREE.MeshLambertMaterial({
+    color: 0x323746,
+    map: shirtMap,
+    flatShading: true,
+  });
+  const skinMat = new THREE.MeshLambertMaterial({
+    color: 0x8c7864,
+    map: skinMap,
+    flatShading: true,
+  });
+  const hairMat = new THREE.MeshLambertMaterial({
+    color: 0x1e1c1a,
+    map: hairMap,
+    flatShading: true,
+  });
+  const torsoGeo = new THREE.BoxGeometry(0.36, 0.42, 0.22);
+  const pelvisGeo = new THREE.BoxGeometry(0.34, 0.16, 0.28);
+  const headGeo = new THREE.BoxGeometry(0.22, 0.24, 0.22);
+  const hairGeo = new THREE.BoxGeometry(0.24, 0.08, 0.24);
+  const armGeo = new THREE.BoxGeometry(0.09, 0.28, 0.09);
+  const legGeo = new THREE.BoxGeometry(0.12, 0.28, 0.18);
+
+  function crtToneHex(ix, iz) {
+    const far = Math.abs(ix) > 6 || iz < -5;
+    if (far) return 0x2a6030;
+    return (ix + iz) % 2 === 0 ? 0x5ecf4a : 0x3ec8b0;
+  }
+  function crtToneKey(ix, iz) {
+    const far = Math.abs(ix) > 6 || iz < -5;
+    if (far) return "dim";
+    return (ix + iz) % 2 === 0 ? "green" : "teal";
+  }
+  function farmHash(ix, iz) {
+    // stable int per cell
+    return ((ix * 73856093) ^ (iz * 19349663)) >>> 0;
+  }
+
+  /** Wire screen_face empty: MeshBasic / emissive glow child. */
+  function lightScreenFace(root, ix, iz) {
+    const hex = crtToneHex(ix, iz);
+    const mat = crtBaseMats[crtToneKey(ix, iz)];
+    const face = root.getObjectByName("screen_face");
+    if (face) {
+      // Clear any prior glow child, then attach bright screen
+      while (face.children.length) face.remove(face.children[0]);
+      let glow;
+      if (by.crt_glow) {
+        glow = by.crt_glow.clone();
+        glow.traverse((o) => {
+          if (o.isMesh) o.material = mat;
+        });
+      } else {
+        glow = new THREE.Mesh(crtScreenGeo, mat);
+      }
+      face.add(glow);
+    }
+    // Also boost any mesh that looks like the screen / whole CRT plastic stays lit mildly
+    root.traverse((o) => {
+      if (!o.isMesh || !o.material) return;
+      const name = (o.name || "").toLowerCase();
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (let i = 0; i < mats.length; i++) {
+        let m = mats[i];
+        if (m.map) {
+          m.map.magFilter = THREE.NearestFilter;
+          m.map.minFilter = THREE.NearestFilter;
+          m.map.generateMipmaps = false;
+        }
+        if (name.includes("screen") || o.parent?.name === "screen_face") {
+          m = mat;
+          if (Array.isArray(o.material)) o.material[i] = m;
+          else o.material = m;
+        } else if ("emissive" in m) {
+          // Keep plastic readable; don't wash whole bay green
+          m.emissive = new THREE.Color(0x1a1814);
+          m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.2);
+          m.needsUpdate = true;
+        }
+      }
+    });
+    return face;
+  }
+
+  /**
+   * Neighbor CRT — prefer neighbor_crt.glb (screen_face), else procedural bezel+glow.
+   * When bay already embeds CRT, withBezel=false still prefers neighbor_crt overlay
+   * or screen_face on the bay itself.
+   */
+  function makeNeighborCrt(ix, iz, withBezel = true) {
+    const g = new THREE.Group();
+    g.name = "NeighborCRT";
+
+    if (by.neighbor_crt) {
+      const crt = by.neighbor_crt.clone();
+      lightScreenFace(crt, ix, iz);
+      // neighbor_crt local origin at base; place on desk
+      crt.position.set(0, 0.74, -0.42);
+      g.add(crt);
+      return g;
+    }
+
+    // Fallback procedural desk_set-style CRT (only if Designer GLB missing)
+    if (withBezel) {
+      const body = new THREE.Mesh(crtBodyGeo, plasticMat);
+      g.add(body);
+      const neck = new THREE.Mesh(crtNeckGeo, plasticMat);
+      neck.position.set(0, -0.22, 0.02);
+      g.add(neck);
+    } else {
+      const rim = new THREE.Mesh(crtRimGeo, plasticMat);
+      rim.position.set(0, 0.02, 0.18);
+      g.add(rim);
+    }
+    let screen;
+    if (by.crt_glow) {
+      screen = by.crt_glow.clone();
+      screen.traverse((o) => {
+        if (o.isMesh) o.material = crtBaseMats[crtToneKey(ix, iz)];
+      });
+    } else {
+      screen = new THREE.Mesh(crtScreenGeo, crtBaseMats[crtToneKey(ix, iz)]);
+    }
+    screen.position.set(0, 0.02, withBezel ? 0.21 : 0.22);
+    g.add(screen);
+    g.position.set(0, 1.0, -0.42);
+    return g;
+  }
 
   function makeNeighborProxy(ix, iz) {
     const g = new THREE.Group();
@@ -300,57 +491,119 @@ async function loadOffice() {
     const back = new THREE.Mesh(wallGeo, wallMat);
     back.position.set(0, 0.7, -0.9);
     g.add(back);
-    const side = new THREE.Mesh(
-      new THREE.BoxGeometry(0.06, 1.2, 1.6),
-      wallMat
-    );
+    const side = new THREE.Mesh(sideGeo, wallMat);
     side.position.set(-0.95, 0.7, -0.2);
     g.add(side);
     const deskProxy = new THREE.Mesh(deskGeo, deskMat);
     deskProxy.position.set(0, 0.74, -0.35);
     g.add(deskProxy);
-    const far = Math.abs(ix) > 6 || iz < -5;
-    const mat = far ? crtDim : (ix + iz) % 2 === 0 ? crtGreen : crtTeal;
-    const glow = new THREE.Mesh(crtGeo, mat);
-    glow.position.set(0, 1.02, -0.58);
-    glow.rotation.y = Math.PI; // face +Z aisle
-    g.add(glow);
+    g.add(makeNeighborCrt(ix, iz, true));
     return g;
   }
 
+  /** Keep bay walls/desk; light embedded screen_face if present. */
   function prepNeighborBay(root, ix, iz) {
-    const far = Math.abs(ix) > 6 || iz < -5;
-    const glowHex = far ? 0x2a6030 : (ix + iz) % 2 === 0 ? 0x5ecf4a : 0x3ec8b0;
-    root.traverse((o) => {
-      if (!o.isMesh || !o.material) return;
-      const name = (o.name || o.material.name || "").toLowerCase();
-      const looksCrt =
-        /crt|screen|monitor|glow|display/.test(name) ||
-        (o.geometry && o.geometry.type === "PlaneGeometry") ||
-        (o.geometry && o.geometry.attributes?.position?.count <= 8);
-      if (looksCrt) {
-        // FARM.md: Basic + toneMapped false so fog doesn’t kill the sea of CRTs
-        o.material = new THREE.MeshBasicMaterial({
-          color: glowHex,
-          toneMapped: false,
-        });
-        return;
+    lightScreenFace(root, ix, iz);
+  }
+
+  /**
+   * Seated worker — prefer worker_seated / worker_seated_b (alternate per cell).
+   * Fidget empties: head, torso, arm_L, arm_R (FARM.md).
+   * Fallback: kyle_bust + blocky only if both GLBs missing.
+   */
+  function makeFarmWorker(ix, iz) {
+    const root = new THREE.Group();
+    root.name = `FarmWorker_${ix}_${iz}`;
+    const seed = farmHash(ix, iz);
+    const phase = (seed % 1000) / 1000 * Math.PI * 2;
+
+    let head = null;
+    let torso = null;
+    let armL = null;
+    let armR = null;
+    let headBaseY = 0;
+    let mode = "blocky";
+
+    const a = by.worker_seated;
+    const b = by.worker_seated_b;
+    if (a || b) {
+      const useB = b && (seed & 1) === 1;
+      const src = (useB ? b : a || b).clone();
+      mode = useB ? "worker_seated_b" : "worker_seated";
+      src.position.set(0, 0, 0);
+      root.add(src);
+      head = src.getObjectByName("head");
+      torso = src.getObjectByName("torso");
+      armL = src.getObjectByName("arm_L");
+      armR = src.getObjectByName("arm_R");
+      if (head) headBaseY = head.position.y;
+      // Seat toward aisle (FARM.md: y=0.45, z=+0.15 from desk ~−0.35)
+      root.position.set(0, 0.45, 0.15);
+    } else {
+      mode = by.kyle_bust ? "kyle_bust+blocky" : "blocky";
+      const pelvis = new THREE.Mesh(pelvisGeo, shirtMat);
+      pelvis.position.set(0, 0.62, 0.02);
+      root.add(pelvis);
+      const legL = new THREE.Mesh(legGeo, shirtMat);
+      legL.position.set(-0.1, 0.42, 0.06);
+      legL.rotation.x = 0.9;
+      root.add(legL);
+      const legR = new THREE.Mesh(legGeo, shirtMat);
+      legR.position.set(0.1, 0.42, 0.06);
+      legR.rotation.x = 0.9;
+      root.add(legR);
+      torso = new THREE.Mesh(torsoGeo, shirtMat);
+      torso.name = "torso";
+      torso.position.set(0, 0.92, -0.02);
+      torso.rotation.x = 0.12;
+      root.add(torso);
+      if (by.kyle_bust) {
+        head = by.kyle_bust.clone();
+        head.visible = true;
+        head.scale.setScalar(0.55);
+        head.position.set(0, 1.22, -0.02);
+        head.rotation.y = Math.PI;
+        root.add(head);
+        headBaseY = 1.22;
+      } else {
+        head = new THREE.Group();
+        head.name = "head";
+        head.add(new THREE.Mesh(headGeo, skinMat));
+        const hair = new THREE.Mesh(hairGeo, hairMat);
+        hair.position.set(0, 0.14, -0.01);
+        head.add(hair);
+        head.position.set(0, 1.22, -0.02);
+        root.add(head);
+        headBaseY = 1.22;
       }
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
-      for (const m of mats) {
-        if (m.map) {
-          m.map.magFilter = THREE.NearestFilter;
-          m.map.minFilter = THREE.NearestFilter;
-          m.map.generateMipmaps = false;
-        }
-        if ("emissive" in m) {
-          m.emissive = new THREE.Color(glowHex);
-          m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 1.1);
-          m.toneMapped = false;
-        }
-        m.needsUpdate = true;
-      }
-    });
+      armL = new THREE.Mesh(armGeo, skinMat);
+      armL.name = "arm_L";
+      armL.position.set(-0.22, 0.88, 0.02);
+      armL.rotation.x = -0.55;
+      root.add(armL);
+      armR = new THREE.Mesh(armGeo, skinMat);
+      armR.name = "arm_R";
+      armR.position.set(0.22, 0.88, 0.02);
+      armR.rotation.x = -0.5;
+      root.add(armR);
+      root.position.set(0, 0, 0.15);
+    }
+
+    const rec = {
+      root,
+      head,
+      torso,
+      armL,
+      armR,
+      phase,
+      seed,
+      headBaseY,
+      mode,
+      // FARM.md speeds
+      designer: !!(a || b),
+    };
+    farmWorkers.push(rec);
+    return root;
   }
 
   // player home bay — full cubicle only
@@ -360,21 +613,58 @@ async function loadOffice() {
   farm.add(c0);
 
   let neighborCount = 0;
+  let crtCount = 0;
+  let workerCount = 0;
   const hasBay = !!by.neighbor_bay;
+  const hasCrt = !!by.neighbor_crt;
+  const hasWorker = !!(by.worker_seated || by.worker_seated_b);
+  const crtMode = hasBay && hasCrt
+    ? "neighbor_bay+screen_face"
+    : hasBay
+      ? "neighbor_bay.screen_face"
+      : hasCrt
+        ? "neighbor_crt.glb"
+        : "proxy-crt";
+  const workerMode = hasWorker
+    ? by.worker_seated && by.worker_seated_b
+      ? "worker_seated+b alt"
+      : by.worker_seated
+        ? "worker_seated"
+        : "worker_seated_b"
+    : by.kyle_bust
+      ? "fallback kyle_bust+blocky"
+      : "fallback blocky";
+
   for (let ix = -10; ix <= 10; ix++) {
     for (let iz = -8; iz <= 4; iz++) {
-      // Skip player home bay AND the aisle cell between spawn and desk
-      // (iz=+1 @ z=2.6) so a neighbor CRT can't eclipse the player's screen at walk start.
+      // Skip player home bay AND aisle cell (iz=+1) — spawn sightline to player CRT
       if (ix === 0 && (iz === 0 || iz === 1)) continue;
       const x = ix * PITCH_X;
       const z = iz * PITCH_Z;
       let bay;
       if (hasBay) {
         bay = by.neighbor_bay.clone();
-        prepNeighborBay(bay, ix, iz);
+        prepNeighborBay(bay, ix, iz); // lights embedded screen_face
+        // If upgraded bay somehow lacks screen_face, drop in standalone neighbor_crt
+        if (!bay.getObjectByName("screen_face")) {
+          bay.add(makeNeighborCrt(ix, iz, true));
+        }
+      } else if (hasCrt) {
+        bay = new THREE.Group();
+        bay.name = `Neighbor_${ix}_${iz}`;
+        const back = new THREE.Mesh(wallGeo, wallMat);
+        back.position.set(0, 0.7, -0.9);
+        bay.add(back);
+        const deskProxy = new THREE.Mesh(deskGeo, deskMat);
+        deskProxy.position.set(0, 0.74, -0.35);
+        bay.add(deskProxy);
+        bay.add(makeNeighborCrt(ix, iz, true));
       } else {
         bay = makeNeighborProxy(ix, iz);
       }
+      crtCount++;
+      bay.add(makeFarmWorker(ix, iz));
+      workerCount++;
       bay.position.set(x, 0, z);
       farm.add(bay);
       neighborCount++;
@@ -382,12 +672,30 @@ async function loadOffice() {
   }
   OfficeRoot.add(farm);
   forceNearest(farm);
+  // Ensure screen_face glow mats survived forceNearest (Basic, toneMapped:false)
+  farm.traverse((o) => {
+    if (o.name !== "screen_face") return;
+    o.traverse((c) => {
+      if (!c.isMesh || !c.material) return;
+      const mats = Array.isArray(c.material) ? c.material : [c.material];
+      for (const m of mats) {
+        m.toneMapped = false;
+        m.needsUpdate = true;
+      }
+    });
+  });
   console.info(
     "[corp.exe] farm neighbors",
     neighborCount,
-    hasBay ? "(neighbor_bay.glb)" : "(proxy until neighbor_bay.glb lands)"
+    "| CRTs",
+    crtCount,
+    `(${crtMode})`,
+    "| workers",
+    workerCount,
+    `(${workerMode})`,
+    "| farmWorkers[]",
+    farmWorkers.length
   );
-
 
   const desk = by.desk_set;
   desk.name = "DeskSet";
@@ -817,22 +1125,54 @@ if (sitBtnEl) {
 
 
 
+/* —— Neighbor farm fidget (FARM.md empties API) —— */
+function updateFarmFidget(time) {
+  if (!farmWorkers.length) return;
+  const deg1 = Math.PI / 180;
+  const deg2 = 2 * Math.PI / 180;
+  for (let i = 0; i < farmWorkers.length; i++) {
+    const w = farmWorkers[i];
+    const t = time + (w.seed || 0) * 0.17;
+    if (w.designer) {
+      // Exact FARM.md loop on empties
+      if (w.torso) w.torso.rotation.x = Math.sin(t * 0.7) * deg1;
+      if (w.head) w.head.rotation.x = Math.sin(t * 1.3) * deg2;
+      if (w.armL) w.armL.rotation.x = Math.sin(t * 8.0) * 0.08;
+      if (w.armR) w.armR.rotation.x = Math.sin(t * 8.0 + 0.9) * 0.08;
+    } else {
+      // Fallback proxy fidget (kyle/blocky)
+      const ph = w.phase || 0;
+      if (w.head) {
+        w.head.position.y = w.headBaseY + Math.sin(t * 1.6 + ph) * 0.014;
+        w.head.rotation.x = Math.sin(t * 1.3) * deg2;
+        w.head.rotation.y = Math.sin(t * 0.65 + ph) * 0.09;
+      }
+      if (w.torso) w.torso.rotation.x = 0.12 + Math.sin(t * 0.7) * deg1;
+      if (w.armL) w.armL.rotation.x = -0.5 + Math.sin(t * 8.0 + ph) * 0.08;
+      if (w.armR) w.armR.rotation.x = -0.48 + Math.sin(t * 8.0 + 0.9 + ph) * 0.08;
+    }
+  }
+}
+
 /* —— Loop —— */
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, clock.getDelta());
   postUniforms.uTime.value = clock.elapsedTime;
 
-  if (G.phase === "walk") updateWalk(dt);
-  else if (G.phase === "sit") updateSit(dt);
+  const t = clock.elapsedTime;
+  if (G.phase === "walk") {
+    updateWalk(dt);
+    updateFarmFidget(t);
+  } else if (G.phase === "sit") updateSit(dt);
   else if (G.phase === "seated") updateSeated(dt);
   else if (G.phase === "title" || G.phase === "boot" || G.phase === "ending") {
     // ambient orbit peek
-    const t = clock.elapsedTime;
     camera.position.set(Math.sin(t * 0.15) * 0.4 + 0.8, 1.6, 2.8);
     camera.lookAt(0, 1.0, -0.5);
     win95.render();
     crtTex.needsUpdate = true;
+    updateFarmFidget(t);
   }
 
   if (win95.state.sanity < 25) {

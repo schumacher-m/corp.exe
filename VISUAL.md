@@ -41,7 +41,7 @@ Babylon / PlayCanvas only if you need an editor — not required for v1.
 
 ## Assets (v1) — load from box paths
 
-All under `/workspace/corp-html/assets/`. Regenerator: `assets/build_ps1_assets.py`.
+All under `/workspace/corp-html/assets/`. Regenerators: `assets/build_ps1_assets.py`, farm extras `assets/build_neighbor_assets.py`.
 
 | File | Tris (approx) | Role |
 |------|----------------|------|
@@ -57,6 +57,11 @@ All under `/workspace/corp-html/assets/`. Regenerator: `assets/build_ps1_assets.
 | `models/prop_stickies.glb` | 36 | Sticky stack |
 | `models/prop_dead_plant.glb` | 48 | Dead plant |
 | `models/prop_ticket.glb` | 12 | Yellow ticket sticker |
+| `models/neighbor_bay.glb` | ~110 | Dense-farm bay + chunky CRT; empty `screen_face` |
+| `models/neighbor_crt.glb` | ~50 | Standalone chunky PS1 CRT; empty `screen_face` |
+| `models/crt_glow.glb` | 2 | Optional bright screen quad |
+| `models/worker_seated.glb` | ~96 | Seated clerk; empties `head`/`torso`/`arm_L`/`arm_R` |
+| `models/worker_seated_b.glb` | ~96 | Shirt/hair tint variant |
 
 Textures: `assets/textures/*.png` (16–64px, Bayer-dithered, embedded in GLBs too). Samplers already **NEAREST**.
 
@@ -72,6 +77,12 @@ Textures: `assets/textures/*.png` (16–64px, Bayer-dithered, embedded in GLBs t
 **`hands.glb`**
 - `left_wrist` `[-0.18, 0, 0]`
 - `right_wrist` `[0.18, 0, 0]`
+
+**`neighbor_bay.glb` / `neighbor_crt.glb`**
+- `screen_face` — screen center; Dev emissive / MeshBasic swap (see FARM.md)
+
+**`worker_seated.glb` / `worker_seated_b.glb`**
+- `head`, `torso`, `arm_L`, `arm_R` — fidget pivots (exact names)
 
 ### Suggested scene graph
 
@@ -109,4 +120,9 @@ Open `assets/preview/index.html` (Three.js CDN + GLTFLoader) to eyeball models. 
 
 ## Cubicle farm hellscape
 
-Dense packed grid + CRT emissive: see **`FARM.md`**. Neighbor asset: `assets/models/neighbor_bay.glb`. Pitch 2.2×2.6 m; hundreds of lit screens; brighter ambient/fog. Player cell keeps full cubicle + Win95 CRT.
+Dense packed grid + chunky CRT emissive + seated workers: see **`FARM.md`**.
+
+- Bay / CRT: `neighbor_bay.glb` or `neighbor_crt.glb` — MeshBasic/emissive on empty **`screen_face`**
+- Workers: `worker_seated.glb` (+ optional `worker_seated_b.glb`); empties **`head` / `torso` / `arm_L` / `arm_R`**; phase fidget by `hash(ix,iz)`
+- Pitch 2.2×2.6 m; ~270 instances — tris budget in FARM.md
+- Player cell keeps full cubicle + Win95 CRT

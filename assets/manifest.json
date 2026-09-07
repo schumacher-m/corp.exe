@@ -12,12 +12,15 @@
     "assets/models/kyle_bust.glb",
     "assets/models/mouse.glb",
     "assets/models/neighbor_bay.glb",
+    "assets/models/neighbor_crt.glb",
     "assets/models/prop_dead_plant.glb",
     "assets/models/prop_mug.glb",
     "assets/models/prop_stickies.glb",
     "assets/models/prop_ticket.glb",
     "assets/models/screen_quad.glb",
-    "assets/models/slack_panel.glb"
+    "assets/models/slack_panel.glb",
+    "assets/models/worker_seated.glb",
+    "assets/models/worker_seated_b.glb"
   ],
   "textures": [
     "assets/textures/crt.png",
@@ -73,6 +76,64 @@
         0.0,
         0.0
       ]
+    },
+    "assets/models/neighbor_bay.glb": {
+      "screen_face": [
+        0.0,
+        1.13,
+        -0.35000000000000003
+      ]
+    },
+    "assets/models/neighbor_crt.glb": {
+      "screen_face": [
+        0.0,
+        0.39,
+        0.2
+      ]
+    },
+    "assets/models/worker_seated.glb": {
+      "torso": [
+        0.0,
+        0.36,
+        -0.02
+      ],
+      "head": [
+        0.0,
+        0.68,
+        -0.02
+      ],
+      "arm_L": [
+        -0.24,
+        0.42,
+        0.02
+      ],
+      "arm_R": [
+        0.24,
+        0.42,
+        0.02
+      ]
+    },
+    "assets/models/worker_seated_b.glb": {
+      "torso": [
+        0.0,
+        0.36,
+        -0.02
+      ],
+      "head": [
+        0.0,
+        0.68,
+        -0.02
+      ],
+      "arm_L": [
+        -0.24,
+        0.42,
+        0.02
+      ],
+      "arm_R": [
+        0.24,
+        0.42,
+        0.02
+      ]
     }
   },
   "triangleCounts": {
@@ -83,13 +144,16 @@
     "assets/models/keyboard.glb": 72,
     "assets/models/kyle_bust.glb": 72,
     "assets/models/mouse.glb": 60,
-    "assets/models/neighbor_bay.glb": 74,
+    "assets/models/neighbor_bay.glb": 110,
+    "assets/models/neighbor_crt.glb": 50,
     "assets/models/prop_dead_plant.glb": 48,
     "assets/models/prop_mug.glb": 36,
     "assets/models/prop_stickies.glb": 36,
     "assets/models/prop_ticket.glb": 12,
     "assets/models/screen_quad.glb": 12,
-    "assets/models/slack_panel.glb": 48
+    "assets/models/slack_panel.glb": 48,
+    "assets/models/worker_seated.glb": 96,
+    "assets/models/worker_seated_b.glb": 96
   },
   "loadHint": "THREE.GLTFLoader; traverse and force material.map.magFilter/minFilter = NearestFilter; generateMipmaps=false; bind Win95 canvas to screen_anchor / screen_quad"
 }
