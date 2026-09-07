@@ -954,19 +954,9 @@ function stopSlackNoise() {
 }
 
 async function runBoot() {
-  G.phase = "boot";
-  showScreen("screen-title");
-  $("screen-title").classList.remove("active");
+  // BIOS overlay removed — Michael found it distracting; go straight into the farm.
   const boot = $("boot-overlay");
-  boot.classList.add("show");
-  const lines = copy.boot?.biosLines || ["HelixStack BIOS", "Cubicle 4-B", "OK"];
-  boot.textContent = "";
-  for (const ln of lines) {
-    boot.textContent += ln + "\n";
-    await new Promise((r) => setTimeout(r, 180));
-  }
-  await new Promise((r) => setTimeout(r, 400));
-  boot.classList.remove("show");
+  if (boot) boot.classList.remove("show");
   showScreen("screen-title");
   $("screen-title").classList.remove("active");
   G.phase = "walk";
