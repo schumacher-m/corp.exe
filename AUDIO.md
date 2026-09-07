@@ -25,9 +25,11 @@ Crossfade or equal-power fade (~400–800 ms) when switching phase. Keep BGM qui
 
 | File | Phase / when | Loop | Notes |
 |------|----------------|------|-------|
-| `audio/bgm-cubicle-walk.ogg` | **Cubicle walk** — empty office roam before sitting | Yes | HVAC drone, fluorescent hum, distant printer chatter, sparse lonely notes. ~72 s. |
-| `audio/bgm-seated-desktop.ogg` | **Seated desktop** — the daily grind / coding loop | Yes | Muted, repetitive, slightly detuned / off-kilter tracker ostinato. ~68 s. |
-| `audio/bgm-pr-fight.ogg` | **PR fight / minigames** — review combat, tense tasks | Yes | Slightly more tense cheap tracker; still not cinematic. ~64 s. |
+| `audio/bgm-cubicle-walk.ogg` | **Cubicle walk** — empty office roam before sitting | Yes | HVAC/fluorescent bed + **shifting minor pads** (chord/root every ~12 bars), sparse lonely notes that follow the root, soft lo-fi perc that morphs. Lonelier. ~76 s. |
+| `audio/bgm-seated-desktop.ogg` | **Seated desktop** — the daily grind / coding loop | Yes | Repetitive tracker ostinato with **root drift** every 8 bars, layered pad bed, kick/hat pattern banks that change over the loop — drifting / a little wrong. ~72 s. |
+| `audio/bgm-pr-fight.ogg` | **PR fight / minigames** — review combat, tense tasks | Yes | Tenser cheap tracker + **chord pressure** (Am→Bb→Am→Gm), denser perc in the back half; still not cinematic. ~68 s. |
+
+**BGM movement (2026-09):** Beds are no longer static drones — subtle chord/root shifts every 8–16 bars, light percussion variation, and evolving melodic layers. Filenames and Dev wiring keys unchanged.
 
 Suggested hook:
 
