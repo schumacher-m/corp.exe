@@ -481,9 +481,9 @@ function updateWalk(dt) {
     const rz = -Math.sin(ang);
     player.pos.x += (fx * forward + rx * strafe) * player.speed * dt;
     player.pos.z += (fz * forward + rz * strafe) * player.speed * dt;
-    // soft bounds — match dense 7×5 @ 2.5m farm
-    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -7.5, 7.5);
-    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -4.5, 6.0);
+    // soft bounds — FARM.md hellscape (−10…+10 / −8…+4) with margin
+    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -10.5, 10.5);
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -8.5, 5.0);
     footAcc += dt;
     if (footAcc > 0.38) {
       footAcc = 0;
