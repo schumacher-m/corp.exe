@@ -185,6 +185,9 @@ export function createWin95(copy, hooks) {
     emailQueue: [],
     emailCooldown: EMAIL_MIN + Math.random() * (EMAIL_MAX - EMAIL_MIN),
     emailEnabled: false,
+    incidentPagerCd: 45 + Math.random() * 45, // first soft window 45–90s
+    incidentPagerCooldown: 0,
+    incidentFromPager: false,
     // Appear Active
     presence: "active", // active | yellow | away
     idleAcc: 0,
@@ -1435,32 +1438,7 @@ export function createWin95(copy, hooks) {
         buttons,
       };
     } else if (type === "incident") {
-      const S = ticketStrings.incident || {};
-      const assignees = S.assignees || [
-        "Kyle (Platform)",
-        "Jimbo (AI)",
-        "Intern",
-        "On-Call Roulette",
-        "The fog",
-        "Future me",
-      ];
-      state.stub = {
-        kind: "incident",
-        monitorOff: false,
-        assignee: null,
-        assignees,
-        toastDisable: S.toastDisable || "Monitor disabled. Outage: unobserved.",
-        toastAssign: S.toastAssign || "Ownership transferred. You are a professional.",
-        toastFix: S.toastFix || "Heroism rejected. Try negligence.",
-        toast: S.toast || "Incident owned by someone else. Monitor: off. Career: intact.",
-        toastSelf: S.toastSelf || "Cannot assign to yourself. That would be accountability.",
-      };
-      state.modal = {
-        title: S.windowTitle || "HelixStack Incident — Sev0 (Probably)",
-        body: incidentBody(S),
-        kind: "incidentTicket",
-        buttons: incidentButtons(S),
-      };
+      openIncident({ fromTicket: true, headline: pick(incidentHeadlines()) });
     } else if (type === "filler") {
       state.stub = { kind: "filler" };
       state.modal = {
@@ -1907,6 +1885,28 @@ export function createWin95(copy, hooks) {
         if (mail) queueOrDeliver(mail);
       }
     }
+
+    // Random incident pager (GD incidents.md) — never stacks two modals
+    if (state.incidentPagerCooldown > 0) state.incidentPagerCooldown -= dt;
+    if (
+      state.emailEnabled &&
+      !state.modal &&
+      !state.presenceForced &&
+      !minigameFocused() &&
+      state.incidentPagerCooldown <= 0
+    ) {
+      state.incidentPagerCd -= dt;
+      if (state.incidentPagerCd <= 0) {
+        state.incidentPagerCd = 40; // check cadence
+        // Soft: can fire before first close (lower chance); denser after ≥1 ticket
+        const chance = (state.closedCount || 0) >= 1 ? 0.15 : 0.08;
+        if (Math.random() < chance) {
+          openIncident({ fromTicket: false });
+          state.incidentPagerCooldown = 90;
+          state.incidentPagerCd = 40 + Math.random() * 20;
+        }
+      }
+    }
     flushEmailQueue();
     // keep unread floor
     state.unread = Math.max(emailCopy.unreadFloor || 1, unreadCount());
@@ -1917,6 +1917,8 @@ export function createWin95(copy, hooks) {
     state.idleAcc = 0;
     state.presence = "active";
     state.emailCooldown = 8 + Math.random() * 6;
+    state.incidentPagerCd = 45 + Math.random() * 45;
+    state.incidentPagerCooldown = 0;
   }
 
   function onPointerMove(nx, ny) {
@@ -2091,14 +2093,105 @@ export function createWin95(copy, hooks) {
   }
 
 
-  function incidentBody(S) {
+  function incidentHeadlines() {
+    const S = ticketStrings.incident || {};
+    const fromCopy = S.headlines || S.incidentHeadlines || copy.incident?.headlines;
+    if (fromCopy?.length) return fromCopy;
+    return [
+      "Checkout is returning HTTP 500 (spiritually).",
+      "Latency p99 discovered feelings.",
+      "The fog merged to prod.",
+      "Customers can still click. This is bad.",
+      "PagerDuty loves you specifically.",
+      "Error budget filed for emotional damages.",
+      "The status page is also down. Synergy.",
+      "Someone restarted prod with feelings.",
+    ];
+  }
+
+  /** Shared by board ticket HELIX-5201 and random pager interrupt. */
+  function openIncident({ headline, fromTicket } = {}) {
+    const S = ticketStrings.incident || copy.incident || {};
+    const assignees = S.assignees || [
+      "Kyle (Platform)",
+      "Jimbo (AI)",
+      "Facilities (myth)",
+      "On-call rotation (ghost)",
+      "The fog",
+      "Future me",
+    ];
+    const blurb = headline || pick(incidentHeadlines()) || "Production is on fire (citation needed).";
+    state.incidentFromPager = !fromTicket;
+    if (fromTicket) {
+      // keep activeTicket; phase already set by openTicket
+    } else {
+      state.activeTicket = {
+        id: "HELIX-5201",
+        title: S.ticket?.title || "P0: Something is On Fire",
+        pts: 4,
+        type: "incident",
+        mechanic: "incident",
+        uid: makeUid(),
+        dod: S.ticket?.dod || "Disable monitor + assign away. Do not fix prod.",
+        meta: "Pager · Interrupt",
+        toast: S.ticket?.toast || S.toast,
+      };
+      state.phase = "incident";
+      state.jimboUsedThisTicket = false;
+      delete state.jimboSabotaged.incident;
+      state.pendingFinish = null;
+    }
+    state.stub = {
+      kind: "incident",
+      monitorOff: false,
+      assignee: null,
+      pickingAssign: false,
+      assignees,
+      headline: blurb,
+      toastDisable: S.toastDisable || pick(S.toasts?.monitorOff) || "Monitor disabled. Outage: unobserved.",
+      toastAssign: S.toastAssign || pick(S.toasts?.assigned) || "Ownership transferred. You are a professional.",
+      toastFix: S.toastFix || pick(S.toasts?.fixTrap) || "Heroism rejected. Try negligence.",
+      toast: S.toast || S.ticket?.toast || "Incident owned by someone who isn't you.",
+      toastSelf: S.toastSelf || "Cannot assign to yourself. That would be accountability.",
+    };
+    state.modal = {
+      title: S.windowTitle || "HelixStack Incident — Sev0 (Probably)",
+      body: incidentBody(S),
+      kind: "incidentTicket",
+      buttons: incidentButtons(S),
+    };
+    // Slack page noise
+    const pages = S.slackPages || copy.incident?.slackPages;
+    if (pages?.length && state.slackMsgs) {
+      const m = pick(pages);
+      if (m) {
+        state.slackMsgs.unshift({ name: m.name, color: m.color || "#a05030", text: m.text });
+        if (state.slackMsgs.length > 12) state.slackMsgs.length = 12;
+      }
+    }
+    audio.playSfx("error", { volume: 0.45 }); // tired pager-ish
+    toast(pick(S.toasts?.page) || "You have been paged. Congrats.");
+    return state.stub;
+  }
+
+    function incidentBody(S) {
     const st = state.stub;
     const mon = st?.monitorOff ? "Observability: Off" : "Observability: On (dangerous)";
     const who = st?.assignee ? `Owner: ${st.assignee}` : "Owner: you (unfortunate)";
+    const head = st?.headline ? `● LIVE  ${st.headline}
+
+` : "";
     const base =
       S.body ||
-      "Production is on fire (citation needed).\n\nPro moves (both required):\n1) Disable monitor\n2) Assign to somebody else\n\nDo not fix it.";
-    return `${base}\n\n${mon}\n${who}`;
+      "Pro moves (both required):
+1) Disable monitor
+2) Assign to somebody else
+
+Do not fix it.";
+    return `${head}${base}
+
+${mon}
+${who}`;
   }
 
   function incidentButtons(S) {
@@ -2110,7 +2203,8 @@ export function createWin95(copy, hooks) {
     if (!st?.assignee || /\byou\b/i.test(String(st.assignee))) {
       // picking phase: show assignee chips
       if (st?.pickingAssign) {
-        for (const name of st.assignees || []) {
+        for (const a of st.assignees || []) {
+          const name = typeof a === "string" ? a : (a.label || a.id || "Someone");
           btns.push({ label: name, action: "incidentAssignTo:" + name });
         }
         btns.push({ label: "Back", action: "incidentAssignBack" });
@@ -2139,7 +2233,7 @@ export function createWin95(copy, hooks) {
     if (!st || st.kind !== "incident") return false;
     if (!st.monitorOff || !st.assignee || /\byou\b/i.test(String(st.assignee))) return false;
     state.modal = null;
-    requestFinish({ toastMsg: st.toast || "Incident owned by someone else. Monitor: off.", sanHit: 2 });
+    requestFinish({ toastMsg: st.toast || "Incident owned by someone who isn't you.", sanHit: 3 });
     return true;
   }
 

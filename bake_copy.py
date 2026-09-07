@@ -125,6 +125,38 @@ if "Jimbo" not in labels:
 if "Inbox" not in labels:
     items.insert(1, {"label": "Inbox", "id": "inbox"})
 
+
+# Incident meme (Writer incident.md)
+inc_path = COPY / "incident.md"
+if inc_path.exists():
+    inc = fence(inc_path)
+    data["incident"] = inc
+    # Merge ticketStrings.incident + ticket into pool
+    ts = data.setdefault("ticketStrings", {})
+    strings = dict(ts.get("incident") or {})
+    if isinstance(inc, dict):
+        for k in ("windowTitle", "body", "disableLabel", "assignLabel", "fixLabel", "submitLabel",
+                  "toast", "toastDisable", "toastAssign", "toastFix", "toastSelf", "assignees",
+                  "headlines", "toasts", "slackPages"):
+            if k in inc:
+                strings[k] = inc[k]
+        if "strings" in inc and isinstance(inc["strings"], dict):
+            strings.update(inc["strings"])
+        ts["incident"] = strings
+        sab = data.setdefault("jimbo", {}).setdefault("sabotage", {})
+        if inc.get("sabotage"):
+            sab["incident"] = inc["sabotage"] if isinstance(inc["sabotage"], list) else inc.get("sabotage", {}).get("incident") or sab.get("incident")
+        if isinstance(inc.get("sabotage"), dict) and inc["sabotage"].get("incident"):
+            sab["incident"] = inc["sabotage"]["incident"]
+        ticket = inc.get("ticket")
+        if ticket and ticket.get("type") == "incident":
+            pool = {t.get("id"): t for t in (data.get("ticketPool") or [])}
+            pool[ticket["id"]] = ticket
+            data["ticketPool"] = list(pool.values())
+            tickets = [t for t in (data.get("tickets") or []) if t.get("type") != "incident"]
+            # keep cores; incident stays in pool for refill
+            data["tickets"] = tickets
+
 (ROOT / "copy-data.js").write_text(
     "/* Auto-baked from copy/*.md — re-run bake_copy.py */\nexport default "
     + json.dumps(data, indent=2, ensure_ascii=False)

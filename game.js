@@ -3,9 +3,14 @@
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import copy from "./copy-data.js";
 import { createWin95, W as CRT_W, H as CRT_H } from "./win95.js";
 import * as audio from "./audio.js";
+let copy = { boot: { clockInButton: "CLOCK IN" }, tickets: [], ticketPool: [] };
+try {
+  copy = (await import("./copy-data.js")).default || copy;
+} catch (e) {
+  console.error("[corp.exe] copy-data failed", e);
+}
 /* exhausted bed: audio.startExhaustedBed / stopExhaustedBed */
 
 const $ = (id) => document.getElementById(id);
