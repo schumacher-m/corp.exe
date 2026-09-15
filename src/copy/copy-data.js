@@ -643,7 +643,11 @@ export default {
         "id": "tickets"
       },
       {
-        "label": "Inbox",
+        "label": "Sync",
+        "id": "teams"
+      },
+      {
+        "label": "Mail",
         "id": "inbox"
       },
       {

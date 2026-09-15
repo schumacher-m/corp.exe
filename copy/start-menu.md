@@ -6,7 +6,8 @@
   "items": [
     {"label": "Jimbo", "id": "jimbo"},
     {"label": "Tracker", "id": "tickets"},
-    {"label": "Inbox", "id": "inbox"},
+    {"label": "Sync", "id": "teams"},
+    {"label": "Mail", "id": "inbox"},
     {"label": "Jimbo Mouse Jiggler", "id": "jiggler"},
     {"label": "timesheet.xls", "id": "timesheet"},
     {"label": "Programs", "submenu": ["corp.exe", "InsightBot", "Solitaire (blocked by policy)", "Notepad (for feelings)"]},

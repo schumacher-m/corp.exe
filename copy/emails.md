@@ -3,8 +3,8 @@
 
 ```json
 {
-  "inboxTitle": "Inbox -- Mail",
-  "desktopLabel": "Inbox",
+  "inboxTitle": "Mail",
+  "desktopLabel": "Mail",
   "unreadFloor": 1,
   "messages": [
     {

@@ -61,6 +61,12 @@ export function installWindow(d) {
       d.ctx.font = "bold 9px Tahoma, 'MS Sans Serif', sans-serif";
       d.ctx.textBaseline = "middle";
       d.ctx.fillText(win.title.slice(0, 24), win.x + 20, win.y + 10);
+    } else if (win.id === "tickets" && d.imgReady(d.imgs.tr16)) {
+      d.ctx.drawImage(d.imgs.tr16, win.x + 5, win.y + 4, 12, 12);
+      d.ctx.fillStyle = d.C.inv;
+      d.ctx.font = "bold 9px Tahoma, 'MS Sans Serif', sans-serif";
+      d.ctx.textBaseline = "middle";
+      d.ctx.fillText(win.title.slice(0, 24), win.x + 20, win.y + 10);
     } else if (win.id === "slack" && d.imgReady(d.imgs.t16)) {
       // optional purple title for Sync
       d.ctx.fillStyle = d.C.teams;

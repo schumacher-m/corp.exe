@@ -92,10 +92,19 @@ export function installDesktopShell(d) {
         } else if (d.imgReady(d.imgs.t48)) {
           d.ctx.drawImage(d.imgs.t48, bx + 4, by, 40, 40);
         } else {
-          // Unbranded Sync tile (no trademark lettermark)
+          // Unbranded Sync tile: chat bubble + handset cue (no letter T)
           d.bevelRaised(bx + 8, by + 2, 28, 30, d.C.teams);
+          d.ctx.fillStyle = d.C.inv;
+          d.ctx.fillRect(bx + 12, by + 8, 16, 12);
+          d.ctx.beginPath();
+          d.ctx.moveTo(bx + 14, by + 20);
+          d.ctx.lineTo(bx + 18, by + 20);
+          d.ctx.lineTo(bx + 12, by + 26);
+          d.ctx.closePath();
+          d.ctx.fill();
           d.ctx.fillStyle = d.C.teamsHi;
-          d.ctx.fillRect(bx + 14, by + 10, 16, 12);
+          d.ctx.fillRect(bx + 26, by + 22, 6, 3);
+          d.ctx.fillRect(bx + 28, by + 25, 6, 3);
         }
       } else if (ic.id === "jiggler") {
         if (d.imgReady(d.imgs.jig32)) d.ctx.drawImage(d.imgs.jig32, bx + 8, by, 32, 32);
@@ -506,7 +515,7 @@ export function installDesktopShell(d) {
     } else if (id === "tickets" || /ticket|tracker/i.test(label)) {
       d.wins.tickets.open = true;
       d.raise("tickets");
-    } else if (id === "slack" || id === "teams" || /slack|teams/i.test(label)) {
+    } else if (id === "slack" || id === "teams" || /slack|teams|sync/i.test(label)) {
       d.wins.slack.open = true;
       d.wins.slack.title = d.teamsCopy.windowTitle || d.wins.slack.title;
       d.raise("slack");
