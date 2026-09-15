@@ -141,12 +141,13 @@ Jiggler is intentionally quieter than Away (−12 dBFS) — almost subliminal. P
 | File | When | Loop | Suggested key | Vol |
 |------|------|------|---------------|-----|
 | `audio/sfx-teams-ring.wav` | Incoming call overlay (~8–12s ring) | Yes (`playLoop`) | `teamsRing` | 0.4 |
-| `audio/sfx-muffled-call.ogg` | Connected call bed under UI — **no intelligible speech** | Yes | `muffledCall` | 0.25–0.35 |
+| `audio/sfx-muffled-call.ogg` | Connected call bed — **Sims-style babble** (nonsense vowels, talking cadence; **zero real words**) | Yes | `muffledCall` | 0.25–0.35 |
 | `audio/sfx-call-accept.wav` | Accept button | No | `callAccept` | 0.55 |
 | `audio/sfx-call-decline.wav` | Decline / ring timeout | No | `callDecline` | 0.5 |
 | `audio/sfx-teams-ping.wav` | Teams chat spam (replaces / aliases Slack ping) | No | `teamsPing` | 0.4 |
 
-Helpers in `audio.js`: `playLoop(name)` / `stopLoop(name)` / `stopAllLoops()`. Stop ring on Accept/Decline; start muffled on Accept; stop muffled on hang-up. Keep or map old `slack` → `teamsPing` for chat.
+Helpers in `audio.js`: `playLoop(name)` / `stopLoop(name)` / `stopAllLoops()`.
+Babble bed is original formant synth (not sampled speech / not copyrighted Sims audio). Path unchanged so Dev needs no rewiring. Stop ring on Accept/Decline; start muffled on Accept; stop muffled on hang-up. Keep or map old `slack` → `teamsPing` for chat.
 
 
 ### Outlook Theater (optional)
