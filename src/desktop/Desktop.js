@@ -20,6 +20,7 @@ import {
   JIGGLER_AUDIT_SPAN,
   EMAIL_MIN,
   EMAIL_MAX,
+  DAY_GRACE,
   Presence,
 } from "../util/constants.js";
 
@@ -66,6 +67,7 @@ export function createDesktop(copy, hooks) {
     JIGGLER_AUDIT_SPAN,
     EMAIL_MIN,
     EMAIL_MAX,
+    DAY_GRACE,
     Presence,
     pick,
     loadImg,

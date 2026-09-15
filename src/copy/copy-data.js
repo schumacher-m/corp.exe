@@ -639,6 +639,10 @@ export default {
         "id": "jimbo"
       },
       {
+        "label": "Inbox",
+        "id": "inbox"
+      },
+      {
         "label": "Tracker",
         "id": "tickets"
       },
@@ -1027,7 +1031,8 @@ export default {
         "force": true
       }
     ],
-    "_writerNote": "Writer: doom=true unsolicited popups; presence/force=Away mandatory mail."
+    "_writerNote": "Writer: doom=true unsolicited popups; presence/force=Away mandatory mail.",
+    "mailWaitingToast": "Mail waiting..."
   },
   "presence": {
     "badgeLabels": {
@@ -1081,6 +1086,7 @@ export default {
     ],
     "pickerTitle": "Set status",
     "pickerToast": "Status updated. InsightBot has opinions.",
+    "presenceYellowToast": "Still there?",
     "jiggler": {
       "menuLabel": "Jimbo Mouse Jiggler",
       "menuHint": "Stay Active. Lose Sanity. Win nothing.",

@@ -13,6 +13,7 @@ export function installTeamsApp(d) {
     if (d.callBusy()) return false;
     if (d.state.presenceForced) return false;
     if (d.state.timesheetGateOpen) return false;
+    if (d.interruptShielded()) return false;
     if (d.state.modal && d.state.modal.kind === "presence") return false;
     if (d.state.modal && d.state.modal.kind === "hr") return false;
     return true;

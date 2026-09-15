@@ -182,19 +182,20 @@ def wav_to_ogg(wav_path: Path, ogg_path: Path, bitrate="96k"):
 
 
 def make_loopable(x, fade_ms=80, sr=SR):
-    """Crossfade start/end so loop has no click; match drone energy."""
+    """Crossfade tail into head so HTMLAudio loop (last→first) has no click."""
     n = int(sr * fade_ms / 1000)
     if n < 2 or len(x) < 2 * n:
         return fade_edges(x, 5, sr)
     y = x.copy()
-    # equal-power-ish crossfade of tail into head
-    fade_out = np.linspace(1, 0, n)
-    fade_in = np.linspace(0, 1, n)
-    head = y[:n].copy()
-    tail = y[-n:].copy()
-    blended = tail * fade_out + head * fade_in
-    y[-n:] = blended
-    y[:n] = blended
+    # equal-power crossfade: only rewrite the TAIL so y[-1] ≈ y[0] when
+    # head/tail already share musical phase (motif-aligned beds).
+    fade_out = np.sqrt(np.linspace(1, 0, n))
+    fade_in = np.sqrt(np.linspace(0, 1, n))
+    y[-n:] = y[-n:] * fade_out + y[:n] * fade_in
+    # force exact endpoint match (removes single-sample tick after encode)
+    y[-1] = y[0]
+    if n > 2:
+        y[-2] = 0.5 * y[-2] + 0.5 * y[1]
     return y
 
 
@@ -226,6 +227,43 @@ def fluorescent_hum(n, sr=SR):
     )
     buzz = one_pole_lp(buzz, 900, sr)
     flicker = 0.9 + 0.1 * sine(0.23, n, sr) + 0.05 * sine(2.1, n, sr)
+    return buzz * flicker * 0.12
+
+
+
+def _loop_lfo(cycles, n, sr=SR, phase=0.0):
+    """LFO that completes an integer number of cycles over n samples (seamless)."""
+    t = np.arange(n) / sr
+    dur = n / sr
+    freq = cycles / dur
+    return np.sin(2 * math.pi * freq * t + phase)
+
+
+def hvac_drone_loop(n, sr=SR):
+    """HVAC / fluorescent rumble with LFOs phase-locked to buffer length."""
+    base = (
+        0.35 * sine(58.5, n, sr)
+        + 0.22 * sine(117.0, n, sr, phase=0.4)
+        + 0.12 * sine(176.0, n, sr, phase=1.1)
+        + 0.08 * sine(41.0, n, sr)
+    )
+    lfo = 0.85 + 0.15 * _loop_lfo(4, n, sr)          # 4 slow breaths per loop
+    hum = 0.06 * sine(120.0, n, sr) * (0.5 + 0.5 * _loop_lfo(6, n, sr, phase=0.3))
+    air = one_pole_lp(noise(n, "brown"), 180, sr) * 0.08
+    # soften air at edges so noise isn't a seam tell
+    air = make_loopable(air, fade_ms=200, sr=sr)
+    return (base * lfo + hum + air) * 0.55
+
+
+def fluorescent_hum_loop(n, sr=SR):
+    """Ballast buzz with flicker LFO locked to loop length."""
+    buzz = (
+        0.4 * square(119.3, n, sr, duty=0.48)
+        + 0.25 * square(120.7, n, sr, duty=0.52)
+        + 0.15 * sine(240.0, n, sr)
+    )
+    buzz = one_pole_lp(buzz, 900, sr)
+    flicker = 0.9 + 0.1 * _loop_lfo(8, n, sr) + 0.05 * _loop_lfo(32, n, sr, phase=1.0)
     return buzz * flicker * 0.12
 
 
@@ -274,157 +312,337 @@ def sparse_lonely_notes(n, sr=SR):
     return one_pole_lp(out, 3200, sr)
 
 
-def grind_loop_motif(n, sr=SR):
-    """Repetitive off-kilter desktop grind — tracker feel."""
-    # slightly wrong BPM (~92.3 instead of 92)
-    bpm = 92.3
-    beat = 60.0 / bpm
-    out = np.zeros(n)
-    # 4-note ostinato, last note flat
-    pattern = [196.0, 233.08, 261.63, 246.94]  # G A# C B(wrong)
-    i = 0
-    t = 0.0
-    while int(t * sr) < n:
-        f = pattern[i % 4]
-        # every 8th cycle, detune more
-        if (i // 4) % 8 == 7:
-            f *= 0.97
-        dur = int(beat * 0.85 * sr)
-        start = int(t * sr)
-        if start + dur > n:
-            break
-        wave_ = 0.5 * square(f, dur, sr, duty=0.4) + 0.3 * triangle(f * 0.5, dur, sr)
-        wave_ = bitcrush(downsample_upsample(wave_, 3), bits=10)
-        e = env_adsr(dur, 0.005, 0.08, 0.4, 0.15, sr)
-        # soft pulse bass every 2 beats
-        if i % 2 == 0:
-            bass = soft_limit(sine(f / 4, dur, sr) * env_adsr(dur, 0.01, 0.1, 0.5, 0.2, sr)) * 0.25
-            out[start : start + dur] += bass
-        out[start : start + dur] += wave_ * e * 0.14
-        # ghost hihat tick
-        if i % 2 == 1:
-            tick_n = min(400, dur)
-            tick = one_pole_hp(noise(tick_n), 4000, sr) * env_adsr(tick_n, 0.001, 0.01, 0.1, 0.03, sr) * 0.04
-            out[start : start + tick_n] += tick
-        i += 1
-        t += beat
-    # add muted wrong chord pad underneath
-    pad = (
-        0.08 * sine(98.0, n, sr)
-        + 0.06 * sine(146.5, n, sr)  # slightly flat
-        + 0.05 * sine(195.5, n, sr)
-    )
-    pad *= 0.7 + 0.3 * sine(0.05, n, sr)
-    pad = bitcrush(pad, bits=11)
-    return one_pole_lp(out + pad * 0.35, 4800, sr)
+def note_hz(midi):
+    """MIDI note number → Hz (A4=440)."""
+    return 440.0 * (2.0 ** ((midi - 69) / 12.0))
 
 
-def tense_tracker_motif(n, sr=SR):
-    """PR fight — slightly more tense, still cheap tracker."""
-    bpm = 118.0
-    beat = 60.0 / bpm
+def tracker_note(freq, n, sr=SR, kind="square", duty=0.4, crush_bits=10, rate_div=3):
+    """Cheap PS1/tracker voice: square/triangle/saw + bitcrush."""
+    if n <= 0:
+        return np.zeros(0)
+    if kind == "square":
+        raw = 0.55 * square(freq, n, sr, duty=duty) + 0.25 * triangle(freq * 0.5, n, sr)
+    elif kind == "triangle":
+        raw = 0.65 * triangle(freq, n, sr) + 0.2 * sine(freq * 2.002, n, sr)
+    elif kind == "saw":
+        raw = 0.45 * saw(freq, n, sr) + 0.25 * square(freq * 0.997, n, sr, duty=0.35)
+    else:
+        raw = sine(freq, n, sr)
+    raw = bitcrush(downsample_upsample(raw, max(1, rate_div)), bits=crush_bits)
+    return raw
+
+
+def place(buf, start, sig, gain=1.0):
+    """Add sig into buf at start, clipped to buffer length."""
+    if start >= len(buf) or len(sig) == 0:
+        return
+    end = min(len(buf), start + len(sig))
+    buf[start:end] += sig[: end - start] * gain
+
+
+def printer_tick(n, sr=SR, bright=1.0):
+    """Single printer-ish mechanical click (short)."""
+    click = one_pole_hp(noise(n), 3500, sr) * env_adsr(n, 0.0004, 0.008, 0.12, 0.025, sr)
+    click += square(RNG.uniform(1100, 1700), n, sr, duty=0.3) * env_adsr(
+        n, 0.0003, 0.006, 0.1, 0.02, sr
+    ) * 0.25
+    return one_pole_lp(click, 4500, sr) * 0.045 * bright
+
+
+def grind_loop_motif(n, sr=SR, bpm=90.0, density=1.0, tense=False):
+    """
+    Multi-bar depressing tracker ostinato (shared palette A-minor-ish + wrong notes).
+    density < 1 sparsifies (walk); tense=True speeds feel / adds dissonance (PR).
+    Motif is exactly 8 bars of 4/4; caller should size n to an integer number of motifs.
+    """
+    beat_n = int(round(sr * 60.0 / bpm))
+    bar_n = beat_n * 4
+    motif_n = bar_n * 8  # 32 beats
     out = np.zeros(n)
-    # ascending anxiety riff with wrong step
-    notes = [130.81, 155.56, 185.0, 196.0, 233.08, 220.0]  # climb then drop wrong
-    i = 0
-    t = 0.0
-    while int(t * sr) < n:
-        f = notes[i % len(notes)]
-        dur = int(beat * 0.55 * sr)
-        start = int(t * sr)
-        if start + dur > n:
+
+    # Shared key center: A minor with a "wrong" B-natural / flat-fifth color
+    # MIDI: A2=45, C3=48, E3=52, G3=55, Bb3=58, B3=59, C4=60, D4=62, E4=64
+    ostinato = [
+        # bar 0: hypnotic 4-note grind — last note is the wrong B
+        [55, 58, 60, 59],
+        # bar 1: same, slightly delayed last tick handled in timing
+        [55, 58, 60, 59],
+        # bar 2: drop then climb
+        [52, 55, 58, 57],  # E G Bb A(wrong landing flat)
+        [52, 55, 58, 57],
+        # bar 4–5: thinner mid register echo
+        [60, 58, 55, 58],
+        [60, 58, 55, 59],  # ends on wrong B again
+        # bar 6–7: sparse hold / ghost
+        [55, None, 58, None],
+        [52, None, 55, 59],
+    ]
+    if tense:
+        # busier / more dissonant intervals (tritone hops)
+        ostinato = [
+            [55, 61, 60, 59],  # G C# C B — sick
+            [55, 61, 60, 59],
+            [52, 58, 61, 57],
+            [52, 58, 61, 57],
+            [60, 61, 55, 58],
+            [60, 61, 55, 59],
+            [55, 58, 61, None],
+            [52, 61, 55, 59],
+        ]
+
+    # Bass root pattern (every 2–4 beats), octave below
+    bass_pat = [33, None, 33, None, 31, None, 33, None]  # A2 / G2 pulse over 8 beats, tiled
+    if tense:
+        bass_pat = [33, 33, 31, 33, 33, 36, 31, 33]  # busier
+
+    # Swing: slightly late off-beats (tracker humanize / sick feel)
+    swing = 0.07 if not tense else 0.04  # fraction of beat
+
+    num_motifs = max(1, int(np.ceil(n / motif_n)))
+    for m in range(num_motifs):
+        base = m * motif_n
+        if base >= n:
             break
-        lead = 0.45 * square(f, dur, sr, duty=0.35) + 0.2 * saw(f * 1.005, dur, sr)
-        lead = bitcrush(downsample_upsample(lead, 2), bits=9)
-        e = env_adsr(dur, 0.002, 0.05, 0.35, 0.12, sr)
-        out[start : start + dur] += lead * e * 0.16
-        # kick-ish thump on 1 and 3
-        if i % 4 == 0 or i % 4 == 2:
-            kn = min(int(0.12 * sr), dur)
-            # pitch drop
-            tt = np.arange(kn) / sr
-            kf = 90 * np.exp(-tt * 28)
-            kick = np.sin(2 * np.pi * np.cumsum(kf) / sr)
-            kick *= env_adsr(kn, 0.001, 0.04, 0.2, 0.05, sr)
-            out[start : start + kn] += kick * 0.22
-        # snare-ish noise on 2 and 4
-        if i % 4 == 1 or i % 4 == 3:
-            sn = min(int(0.08 * sr), dur)
-            snare = one_pole_hp(noise(sn), 2000, sr) * env_adsr(sn, 0.001, 0.02, 0.15, 0.04, sr)
-            out[start : start + sn] += snare * 0.09
+        # every other motif: micro-detune the whole pass (sick fluorescent pitch)
+        motif_detune = 1.0 + (0.006 if (m % 2 == 1) else 0.0)
+        if tense:
+            motif_detune *= 1.0 + 0.003 * ((m % 3) - 1)
+
+        for bar_i, notes in enumerate(ostinato):
+            for beat_i, midi in enumerate(notes):
+                # density: skip some notes for walk
+                if density < 1.0 and midi is not None:
+                    # keep downbeats and the wrong-note landings more often
+                    keep = (beat_i == 0) or (beat_i == 3) or (RNG.random() < density)
+                    if not keep:
+                        midi = None
+
+                beat_start = base + bar_i * bar_n + beat_i * beat_n
+                # off-kilter: push beats 1 and 3 a tick late
+                if beat_i in (1, 3):
+                    beat_start += int(beat_n * swing)
+                # every 8th bar cycle, delay the last note one extra tick
+                if bar_i == 7 and beat_i == 3:
+                    beat_start += int(beat_n * 0.12)
+
+                if midi is not None and beat_start < n:
+                    f = note_hz(midi) * motif_detune * RNG.uniform(0.998, 1.002)
+                    dur = int(beat_n * (0.72 if not tense else 0.55))
+                    if tense and beat_i % 2 == 0:
+                        dur = int(beat_n * 0.42)  # choppier
+                    kind = "square" if not tense else ("saw" if beat_i % 2 == 0 else "square")
+                    duty = 0.38 if not tense else 0.32
+                    wave_ = tracker_note(
+                        f, dur, sr, kind=kind, duty=duty,
+                        crush_bits=9 if tense else 10,
+                        rate_div=2 if tense else 3,
+                    )
+                    e = env_adsr(dur, 0.004, 0.07, 0.38, 0.14, sr)
+                    gain = 0.155 if not tense else 0.17
+                    if density < 0.7:
+                        gain *= 0.85
+                    place(out, beat_start, wave_ * e, gain)
+
+                # bass pulse on pattern
+                bp = bass_pat[(bar_i * 4 + beat_i) % len(bass_pat)]
+                if bp is not None and beat_start < n:
+                    # only every 2 beats when not tense, unless density low
+                    if tense or (beat_i % 2 == 0):
+                        bf = note_hz(bp) * motif_detune
+                        bdur = int(beat_n * (1.6 if not tense else 1.1))
+                        bass = soft_limit(
+                            sine(bf, bdur, sr) * env_adsr(bdur, 0.01, 0.12, 0.45, 0.25, sr)
+                        )
+                        # add quiet sub triangle for body
+                        bass += triangle(bf * 0.5, bdur, sr) * env_adsr(
+                            bdur, 0.02, 0.15, 0.35, 0.3, sr
+                        ) * 0.35
+                        place(out, beat_start, bass, 0.22 if not tense else 0.26)
+
+                # sparse high printer tick every bar (beat 0) or every 2 bars
+                tick_every = 1 if tense else 2
+                if beat_i == 0 and (bar_i % tick_every == 0) and beat_start < n:
+                    tn = min(int(0.04 * sr), beat_n // 4)
+                    place(out, beat_start + int(0.02 * sr), printer_tick(tn, sr, bright=1.1 if tense else 0.85), 1.0)
+                # ghost open-hat tick on offbeats (very quiet)
+                if beat_i == 2 and density > 0.5 and beat_start < n:
+                    tn = min(350, beat_n // 8)
+                    hat = one_pole_hp(noise(tn), 5000, sr) * env_adsr(
+                        tn, 0.0005, 0.008, 0.08, 0.02, sr
+                    )
+                    place(out, beat_start, hat, 0.028 if not tense else 0.04)
+
+        # pad chord under each motif (slightly flat fifth — sick)
+        pad_len = min(motif_n, n - base)
+        if pad_len > 0:
+            pad = (
+                0.07 * sine(note_hz(33) * motif_detune, pad_len, sr)  # A1
+                + 0.05 * sine(note_hz(36) * 0.995 * motif_detune, pad_len, sr)  # flat C
+                + 0.04 * sine(note_hz(40) * 0.992 * motif_detune, pad_len, sr)  # flat E / sick
+            )
+            if tense:
+                pad += 0.035 * sine(note_hz(39) * motif_detune, pad_len, sr)  # Eb — dissonant
+            pad *= 0.75 + 0.25 * sine(0.045, pad_len, sr)
+            pad = bitcrush(pad, bits=11)
+            place(out, base, pad, 0.55 if not tense else 0.65)
+
+    return one_pole_lp(out, 5200 if not tense else 5600, sr)
+
+
+def sparse_lonely_notes(n, sr=SR, bpm=90.0):
+    """Sparse detuned chiptune notes — same A-minor palette as the grind, lots of air."""
+    beat_n = int(round(sr * 60.0 / bpm))
+    # same scale as grind: A C E G Bb + wrong B
+    pool = [45, 48, 52, 55, 58, 59, 60, 64]  # A2…E4
+    out = np.zeros(n)
+    # place notes on a slow grid so loop math stays clean: every 4–8 beats
+    t = beat_n * 4  # start after one bar of air
+    step_beats = 6
+    i = 0
+    while t < n - beat_n * 2:
+        midi = pool[i % len(pool)]
+        # occasionally the wrong B
+        if i % 5 == 4:
+            midi = 59
+        f = note_hz(midi) * RNG.uniform(0.990, 1.008)
+        # sometimes drop an octave for loneliness
+        if i % 3 == 0:
+            f *= 0.5
+        dur = int(RNG.uniform(0.9, 2.2) * sr)
+        dur = min(dur, n - t)
+        tone = tracker_note(f, dur, sr, kind="triangle", crush_bits=9, rate_div=2)
+        e = env_adsr(dur, 0.08, 0.25, 0.3, 0.6, sr)
+        place(out, t, tone * e, RNG.uniform(0.07, 0.11))
+        # rare soft echo an octave up, delayed
+        if i % 4 == 2:
+            echo_at = t + int(0.35 * sr)
+            ed = int(0.5 * sr)
+            if echo_at + ed < n:
+                echo = tracker_note(f * 2.01, ed, sr, kind="triangle", crush_bits=11, rate_div=1)
         i += 1
-        t += beat * 0.5  # 8th notes
-    # tense drone bed
-    drone = (
-        0.1 * sine(55.0, n, sr)
-        + 0.07 * sine(82.5, n, sr)  # flat fifth-ish
-        + 0.05 * sine(110.3, n, sr)
-    )
-    drone *= 0.8 + 0.2 * sine(0.09, n, sr)
-    # occasional alarm-ish blip
-    for _ in range(6):
-        at = int(RNG.uniform(0.1, 0.9) * n)
-        bl = int(0.06 * sr)
-        if at + bl > n:
+        # advance 4, 6, or 8 beats — always on grid
+        step_beats = [4, 6, 8, 6, 8, 4][i % 6]
+        t += beat_n * step_beats
+    return one_pole_lp(out, 3000, sr)
+
+
+def distant_printer_bed(n, sr=SR, bpm=90.0):
+    """Loop-friendly distant printer chatter aligned to bar grid (not free RNG bursts only)."""
+    beat_n = int(round(sr * 60.0 / bpm))
+    bar_n = beat_n * 4
+    out = np.zeros(n)
+    # also sprinkle classic freeform chatter underneath (quieter)
+    out += printer_chatter(n) * 0.55
+    # bar-aligned soft bursts so loop seam stays stable
+    for bar in range(0, n // bar_n):
+        if bar % 3 != 0:
             continue
-        blip = square(880 * RNG.uniform(0.95, 1.05), bl, sr) * env_adsr(bl, 0.001, 0.01, 0.2, 0.03, sr)
-        out[at : at + bl] += blip * 0.05
-    return soft_limit(one_pole_lp(out + drone * 0.5, 5200, sr) * 0.9)
+        start = bar * bar_n + int(beat_n * 1.5)
+        burst_len = int(RNG.uniform(0.12, 0.28) * sr)
+        if start + burst_len >= n:
+            break
+        click = np.zeros(burst_len)
+        step = max(1, int(sr / RNG.uniform(22, 36)))
+        for i in range(0, burst_len, step):
+            w = min(60, burst_len - i)
+            click[i : i + w] += env_adsr(w, 0.001, 0.004, 0.15, 0.015, sr) * (
+                0.35 * noise(w) + 0.25 * square(RNG.uniform(1000, 1600), w, sr)
+            )
+        click = one_pole_lp(click, 1600, sr) * RNG.uniform(0.03, 0.06)
+        place(out, start, click, 1.0)
+    return out
+
+
+def tense_tracker_motif(n, sr=SR, bpm=112.5):
+    """PR fight — same palette, faster / dissonant, still cheap tracker."""
+    return grind_loop_motif(n, sr=sr, bpm=bpm, density=1.0, tense=True)
 
 
 # ---------------------------------------------------------------------------
 # BGM generators
 # ---------------------------------------------------------------------------
 
+# Shared tempo / loop math:
+#   seated + walk use 90.0 BPM → beat = 29400 samples @ 44.1k
+#   motif = 8 bars = 32 beats = 940800 samples ≈ 21.333s
+#   durations chosen as integer motif counts for seamless loop period.
+
+def _bgm_length(bpm, num_motifs, bars_per_motif=8, sr=SR):
+    beat_n = int(round(sr * 60.0 / bpm))
+    motif_n = beat_n * 4 * bars_per_motif
+    return motif_n * num_motifs, beat_n, motif_n
+
+
 def gen_bgm_cubicle_walk():
-    dur = 72.0
-    n = int(dur * SR)
+    """Lonely walk — same key as desktop, sparse notes, distant printers, HVAC."""
+    bpm = 90.0
+    # 4 motifs = ~85.33s (within 60–90)
+    n, beat_n, motif_n = _bgm_length(bpm, num_motifs=4)
     mix = (
-        hvac_drone(n) * 1.0
-        + fluorescent_hum(n) * 1.1
-        + printer_chatter(n) * 1.0
-        + sparse_lonely_notes(n) * 1.0
+        hvac_drone_loop(n) * 0.95
+        + fluorescent_hum_loop(n) * 1.05
+        + distant_printer_bed(n, bpm=bpm) * 1.05
+        + sparse_lonely_notes(n, bpm=bpm) * 1.05
+        + grind_loop_motif(n, bpm=bpm, density=0.28, tense=False) * 0.35  # ghost of the grind
     )
-    # distant CRT-ish very quiet whine bed (safe, low)
-    whine = sine(15600, n) * 0.004 * (0.5 + 0.5 * sine(0.04, n))
+    # very quiet CRT coil bed
+    whine = sine(15600, n) * 0.0035 * (0.5 + 0.5 * sine(0.035, n))
     mix = mix + whine
-    mix = soft_limit(mix * 0.95)
-    mix = make_loopable(mix, fade_ms=120)
-    return normalize(mix, peak_db=-6.0)
+    mix = soft_limit(mix * 0.9, drive=1.15)
+    mix = make_loopable(mix, fade_ms=300)
+    # quieter bed so footsteps/UI cut through
+    return normalize(mix, peak_db=-11.0)
 
 
 def gen_bgm_seated_desktop():
-    dur = 68.0
-    n = int(dur * SR)
+    """PRIORITY — the grind. Memorable detuned ostinato, HVAC, bass, printer ticks."""
+    bpm = 90.0
+    # 3 motifs = 64.0s exactly at 90 BPM / 44.1k
+    n, beat_n, motif_n = _bgm_length(bpm, num_motifs=3)
     mix = (
-        hvac_drone(n) * 0.55
-        + fluorescent_hum(n) * 0.7
-        + grind_loop_motif(n) * 1.0
+        hvac_drone_loop(n) * 0.45
+        + fluorescent_hum_loop(n) * 0.55
+        + grind_loop_motif(n, bpm=bpm, density=1.0, tense=False) * 1.15
     )
-    # occasional slack-ish hollow ping in the distance (very quiet)
-    for _ in range(4):
-        at = int(RNG.uniform(8, dur - 3) * SR)
-        pn = int(0.35 * SR)
-        if at + pn > n:
+    # rare distant hollow ping (dread mail somewhere else in the farm)
+    for k in range(3):
+        # park pings on motif boundaries so loop energy stays even
+        at = (k + 1) * motif_n // 2 + int(2.5 * SR)
+        if at + int(0.4 * SR) >= n:
             continue
-        ping = hollow_chord(pn) * 0.045
-        mix[at : at + pn] += ping
-    mix = soft_limit(mix)
-    mix = make_loopable(mix, fade_ms=100)
-    return normalize(mix, peak_db=-7.0)
+        pn = int(0.38 * SR)
+        mix[at : at + pn] += hollow_chord(pn) * 0.035
+    mix = soft_limit(mix, drive=1.15)
+    mix = make_loopable(mix, fade_ms=180)
+    return normalize(mix, peak_db=-10.5)
 
 
 def gen_bgm_pr_fight():
-    dur = 64.0
-    n = int(dur * SR)
+    """PR fight — same palette, 112.5 BPM, dissonant / busier, still MOD-cheap."""
+    bpm = 112.5
+    # beat = 23520 samples; motif 8 bars = 752640; 5 motifs = 85.333s
+    n, beat_n, motif_n = _bgm_length(bpm, num_motifs=5)
     mix = (
-        hvac_drone(n) * 0.35
-        + fluorescent_hum(n) * 0.4
-        + tense_tracker_motif(n) * 1.0
+        hvac_drone_loop(n) * 0.32
+        + fluorescent_hum_loop(n) * 0.38
+        + tense_tracker_motif(n, bpm=bpm) * 1.0
     )
-    mix = soft_limit(mix)
-    mix = make_loopable(mix, fade_ms=90)
-    return normalize(mix, peak_db=-5.5)
+    # occasional alarm-ish blip on motif downbeats (deterministic, loop-safe)
+    bl = int(0.055 * SR)
+    for m in range(5):
+        if m % 2 == 0:
+            continue
+        at = m * motif_n + beat_n * 8  # mid-motif
+        if at + bl > n:
+            continue
+        blip = square(830 * (1.0 + 0.02 * (m % 3)), bl, SR) * env_adsr(
+            bl, 0.001, 0.01, 0.18, 0.025, SR
+        )
+        mix[at : at + bl] += blip * 0.04
+    mix = soft_limit(mix, drive=1.2)
+    mix = make_loopable(mix, fade_ms=160)
+    return normalize(mix, peak_db=-10.0)
 
 
 # ---------------------------------------------------------------------------
@@ -968,7 +1186,7 @@ def main():
         audio = fn()
         wav_path = TMP / (name.replace(".ogg", ".wav"))
         write_wav(wav_path, audio)
-        wav_to_ogg(wav_path, OUT / name, bitrate="96k")
+        wav_to_ogg(wav_path, OUT / name, bitrate="128k")
         print(f"    -> {(OUT / name).stat().st_size} bytes")
 
     print("Generating SFX...")

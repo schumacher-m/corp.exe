@@ -355,11 +355,15 @@ export function installOutlookApp(d) {
   }
 
   d.queueOrDeliver = function queueOrDeliver(mail) {
-    if (d.minigameFocused() || d.state.modal || d.state.presenceForced) {
+    if (d.interruptShielded() || d.state.modal || d.state.presenceForced) {
       d.state.emailQueue.push(mail);
       d.state.unread = Math.max(1, d.state.unread + 1);
       d.audio.playSfx("newMail", { volume: 0.35 });
-      d.toast("Mail queued...");
+      d.toast(
+        d.emailCopy.mailWaitingToast ||
+          (d.copy.emails && d.copy.emails.mailWaitingToast) ||
+          "Mail waiting..."
+      );
     } else {
       d.deliverDoomMail(mail);
     }
@@ -367,7 +371,7 @@ export function installOutlookApp(d) {
 
   d.flushEmailQueue = function flushEmailQueue() {
     if (!d.state.emailQueue.length) return;
-    if (d.minigameFocused() || d.state.modal || d.state.presenceForced) return;
+    if (d.interruptShielded() || d.state.modal || d.state.presenceForced) return;
     const mail = d.state.emailQueue.shift();
     d.deliverDoomMail(mail);
   }

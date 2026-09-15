@@ -21,13 +21,40 @@ Load paths are relative to the game HTML root: `audio/<filename>`.
 
 ## BGM (loopable OGG)
 
-Crossfade or equal-power fade (~400–800 ms) when switching phase. Keep BGM quieter than SFX so UI cuts through. Suggested default BGM volume: **0.35–0.45**. Make loopable elements use `audio.loop = true`.
+Crossfade or equal-power fade (~400–800 ms) when switching phase. Keep BGM quieter than SFX so UI cuts through. Suggested default BGM volume: **0.32–0.42** (beds normalized ~−10 to −11 dBFS peak / quieter integrated than the old pack). Make loopable elements use `audio.loop = true`.
 
-| File | Phase / when | Loop | Notes |
-|------|----------------|------|-------|
-| `audio/bgm-cubicle-walk.ogg` | **Cubicle walk** — empty office roam before sitting | Yes | HVAC drone, fluorescent hum, distant printer chatter, sparse lonely notes. ~72 s. |
-| `audio/bgm-seated-desktop.ogg` | **Seated desktop** — the daily grind / coding loop | Yes | Muted, repetitive, slightly detuned / off-kilter tracker ostinato. ~68 s. |
-| `audio/bgm-pr-fight.ogg` | **PR fight / minigames** — review combat, tense tasks | Yes | Slightly more tense cheap tracker; still not cinematic. ~64 s. |
+| File | Phase / when | Loop length | BPM / motif | Notes |
+|------|----------------|-------------|-------------|-------|
+| `audio/bgm-seated-desktop.ogg` | **Seated desktop** (PRIORITY) — daily grind / coding | **64.0 s** (exact) | 90 BPM · 8-bar motif × 3 | Memorable depressing ostinato (G–Bb–C–**B♮ wrong**), micro-detune on alternate motifs, late swing on off-beats, bass pulse, printer ticks, HVAC + fluorescent bed. |
+| `audio/bgm-cubicle-walk.ogg` | **Cubicle walk** — empty office roam | **85.333 s** | 90 BPM · 8-bar × 4 | Same A-minor palette; sparse lonely triangle notes; distant bar-aligned printer chatter; ghost of the grind at low density; more HVAC air. |
+| `audio/bgm-pr-fight.ogg` | **PR fight / minigames** | **85.333 s** | 112.5 BPM · 8-bar × 5 | Same palette, tense=True: tritone hops, busier bass, choppier saw/square leads, occasional alarm blip. Still cheap MOD — never Hollywood. |
+
+### Listen notes / mood
+
+- **Palette:** A-minor-ish cubicle hell (A C E G Bb) plus intentional “wrong” B♮ landings and flat pad tones. Shared across all three so walk → desk → PR does not key-jar.
+- **Aesthetic:** Lo-fi tracker / PS1 office / MOD grit, 8–12-bit crush, fluorescent hum + HVAC under the music. Depressing ostinato — not ambience-only, not orchestra.
+- **Seated (the grind):** Hypnotic 4-note square+triangle ostinato; every 8th bar delays the last note; alternate motifs pitch-drift ~6 cents. Should feel a little sick.
+- **Walk:** Lonelier, more space between notes; printers as texture; quiet CRT coil whine bed.
+- **PR:** Faster pulse, dissonant intervals (G–C#), denser bass — anxiety, not action trailer.
+
+### Loop seam approach
+
+1. Duration = integer number of 8-bar motifs at a sample-aligned BPM (`beat_n = round(sr * 60 / bpm)`), so musical phase matches at wrap.
+2. HVAC / fluorescent LFOs use `_loop_lfo(cycles, n)` (integer cycles per buffer) via `hvac_drone_loop` / `fluorescent_hum_loop`.
+3. `make_loopable`: equal-power **tail→head** crossfade (160–300 ms) + exact endpoint match for encoder-safe HTMLAudio loops.
+
+### What changed vs old BGM (2026-09 quality pass)
+
+| | Old | New |
+|-|-----|-----|
+| Composition | Short free-running patterns, RNG-ish length | Multi-bar designed motifs, shared key, density/tense modes |
+| Seated length | ~68 s | **64.0 s** (3× motif @ 90) |
+| Walk length | ~72 s | **85.333 s** (4× motif @ 90) |
+| PR length | ~64 s | **85.333 s** (5× motif @ 112.5) |
+| Loudness | peak ~−5.5 to −7 dBFS (hotter) | peak ~−10 to −11 dBFS; UI/SFX cut through |
+| Encode | 96k libvorbis | **128k** libvorbis target (VBR may land ~90–110k on sparse beds) |
+| Loop | Crossfade only; seated seam was weak | Motif-divides-length + synced drones + tail crossfade |
+| Regen | `gen_bgm_*` thin wrappers | Rewritten `grind_loop_motif` / `sparse_lonely_notes` / `tense_tracker_motif` + loop drones |
 
 Suggested hook:
 

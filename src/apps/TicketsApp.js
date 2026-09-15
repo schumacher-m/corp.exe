@@ -514,8 +514,15 @@ export function installTicketsApp(d) {
     }
     d.hooks.onTicketDone?.(type, pts);
     d.audio.playBgm("bgmDesk");
+    // CORP-BAL-01: first ticket finish ends day grace
+    if ((d.state.dayGraceLeft || 0) > 0) {
+      d.state.dayGraceLeft = 0;
+      d.state.emailCooldown = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
+    }
+    // Flush Mail then Sync when interrupt shield clears
     d.flushEmailQueue();
-    // Timesheet Lock trigger A -- every N completions (default 3)
+    d.tryFlushCallQueue();
+    // Timesheet Lock trigger A -- every N completions (default 3); mid-day only
     if (
       d.state.ticketsCompletedSinceLock >= (d.state.timesheetGateThreshold || 3) &&
       !d.state.timesheetGateOpen &&
@@ -542,6 +549,16 @@ export function installTicketsApp(d) {
 
   d.minigameFocused = function minigameFocused() {
     return !!(d.state.phase && d.state.phase !== "desktop" && d.state.phase !== "ending");
+  }
+
+  // CORP-BAL-01: queue Mail / Sync rings over active ticket work (incl. desktop+IDE)
+  d.interruptShielded = function interruptShielded() {
+    if (d.minigameFocused()) return true;
+    if (d.state.activeTicket) return true;
+    if (d.wins && d.wins.ide && d.wins.ide.open) return true;
+    if (d.wins && d.wins.pr && d.wins.pr.open) return true;
+    if (d.wins && d.wins.standup && d.wins.standup.open) return true;
+    return false;
   }
 
   d.handleStubClick = function handleStubClick(win, x, y) {

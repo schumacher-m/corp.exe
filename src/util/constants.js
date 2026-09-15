@@ -12,6 +12,7 @@ export const JIGGLER_AUDIT_MIN = 45;
 export const JIGGLER_AUDIT_SPAN = 45;
 export const EMAIL_MIN = 14;
 export const EMAIL_MAX = 28;
+export const DAY_GRACE = 60; // seconds after enableDaySystems before Mail/incident
 
 export const Presence = {
   ACTIVE: "active",

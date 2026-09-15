@@ -214,6 +214,7 @@ export function setupAfter_rebuildDrawBag(d) {
     emailQueue: [],
     emailCooldown: d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN),
     emailEnabled: false,
+    dayGraceLeft: 0,
     incidentPagerCd: 45 + Math.random() * 45, // first soft window 45-90s
     incidentPagerCooldown: 0,
     incidentFromPager: false,
@@ -246,7 +247,7 @@ export function setupAfter_rebuildDrawBag(d) {
     // Call Theater (Sync parody)
     callPhase: null, // null | ringing | connected
     callQueued: false,
-    callCd: 30 + Math.random() * 30, // first eligible 30-60s after d.enableDaySystems
+    callCd: 25 + Math.random() * 20, // first eligible 25-45s after d.enableDaySystems
     callRingLeft: 0,
     callConnLeft: 0,
     callAttent: 1,

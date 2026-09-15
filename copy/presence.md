@@ -56,7 +56,8 @@ Ship first. Keys stable for Dev.
     }
   ],
   "pickerTitle": "Set status",
-  "pickerToast": "Status updated. InsightBot has opinions."
+  "pickerToast": "Status updated. InsightBot has opinions.",
+  "presenceYellowToast": "Still there?"
 }
 ```
 

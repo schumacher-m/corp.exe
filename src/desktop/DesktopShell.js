@@ -307,12 +307,22 @@ export function installDesktopShell(d) {
       } else if (d.state.idleAcc >= d.IDLE_YELLOW && d.state.presence === d.Presence.ACTIVE) {
         d.state.presence = d.Presence.IDLE_YELLOW;
         d.audio.playSfx("awayTick", { volume: 0.2 });
+        d.toast(d.presenceCopy.presenceYellowToast || "Still there?");
       }
     } else {
       d.state.statusPopover = false;
     }
-    // doom mail timer
-    if (!d.state.presenceForced) {
+    // CORP-BAL-01 grace: countdown; Mail + incident frozen until done
+    if (d.state.dayGraceLeft > 0) {
+      d.state.dayGraceLeft -= dt;
+      if (d.state.dayGraceLeft <= 0) {
+        d.state.dayGraceLeft = 0;
+        d.state.emailCooldown = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
+      }
+    }
+
+    // doom mail timer (frozen during day grace)
+    if (!d.state.presenceForced && !d.inDayGrace()) {
       d.state.emailCooldown -= dt;
       if (d.state.emailCooldown <= 0) {
         d.state.emailCooldown = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
@@ -325,12 +335,14 @@ export function installDesktopShell(d) {
 
     // Random incident pager (GD incidents.md) - never stacks two modals
     // Prefer one modal at a time: skip if Away/presenceForced or any modal open
+    // Frozen during day grace (CORP-BAL-01)
     if (d.state.incidentPagerCooldown > 0) d.state.incidentPagerCooldown -= dt;
     if (
       d.state.emailEnabled &&
+      !d.inDayGrace() &&
       !d.state.modal &&
       !d.state.presenceForced &&
-      !d.minigameFocused() &&
+      !d.interruptShielded() &&
       !d.state.timesheetGateOpen &&
       !d.callBusy() &&
       d.state.incidentPagerCooldown <= 0
@@ -352,6 +364,11 @@ export function installDesktopShell(d) {
     d.tickCallTheater(dt);
     // keep unread floor
     d.state.unread = Math.max(d.emailCopy.unreadFloor || 1, d.unreadCount());
+  }
+
+
+  d.inDayGrace = function inDayGrace() {
+    return (d.state.dayGraceLeft || 0) > 0;
   }
 
   d.enableDaySystems = function enableDaySystems() {
@@ -379,14 +396,16 @@ export function installDesktopShell(d) {
     d.state.timesheetAcceptedOpen = false;
     d.resetTimesheetHours();
     if (d.wins.timesheet) d.wins.timesheet.open = false;
-    d.state.emailCooldown = 8 + Math.random() * 6;
+    // CORP-BAL-01: grace band -- no early Mail slap (was 8+rand*6)
+    d.state.dayGraceLeft = d.DAY_GRACE || 60;
+    d.state.emailCooldown = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
     d.state.incidentPagerCd = 45 + Math.random() * 45;
     d.state.incidentPagerCooldown = 0;
     d.state.incidentFromPager = false;
     d.stopCallAudio();
     d.state.callPhase = null;
     d.state.callQueued = false;
-    d.state.callCd = 30 + Math.random() * 30;
+    d.state.callCd = 25 + Math.random() * 20;
     d.resetCallUiState();
     d.state.callMissedBadge = false;
     d.state.callCaller = null;
@@ -524,11 +543,20 @@ export function installDesktopShell(d) {
     } else if (id === "jiggler" || label === (d.jigglerCopy.menuLabel || "Jimbo Mouse Jiggler") || /jiggler/i.test(label)) {
       d.toggleJiggler({ fromStart: true });
     } else if (id === "clockout" || /shut|log off|clock out/i.test(label)) {
-      const conf =
-        d.copy.dialogs?.confirms?.find((c) => /clock/i.test(c.title || "")) ||
-        d.copy.dialogs?.confirms?.[0];
-      d.toast((conf && conf.body) || "Clocking out...");
-      setTimeout(() => d.hooks.onClockOut?.(), 500);
+      if (d.needsTimesheetForClockOut()) {
+        d.state.timesheetPendingClockOut = true;
+        d.toast(
+          d.timesheetCopy.blockClockOut ||
+            "Cannot Shut Down until timesheet.xls equals 8.0."
+        );
+        d.requestTimesheetGate("shut-down");
+      } else {
+        const conf =
+          d.copy.dialogs?.confirms?.find((c) => /clock/i.test(c.title || "")) ||
+          d.copy.dialogs?.confirms?.[0];
+        d.toast((conf && conf.body) || "Clocking out...");
+        setTimeout(() => d.hooks.onClockOut?.(), 500);
+      }
     } else if (id === "ide" || /notepad|corp\.exe/i.test(label)) {
       d.wins.ide.open = true;
       d.raise("ide");

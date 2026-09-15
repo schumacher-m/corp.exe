@@ -142,6 +142,7 @@
       "force": true
     }
   ],
-  "_writerNote": "Writer: doom=true unsolicited popups; presence/force=Away mandatory mail."
+  "_writerNote": "Writer: doom=true unsolicited popups; presence/force=Away mandatory mail.",
+  "mailWaitingToast": "Mail waiting..."
 }
 ```
