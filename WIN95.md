@@ -32,8 +32,8 @@ Host each mode in its own Win95 window (or MDI child) on the teal desktop:
 
 | Window | Role |
 |--------|------|
-| Tickets | Jira-style ticket queue / triage |
-| Slack | IM / unread spam |
+| Tickets | Tracker-style ticket queue / triage |
+| Sync | IM / unread spam + calls |
 | IDE | Code / typing minigame |
 | PR fight | Reviewer / Kyle confrontation UI |
 
@@ -170,13 +170,14 @@ Desktop icon for locked timesheet spreadsheet (`timesheet.xls` vibe). Beige shee
 | Mirrors | `assets/timesheet/timesheet_xls_{16,32,48}.png` | same | Alias copies |
 
 
-## Call Theater / Teams
+## Call Theater / Sync
 
-Purple parody of corporate chat + call overlay. Replaces Slack player-facing chrome. Abstract muddy-purple "T" tile — **not** Microsoft Fluent / Teams trademark. Anonymous corp (no Helix). Spec: `specs/03-call-theater.md`. Dev notes: `assets/teams/TEAMS_UI.md`.
+Purple parody of corporate chat + call overlay. Player-facing: **Sync** (not Slack/Teams). Abstract muddy-purple chat-bubble + handset tile — **no letter "T"**, not a trademark logo. Anonymous corp (no Helix). Asset folder stays `assets/teams/`. Spec: `specs/03-call-theater.md`. Dev notes: `assets/teams/TEAMS_UI.md`. See `docs/GENERIC_NAMES.md`.
 
 | Spec | Value |
 |------|-------|
-| Window title | `Teams (Corp)` |
+| Window title | `Sync` |
+| Desktop label | `Sync` |
 | Role | Chat spam host + incoming / connected call overlay |
 | Regenerator | `assets/teams/build_teams_assets.py` |
 
@@ -197,14 +198,14 @@ Purple parody of corporate chat + call overlay. Replaces Slack player-facing chr
 Purple chrome: `#5A588E` / `#7A76B0` / `#3A3868` / `#282648`. Defaults: **Mute ON**, **Camera OFF**. Classes: `.w95-teams` `.w95-call-overlay` `.w95-call-chip` `.w95-attentiveness`.
 
 
-## Outlook Theater
+## Mail Theater
 
-Modern Outlook parody on Win95 CRT. Abstract envelope + blue/purple accent — **not** Microsoft Outlook / Fluent trademark. Anonymous corp (no Helix). Spec: `specs/04-outlook-theater.md`. Dev notes: `assets/outlook/OUTLOOK_UI.md`.
+Corporate inbox parody on classic CRT desktop. Player-facing: **Mail**. Abstract envelope + blue/purple accent — **not** a trademark mail-client logo. Anonymous corp (no Helix). Asset folder stays `assets/outlook/`. Spec: `specs/04-outlook-theater.md`. Dev notes: `assets/outlook/OUTLOOK_UI.md`. See `docs/GENERIC_NAMES.md`.
 
 | Spec | Value |
 |------|-------|
-| Window title | `Outlook` |
-| Desktop label | `Outlook` |
+| Window title | `Mail` |
+| Desktop label | `Mail` |
 | Role | Focused / Other inbox + reading pane + New compose stub |
 | Regenerator | `assets/outlook/build_outlook_assets.py` |
 

@@ -8,7 +8,7 @@ Funny, not preachy. No ableist jokes. Distinct from CORP-5110 Pick a Severity (t
 
 ## Trigger
 
-**Primary:** Random **Incident** modal while on the Win95 desktop (after sit), independent of the ticket board.
+**Primary:** Random **Incident** modal while on the classic desktop (after sit), independent of the ticket board.
 
 | Field | Spec |
 |-------|------|
@@ -16,7 +16,7 @@ Funny, not preachy. No ableist jokes. Distinct from CORP-5110 Pick a Severity (t
 | Chance | ~12-18% check every 40s while desktop active; **at most 1 open incident** at a time; cooldown 90s after resolve/dismiss-fail. |
 | Also | Optional board ticket `CORP-5201` (`type: incident`) that opens the **same** modal when clicked -- so refill loop can deal it as a normal ticket. |
 
-**Popup chrome:** Win95 dialog, title `Corp Incident -- Sev0 (Probably)`, red/amber banner, blinking `● LIVE` (or static for S). Optional Slack toast: `#incidents: you have been volunteered.`
+**Popup chrome:** classic desktop dialog, title `Corp Incident -- Sev0 (Probably)`, red/amber banner, blinking `● LIVE` (or static for S). Optional Sync toast: `#incidents: you have been volunteered.`
 
 **Sample headline pool (Writer):**  
 - `Checkout is returning HTTP 500 (spiritually).`  
@@ -44,7 +44,7 @@ Modal body shows the incident blurb + two required corporate moves (order free):
 
 **Fail / stall:** Closing the X without both actions → `-5 SAN`, toast `Incident remains. So do you.` Modal can reappear after cooldown (or ticket stays open).
 
-**Optional third beat (still S):** After assign, a 1-line Slack DM from the assignee (`lol`) -- no extra click required; auto-closes.
+**Optional third beat (still S):** After assign, a 1-line Sync DM from the assignee (`lol`) -- no extra click required; auto-closes.
 
 ---
 
@@ -96,7 +96,7 @@ Pts on board ticket: `4`. Complexity: **S** (one modal, two buttons + dropdown -
 - Modal title, button labels, confirm copy, success/fail toasts
 - Assignee list labels
 - `sabotage.incident[]` (3)
-- Optional Slack one-liners from assignees
+- Optional Sync one-liners from assignees
 
 ## QA
 

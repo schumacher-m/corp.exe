@@ -52,7 +52,7 @@ On phase change (walk → seated → PR fight): fade out current, fade in next. 
 
 ## SFX (WAV one-shots, 16-bit PCM mono 44.1 kHz)
 
-Suggested default SFX volume: **0.55–0.75** (CRT whine quieter: **~0.25–0.35**). Prefer cloning/`new Audio()` per play or Web Audio buffer nodes so overlaps work (Slack pings never wait).
+Suggested default SFX volume: **0.55–0.75** (CRT whine quieter: **~0.25–0.35**). Prefer cloning/`new Audio()` per play or Web Audio buffer nodes so overlaps work (Sync chat pings never wait).
 
 ### Movement / body
 
@@ -90,11 +90,11 @@ Suggested default SFX volume: **0.55–0.75** (CRT whine quieter: **~0.25–0.35
 | `audio/sfx-key-03.wav` | Typing variant | No |
 | `audio/sfx-mouse-click.wav` | Mouse / cursor confirm | No |
 
-### Slack / tickets / sanity
+### Sync chat / tickets / sanity
 
 | File | When | Loop |
 |------|------|------|
-| `audio/sfx-slack-ping.wav` | Incoming Slack / chat ping — dread, not delight | No |
+| `audio/sfx-slack-ping.wav` | Incoming Sync chat ping — dread, not delight (internal key may stay `slack`) | No |
 | `audio/sfx-ticket-complete.wav` | Ticket marked done — unsatisfying / anticlimactic | No |
 | `audio/sfx-sanity-low.wav` | Brief sting when sanity dips / crosses a threshold | No |
 
@@ -136,34 +136,34 @@ All original synth. Away tick is intentionally quiet (−8 dBFS) — do not boos
 Jiggler is intentionally quieter than Away (−12 dBFS) — almost subliminal. Presence can ship without these; hook when ready.
 
 
-### Call Theater (Teams parody)
+### Call Theater (Sync calls parody)
 
 | File | When | Loop | Suggested key | Vol |
 |------|------|------|---------------|-----|
 | `audio/sfx-teams-ring.wav` | Incoming call overlay (~8–12s ring) | Yes (`playLoop`) | `teamsRing` | 0.4 |
-| `audio/sfx-muffled-call.ogg` | Connected call bed — **Sims-style babble** (nonsense vowels, talking cadence; **zero real words**) | Yes | `muffledCall` | 0.25–0.35 |
+| `audio/sfx-muffled-call.ogg` | Connected call bed — **nonsense babble** (vowel cadence, talking rhythm; **zero real words**) | Yes | `muffledCall` | 0.25–0.35 |
 | `audio/sfx-call-accept.wav` | Accept button | No | `callAccept` | 0.55 |
 | `audio/sfx-call-decline.wav` | Decline / ring timeout | No | `callDecline` | 0.5 |
-| `audio/sfx-teams-ping.wav` | Teams chat spam (replaces / aliases Slack ping) | No | `teamsPing` | 0.4 |
+| `audio/sfx-teams-ping.wav` | Sync chat spam (aliases older Slack-style ping) | No | `teamsPing` | 0.4 |
 
 Helpers in `audio.js`: `playLoop(name)` / `stopLoop(name)` / `stopAllLoops()`.
-Babble bed is original formant synth (not sampled speech / not copyrighted Sims audio). Path unchanged so Dev needs no rewiring. Stop ring on Accept/Decline; start muffled on Accept; stop muffled on hang-up. Keep or map old `slack` → `teamsPing` for chat.
+Babble bed is original formant synth (not sampled speech). Never name third-party voice products in docs or UI. Path/key unchanged (`muffledCall`). Stop ring on Accept/Decline; start muffled on Accept; stop muffled on hang-up. Map chat pings to `teamsPing` (or legacy `slack`) for Sync.
 
 
-### Outlook Theater (optional)
+### Mail Theater (optional)
 
 | File | When | Loop | Key | Vol |
 |------|------|------|-----|-----|
-| `audio/sfx-outlook-whoosh.wav` | Focused ↔ Other tab switch | No | `outlookWhoosh` | 0.25–0.35 |
+| `audio/sfx-outlook-whoosh.wav` | Mail Focused ↔ Other tab switch | No | `outlookWhoosh` | 0.25–0.35 |
 
-Soft whoosh (−10 dBFS). Not required to ship Outlook Theater.
+Soft whoosh (−10 dBFS). Not required to ship Mail Theater. Internal key `outlookWhoosh` OK.
 
 ## Dev integration checklist
 
 1. Preload BGM + critical SFX on boot (or first user gesture — browsers block autoplay).
 2. Gate **every** `play()` on `!state.muted` (extend the existing mute button beyond toast).
 3. BGM: one active bed; crossfade on phase (`cubicle walk` / `seated desktop` / `PR fight`).
-4. SFX: fire-and-forget; allow overlap for Slack + keys.
+4. SFX: fire-and-forget; allow overlap for Sync chat pings + keys.
 5. Paths: `audio/<exact-filename>` — do not rename files.
 6. Optional Web Audio API: master gain node driven by `state.muted` (gain 0 vs 1) for cleaner mute.
 

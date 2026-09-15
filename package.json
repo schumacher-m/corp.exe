@@ -1,0 +1,12 @@
+{
+  "name": "corp-exe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run build && bunx --bun serve dist -l 8765",
+    "build": "bun run scripts/build.mjs",
+    "check": "bun build ./src/main.js --outdir=/tmp/corp-check --external three --external 'three/*' --external 'three/addons/*' --external 'three/addons/loaders/GLTFLoader.js'",
+    "serve": "bunx serve dist -p 8765"
+  }
+}

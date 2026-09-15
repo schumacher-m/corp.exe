@@ -18,7 +18,7 @@ Bake into `ticketStrings.incident` / `sabotage.incident`. See also `incidents.md
   },
   "windowTitle": "Corp Incident - Sev0 (Probably)",
   "liveBadge": "LIVE",
-  "slackVolunteer": "#incidents: you have been volunteered.",
+  "syncVolunteer": "#incidents: you have been volunteered.",
   "headlines": [
     "Checkout is returning HTTP 500 (spiritually).",
     "Latency p99 discovered feelings.",
@@ -58,7 +58,7 @@ Bake into `ticketStrings.incident` / `sabotage.incident`. See also `incidents.md
     {"id": "intern", "label": "Intern", "blurb": "Has the runbook. Lacks tenure."},
     {"id": "roulette", "label": "On-Call Roulette", "blurb": "May land on you. Spin again."}
   ],
-  "assigneeSlack": [
+  "assigneeSync": [
     {"from": "Kyle", "text": "lol. also the runbook spacing is wrong."},
     {"from": "Jimbo", "text": "lol I turned the graphs back on!"},
     {"from": "Facilities", "text": "lol"},
@@ -83,7 +83,7 @@ Bake into `ticketStrings.incident` / `sabotage.incident`. See also `incidents.md
     "Reassigned to Cubicle 4-B (you). Synergy!",
     "Jimbo: mitigated by vibes."
   ],
-  "slackPages": [
+  "syncPages": [
     {"name": "PagerDuty", "color": "#a05030", "text": "P0: checkout is vibes-only. Ack in 4m."},
     {"name": "Ops", "color": "#6b8f3a", "text": "Error budget is a lifestyle. Who owns this."},
     {"name": "AllHands", "color": "#8b3a2a", "text": "Customers are feeling feelings."},

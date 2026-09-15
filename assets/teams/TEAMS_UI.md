@@ -1,17 +1,18 @@
-# Teams (Corp) — Call Theater chrome
+# Sync — Call Theater chrome
 
 Specs for **Developer**. Chrome / UI glyphs only — **do not implement game logic** here.
 
-Win95-low-fi purple parody of corporate chat + call overlay. Abstract "T" tile / control glyphs — **not** Microsoft Fluent UI or Teams trademark logos. Anonymous corp branding (no Helix). See `specs/03-call-theater.md`.
+Win95-style low-fi purple parody of corporate chat + call overlay. Abstract chat-bubble + phone/handset hybrid tile — **not** Microsoft Fluent UI or Teams trademark logos (no letter "T"). Anonymous corp branding (no Helix). Player-facing name: **Sync**. Internal asset folder stays `assets/teams/` so Dev paths remain stable. See `docs/GENERIC_NAMES.md` and `specs/03-call-theater.md`.
 
 ## Window
 
 | Spec | Value |
 |------|-------|
-| Title | `Teams (Corp)` |
-| Host | Win95 window on CRT desktop (same blit path as `WIN95.md`); replaces Slack player-facing chrome |
+| Title | `Sync` |
+| Desktop label | `Sync` |
+| Host | Classic desktop window on CRT (same blit path as `WIN95.md`); chat + call chrome |
 | Role | Chat spam host + incoming/connected call overlay |
-| Internal id | May stay `slack` or rename to `teams` — Dev choice; player-facing strings say Teams |
+| Internal id / folder | May stay `slack` / `teams` — Dev choice; **player-facing** strings say **Sync**. Folder: `assets/teams/` (do not rename). |
 
 ### App icons
 
@@ -23,21 +24,23 @@ Win95-low-fi purple parody of corporate chat + call overlay. Abstract "T" tile /
 
 Regenerate with: `/workspace/.venv/bin/python assets/teams/build_teams_assets.py`
 
+Icon art: muddy purple tile + white chat bubble + small handset cue. **No lettermark.**
+
 ### Purple chrome tokens (rail / header)
 
 | Token | Hex | Use |
 |-------|-----|-----|
-| teams purple | `#5A588E` | Left rail / header fill (muddy `#6264A7`-adjacent) |
-| teams hi | `#7A76B0` | Highlight strip / hover |
-| teams dk | `#3A3868` | Rail inset / selected |
-| teams edge | `#282648` | Outer edge / bevel dark |
+| sync purple | `#5A588E` | Left rail / header fill (muddy `#6264A7`-adjacent) |
+| sync hi | `#7A76B0` | Highlight strip / hover |
+| sync dk | `#3A3868` | Rail inset / selected |
+| sync edge | `#282648` | Outer edge / bevel dark |
 | face | `#C0C0C0` | Window / dialog face (from WIN95) |
-| title active | `#000080` | Default Win95 title bar (or optional `#3A3868`) |
+| title active | `#000080` | Default classic title bar (or optional `#3A3868`) |
 | text invert | `#FFFFFF` | Title / selected rail labels |
 | accept green | `#28A038` | Accept button / check glyph |
 | decline red | `#C02828` | Decline / hangup / cross |
 
-Keep PS1/Win95 crunch — no Fluent glass, no rounded SaaS panels.
+Keep PS1 / classic-desktop crunch — no Fluent glass, no rounded SaaS panels.
 
 ## Call control glyphs
 
@@ -106,7 +109,7 @@ Nearest-neighbor only when upscaling.
 ## CSS class hooks
 
 ```
-.w95-teams            /* Teams window / panel root (rail + chat) */
+.w95-teams            /* Sync window / panel root (rail + chat); class id may stay teams */
 .w95-call-overlay     /* Incoming or connected call overlay */
 .w95-call-chip        /* Timed reply chip button */
 .w95-attentiveness    /* Attentiveness drain bar */
@@ -117,11 +120,12 @@ Optional: `.w95-teams-rail`, `.w95-teams-header` for purple chrome.
 ## Branding
 
 - Anonymous corp / Corp. Ticket IDs `CORP-####`. Domains `@corp.internal` / `@corp.local`.
-- **No Helix** strings. No real Microsoft product marks beyond parody silhouette energy.
+- **No Helix** strings. No real product marks — abstract bubble + handset only.
 - Jimbo remains separate (`Jimbo - Corporate AI`); optional silent-stakeholder toast only.
 
 ## Out of scope
 
 - Game logic, meters wiring, WebRTC / real mic-cam
-- Fluent UI polish, trademark Teams logo
+- Fluent UI polish, trademark lettermarks
 - Edits to `game.js` / `win95.js` from this designer pack
+- Renaming `assets/teams/` folder

@@ -22,7 +22,7 @@ Ship first. Keys stable for Dev.
     {
       "id": "heads-down",
       "label": "Heads down",
-      "hint": "Do not disturb. Except Slack. And email. And Jimbo.",
+      "hint": "Do not disturb. Except Sync. And email. And Jimbo.",
       "keepsActive": true,
       "sanityPerMinute": 0.3
     },
@@ -122,7 +122,7 @@ Ship first. Keys stable for Dev.
       "body": [
         "HR opened a ticket about us!",
         "You're welcome!",
-        "Also you're on a watchlist for excellence."
+        "Also you're on a watchlist for greatness."
       ],
       "sanityHit": 8,
       "buttons": ["Thanks Jimbo", "Never Thanks Jimbo"]

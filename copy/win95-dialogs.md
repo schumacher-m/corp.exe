@@ -14,7 +14,7 @@
       "buttons": ["Ignore", "Ignore Harder"]
     },
     {
-      "title": "Jira Connector",
+      "title": "Tracker Connector",
       "body": "CORP-2201 cannot be closed. Status: emotionally unfinished.",
       "buttons": ["Retry", "Accept Fate"]
     },

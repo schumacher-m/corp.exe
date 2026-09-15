@@ -1,0 +1,728 @@
+/** desktop/DesktopShell.js -- install onto desktop bag `d`. */
+export function installDesktopShell(d) {
+  d.tStr = function tStr(type, key, fallback) {
+    const block = d.ticketStrings[type] || {};
+    const v = block[key];
+    return v == null || v === "" ? fallback : v;
+  }
+
+  d.imgReady = function imgReady(im) {
+    return !!(im && im.complete && im.naturalWidth);
+  }
+
+  d.drawImgOr = function drawImgOr(im, x, y, w, h, fallback) {
+    if (d.imgReady(im)) {
+      d.ctx.drawImage(im, x, y, w, h);
+      return true;
+    }
+    if (fallback) fallback();
+    return false;
+  }
+
+  d.toast = function toast(msg, { jimbo } = {}) {
+    d.state.toast = msg;
+    d.state.toastT = 100;
+    d.state.toastJimbo = !!jimbo;
+  }
+
+  d.hitSanity = function hitSanity(n) {
+    d.state.sanity = Math.max(0, d.state.sanity - n);
+    if (d.state.sanity < 25) d.audio.playSfx("sanityLow", { volume: 0.35 });
+  }
+
+  d.drawDeskIcons = function drawDeskIcons() {
+    d.state._deskIconHits = [];
+    for (const ic of d.deskIcons) {
+      const bx = ic.x;
+      const by = ic.y;
+      if (ic.id === "jimbo" && d.imgs.j32.complete && d.imgs.j32.naturalWidth) {
+        d.ctx.drawImage(d.imgs.j32, bx + 8, by, 32, 32);
+      } else if (ic.id === "inbox") {
+        if (d.imgReady(d.imgs.ol32)) {
+          d.ctx.drawImage(d.imgs.ol32, bx + 8, by, 32, 32);
+        } else if (d.imgReady(d.imgs.ol48)) {
+          d.ctx.drawImage(d.imgs.ol48, bx + 4, by, 40, 40);
+        } else {
+          d.bevelRaised(bx + 8, by + 4, 28, 22, d.C.face);
+          d.ctx.fillStyle = d.C.outlook;
+          d.ctx.fillRect(bx + 10, by + 8, 24, 14);
+          d.ctx.fillStyle = d.C.outlookHi;
+          d.ctx.beginPath();
+          d.ctx.moveTo(bx + 10, by + 8);
+          d.ctx.lineTo(bx + 22, by + 16);
+          d.ctx.lineTo(bx + 34, by + 8);
+          d.ctx.closePath();
+          d.ctx.fill();
+        }
+        const u = d.unreadCount();
+        d.ctx.fillStyle = d.C.blood;
+        d.ctx.fillRect(bx + 30, by + 2, 12, 10);
+        d.ctx.fillStyle = d.C.inv;
+        d.ctx.font = "bold 7px Tahoma, sans-serif";
+        d.ctx.fillText(String(Math.min(99, u)), bx + 32, by + 10);
+      } else if (ic.id === "timesheet") {
+        const im = d.imgs.ts32;
+        if (d.imgReady(im)) {
+          d.ctx.drawImage(im, bx + 8, by, 32, 32);
+        } else {
+          d.bevelRaised(bx + 8, by + 2, 28, 30, "#e8e0c8");
+          d.ctx.fillStyle = "#2a7a3a";
+          d.ctx.fillRect(bx + 10, by + 4, 24, 6);
+        }
+      } else if (ic.id === "teams") {
+        if (d.imgReady(d.imgs.t32)) {
+          d.ctx.drawImage(d.imgs.t32, bx + 8, by, 32, 32);
+        } else if (d.imgReady(d.imgs.t48)) {
+          d.ctx.drawImage(d.imgs.t48, bx + 4, by, 40, 40);
+        } else {
+          // Unbranded Sync tile (no trademark lettermark)
+          d.bevelRaised(bx + 8, by + 2, 28, 30, d.C.teams);
+          d.ctx.fillStyle = d.C.teamsHi;
+          d.ctx.fillRect(bx + 14, by + 10, 16, 12);
+        }
+      } else if (ic.id === "jiggler") {
+        if (d.imgReady(d.imgs.jig32)) d.ctx.drawImage(d.imgs.jig32, bx + 8, by, 32, 32);
+      }
+      d.ctx.fillStyle = d.C.inv;
+      d.ctx.font = "7px Tahoma, sans-serif";
+      d.ctx.fillText(ic.label, bx + 4, by + 42);
+      d.state._deskIconHits.push({ id: ic.id, hit: { x: bx, y: by, w: 48, h: 48 } });
+    }
+  }
+
+  d.drawTaskbar = function drawTaskbar() {
+    const y = d.H - d.TASK_H;
+    d.bevelRaised(0, y, d.W, d.TASK_H, d.C.face);
+    const pressed = d.state.startOpen;
+    if (pressed) d.bevelSunken(3, y + 3, 42, 16, d.C.face);
+    else d.bevelRaised(3, y + 3, 42, 16, d.C.face);
+    d.ctx.fillStyle = d.C.text;
+    d.ctx.font = "bold 9px Tahoma, sans-serif";
+    d.ctx.fillText(d.copy.startMenu?.startLabel || "Start", 8, y + 14);
+    d.state._startBtn = { x: 3, y: y + 3, w: 42, h: 16 };
+
+    // Ask Jimbo toolbar
+    d.bevelRaised(48, y + 3, 72, 16, d.C.jimbo);
+    if (d.imgs.jtb.complete && d.imgs.jtb.naturalWidth) {
+      d.ctx.drawImage(d.imgs.jtb, 52, y + 5, 12, 12);
+    }
+    d.ctx.fillStyle = d.C.inv;
+    d.ctx.font = "bold 7px Tahoma, sans-serif";
+    d.ctx.fillText("Ask Jimbo", 66, y + 13);
+    d.state._askToolbar = { x: 48, y: y + 3, w: 72, h: 16 };
+
+    let tx = 124;
+    for (const id of ["tickets", "slack", "ide", "pr", "jimbo", "inbox", "timesheet"]) {
+      const win = d.wins[id];
+      if (!win.open) continue;
+      d.bevelRaised(tx, y + 3, 36, 16, d.C.face);
+      d.ctx.font = "7px Tahoma, sans-serif";
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.fillText(win.title.slice(0, 5), tx + 3, y + 13);
+      win._taskHit = { x: tx, y: y + 3, w: 36, h: 16 };
+      tx += 38;
+      if (tx > d.W - 100) break;
+    }
+
+    // presence badge (Idle chip clickable for status theater)
+    const px = d.W - 100;
+    d.bevelSunken(px, y + 3, 44, 16, d.C.face);
+    d.ctx.fillStyle = d.presenceColor();
+    d.ctx.fillRect(px + 3, y + 7, 6, 6);
+    if (d.state.jimboJiggler && d.imgs.jig16.complete && d.imgs.jig16.naturalWidth) {
+      d.ctx.drawImage(d.imgs.jig16, px + 2, y + 4, 12, 12);
+    }
+    d.ctx.fillStyle = d.C.text;
+    d.ctx.font = "7px Tahoma, sans-serif";
+    d.ctx.fillText(d.presenceLabel(), px + 12, y + 13);
+    d.state._presenceBadge = { x: px, y: y + 3, w: 44, h: 16 };
+
+    const trayX = d.W - 54;
+    d.bevelSunken(trayX, y + 3, 50, 16, d.C.face);
+    d.ctx.font = "7px Tahoma, sans-serif";
+    d.ctx.fillStyle = d.C.text;
+    const hh = String(Math.floor(d.state.clockMinutes / 60)).padStart(2, "0");
+    const mm = String(d.state.clockMinutes % 60).padStart(2, "0");
+    d.ctx.fillText(`${hh}:${mm}`, trayX + 4, y + 13);
+
+    d.drawStatusPopover();
+  }
+
+  d.drawStartMenu = function drawStartMenu() {
+    if (!d.state.startOpen) return;
+    const items = d.copy.startMenu?.items || [];
+    const menuH = 16 + items.length * 16;
+    const menuW = 148;
+    const x = 2;
+    const y = d.H - d.TASK_H - menuH;
+    d.bevelRaised(x, y, menuW, menuH, d.C.face);
+    d.ctx.fillStyle = d.C.title;
+    d.ctx.fillRect(x + 2, y + 2, 16, menuH - 4);
+    d.state._startItems = [];
+    items.forEach((it, i) => {
+      const iy = y + 4 + i * 16;
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.font = "8px Tahoma, sans-serif";
+      const lab = it.label || it.id || String(it);
+      const isJimbo = it.id === "jimbo" || lab === "Jimbo";
+      const isJiggler = it.id === "jiggler" || /mouse jiggler/i.test(lab);
+      if (isJimbo && d.imgs.j16.complete && d.imgs.j16.naturalWidth) {
+        d.ctx.drawImage(d.imgs.j16, x + 22, iy + 1, 12, 12);
+        d.ctx.fillText(lab.slice(0, 18), x + 36, iy + 10);
+      } else if (isJiggler && d.imgs.jig16.complete && d.imgs.jig16.naturalWidth) {
+        d.ctx.drawImage(d.imgs.jig16, x + 22, iy + 1, 12, 12);
+        const mark = d.state.jimboJiggler ? "[on] " : "";
+        d.ctx.fillText((mark + lab).slice(0, 18), x + 36, iy + 10);
+      } else {
+        d.ctx.fillText(lab.slice(0, 20), x + 22, iy + 10);
+      }
+      d.state._startItems.push({ hit: { x, y: iy, w: menuW - 2, h: 16 }, item: it });
+    });
+  }
+
+  d.drawStickies = function drawStickies() {
+    d.state.stickies.forEach((s, i) => {
+      const x = 260 + i * 2;
+      const y = 8 + i * 6;
+      d.ctx.fillStyle = d.STICKY_COLS[s.color] || s.color || "#ffff80";
+      d.ctx.fillRect(x, y, 54, 36);
+      d.ctx.strokeStyle = d.C.shadow;
+      d.ctx.strokeRect(x, y, 54, 36);
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.font = "6px Tahoma, sans-serif";
+      d.wrap(s.text, 12).slice(0, 4).forEach((ln, j) => {
+        d.ctx.fillText(ln, x + 2, y + 9 + j * 7);
+      });
+    });
+  }
+
+  d.drawCursor = function drawCursor() {
+    const { x, y } = d.state.cursor;
+    d.ctx.fillStyle = "#000";
+    d.ctx.beginPath();
+    d.ctx.moveTo(x, y);
+    d.ctx.lineTo(x, y + 12);
+    d.ctx.lineTo(x + 3, y + 9);
+    d.ctx.lineTo(x + 7, y + 14);
+    d.ctx.lineTo(x + 9, y + 13);
+    d.ctx.lineTo(x + 5, y + 8);
+    d.ctx.lineTo(x + 10, y + 8);
+    d.ctx.closePath();
+    d.ctx.fill();
+    d.ctx.fillStyle = "#fff";
+    d.ctx.fillRect(x + 1, y + 2, 1, 6);
+  }
+
+  d.render = function render() {
+    d.ctx.setTransform(d.PIXEL_SCALE, 0, 0, d.PIXEL_SCALE, 0, 0);
+    d.ctx.imageSmoothingEnabled = true;
+    d.ctx.fillStyle = d.C.desktop;
+    d.ctx.fillRect(0, 0, d.W, d.H);
+    d.drawDeskIcons();
+    d.drawStickies();
+    for (const id of d.order) d.drawWindow(d.wins[id]);
+    d.drawTaskbar();
+    d.drawStartMenu();
+    if (d.state.toastT > 0) {
+      d.state.toastT--;
+      if (d.state.toastJimbo) {
+        d.ctx.fillStyle = "#C0FFC0";
+        d.ctx.fillRect(d.W / 2 - 90, 4, 180, 20);
+        d.ctx.strokeStyle = "#000";
+        d.ctx.strokeRect(d.W / 2 - 90, 4, 180, 20);
+      } else {
+        d.bevelRaised(d.W / 2 - 90, 4, 180, 18, d.C.face);
+      }
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.font = "8px Tahoma, sans-serif";
+      d.ctx.fillText(String(d.state.toast).slice(0, 40), d.W / 2 - 84, 16);
+    }
+    d.drawCallOverlay();
+    d.drawModal();
+    d.drawCursor();
+  }
+
+  d.tick = function tick(dt) {
+    if (!d.state.emailEnabled) return;
+    // idle / presence (+ Jimbo jiggler delay)
+    if (!d.state.modal || d.state.modal.kind !== "presence") {
+      d.state.idleAcc += dt;
+
+      if (d.state.jimboJiggler && !d.state.presenceForced) {
+        d.state.jigglerMaskAcc += dt;
+        d.state.jigglerPulseAcc += dt;
+        d.state.jigglerSanityAcc += dt;
+        // Soft bump: keep badge Active for a while (DELAY Away, do not delete)
+        if (d.state.jigglerMaskAcc < d.JIGGLER_MAX_MASK) {
+          if (d.state.jigglerPulseAcc >= d.JIGGLER_PULSE && d.state.idleAcc >= d.IDLE_YELLOW - 1) {
+            d.state.jigglerPulseAcc = 0;
+            d.state.idleAcc = Math.min(d.state.idleAcc, d.IDLE_YELLOW - 0.5);
+            if (d.state.presence !== d.Presence.AWAY) d.state.presence = d.Presence.ACTIVE;
+            d.audio.playSfx("jigglerTick", { volume: 0.2 });
+            if (Math.random() < 0.35) {
+              d.toast(d.pick(d.jigglerCopy.tickToasts) || d.pick(d.jimboCopy.jiggleToasts) || "Wiggle.", {
+                jimbo: true,
+              });
+            }
+          }
+        }
+        if (d.state.jigglerSanityAcc >= d.JIGGLER_SANITY_EVERY) {
+          d.state.jigglerSanityAcc = 0;
+          d.hitSanity(1);
+        }
+        d.maybeJigglerAudit();
+      }
+
+      if (d.state.idleAcc >= d.IDLE_AWAY && d.state.presence !== d.Presence.AWAY) {
+        d.state.presence = d.Presence.AWAY;
+        d.state.statusPopover = false;
+        d.audio.playSfx("awayTick", { volume: 0.3 });
+        d.forceAwayMail();
+      } else if (d.state.idleAcc >= d.IDLE_YELLOW && d.state.presence === d.Presence.ACTIVE) {
+        d.state.presence = d.Presence.IDLE_YELLOW;
+        d.audio.playSfx("awayTick", { volume: 0.2 });
+      }
+    } else {
+      d.state.statusPopover = false;
+    }
+    // doom mail timer
+    if (!d.state.presenceForced) {
+      d.state.emailCooldown -= dt;
+      if (d.state.emailCooldown <= 0) {
+        d.state.emailCooldown = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
+        const doom = d.state.inbox.filter((m) => m.doom && !m.opened);
+        const pool = doom.length ? doom : d.state.inbox.filter((m) => m.doom);
+        const mail = d.pick(pool);
+        if (mail) d.queueOrDeliver(mail);
+      }
+    }
+
+    // Random incident pager (GD incidents.md) - never stacks two modals
+    // Prefer one modal at a time: skip if Away/presenceForced or any modal open
+    if (d.state.incidentPagerCooldown > 0) d.state.incidentPagerCooldown -= dt;
+    if (
+      d.state.emailEnabled &&
+      !d.state.modal &&
+      !d.state.presenceForced &&
+      !d.minigameFocused() &&
+      !d.state.timesheetGateOpen &&
+      !d.callBusy() &&
+      d.state.incidentPagerCooldown <= 0
+    ) {
+      d.state.incidentPagerCd -= dt;
+      if (d.state.incidentPagerCd <= 0) {
+        d.state.incidentPagerCd = 40; // check cadence
+        const chance = (d.state.closedCount || 0) >= 1 ? 0.15 : 0.08;
+        if (Math.random() < chance) {
+          d.openIncident({ fromTicket: false });
+          d.state.incidentPagerCooldown = 90;
+          d.state.incidentPagerCd = 40 + Math.random() * 20;
+        }
+      }
+    }
+
+
+    d.flushEmailQueue();
+    d.tickCallTheater(dt);
+    // keep unread floor
+    d.state.unread = Math.max(d.emailCopy.unreadFloor || 1, d.unreadCount());
+  }
+
+  d.enableDaySystems = function enableDaySystems() {
+    d.state.emailEnabled = true;
+    d.state.idleAcc = 0;
+    d.state.presence = d.Presence.ACTIVE;
+    d.state.presenceStatus = null;
+    d.state.statusPopover = false;
+    d.state.jimboJiggler = false;
+    d.state.jigglerInstalled = false;
+    d.state.jigglerPulseAcc = 0;
+    d.state.jigglerSanityAcc = 0;
+    d.state.jigglerMaskAcc = 0;
+    d.state.jigglerAuditArmed = false;
+    d.state.jigglerAuditDone = false;
+    d.state.jigglerAuditAt = 0;
+    d.state.boardRefillPaused = false;
+    d.state.timesheetQueued = false;
+    d.state.timesheetGateOpen = false;
+    d.state.ticketsCompletedSinceLock = 0;
+    d.state.timesheetLockedOk = false;
+    d.state.timesheetGateThreshold = 3; // every 3 completions or Shut Down
+    d.state.timesheetJimboFills = 0;
+    d.state.timesheetPendingClockOut = false;
+    d.state.timesheetAcceptedOpen = false;
+    d.resetTimesheetHours();
+    if (d.wins.timesheet) d.wins.timesheet.open = false;
+    d.state.emailCooldown = 8 + Math.random() * 6;
+    d.state.incidentPagerCd = 45 + Math.random() * 45;
+    d.state.incidentPagerCooldown = 0;
+    d.state.incidentFromPager = false;
+    d.stopCallAudio();
+    d.state.callPhase = null;
+    d.state.callQueued = false;
+    d.state.callCd = 30 + Math.random() * 30;
+    d.resetCallUiState();
+    d.state.callMissedBadge = false;
+    d.state.callCaller = null;
+    d.state.callOpener = "";
+    d.wins.slack.title = d.teamsCopy.windowTitle || "Sync -- Corporate Chat";
+  }
+
+  d.onPointerMove = function onPointerMove(nx, ny) {
+    d.state.cursor.x = Math.max(0, Math.min(d.W - 1, nx));
+    d.state.cursor.y = Math.max(0, Math.min(d.H - 1, ny));
+    d.bumpActivity();
+    if (d.state.callPhase === "connected") {
+      // feed only from call-UI motion (whole overlay is call UI while connected)
+      d.feedCallAttentiveness(0.08);
+    }
+  }
+
+  d.onPointerDown = function onPointerDown() {
+    const x = d.state.cursor.x;
+    const y = d.state.cursor.y;
+    d.state.mouseDown = true;
+    d.bumpActivity();
+    d.audio.playSfx("mouse", { volume: 0.35 });
+    d.hooks.onClick?.();
+
+    if (d.state.callPhase) {
+      d.handleCallClick(x, y);
+      return;
+    }
+
+    if (d.state.modal) {
+      const before = d.state.stub?.jiggles;
+      d.handleModalClick(x, y);
+      // presence: clicks outside buttons still count via fallthrough only when no modal
+      return;
+    }
+    if (d.state.phase === "presence" && d.state.stub?.kind === "presence") {
+      d.bumpPresenceJiggle(1);
+      return;
+    }
+
+    if (d.hit(d.state._startBtn, x, y)) {
+      d.state.startOpen = !d.state.startOpen;
+      d.audio.playSfx(d.state.startOpen ? "start" : "click");
+      return;
+    }
+    if (d.hit(d.state._askToolbar, x, y)) {
+      d.askJimbo();
+      return;
+    }
+    if (d.state.startOpen && d.state._startItems) {
+      for (const it of d.state._startItems) {
+        if (d.hit(it.hit, x, y)) {
+          d.handleStartItem(it.item);
+          d.state.startOpen = false;
+          return;
+        }
+      }
+      d.state.startOpen = false;
+    }
+
+    // desktop icons
+    if (d.state._deskIconHits) {
+      for (const ic of d.state._deskIconHits) {
+        if (d.hit(ic.hit, x, y)) {
+          if (ic.id === "jimbo") d.openJimbo();
+          else if (ic.id === "inbox") {
+            d.openInbox();
+            d.audio.playSfx("click");
+          } else if (ic.id === "timesheet") {
+            d.openTimesheet({ forced: false });
+            d.audio.playSfx("click");
+          } else if (ic.id === "jiggler") {
+            d.toggleJiggler({ fromStart: false });
+          } else if (ic.id === "teams" || ic.id === "slack") {
+            d.wins.slack.open = true;
+            d.wins.slack.title = d.teamsCopy.windowTitle || d.wins.slack.title;
+            d.raise("slack");
+            d.audio.playSfx("click");
+          }
+          return;
+        }
+      }
+    }
+
+    for (let i = d.order.length - 1; i >= 0; i--) {
+      const win = d.wins[d.order[i]];
+      if (!win.open) continue;
+      if (x >= win.x && x <= win.x + win.w && y >= win.y && y <= win.y + win.h) {
+        d.raise(win.id);
+        if (x >= win.x + win.w - 16 && x <= win.x + win.w - 6 && y >= win.y + 5 && y <= win.y + 15) {
+          if (win.id === "meters") return;
+          if (win.id === "inbox" && d.state.openMailId) {
+            d.closeOpenMail(false);
+            return;
+          }
+          win.open = false;
+          d.audio.playSfx("click");
+          return;
+        }
+        d.handleWinClick(win, x, y);
+        return;
+      }
+    }
+  }
+
+  d.deniedToast = function deniedToast(item) {
+    const line = d.pick(d.deniedPool);
+    if (line) d.toast(line);
+    else d.toast((item.submenu?.[0] || item.label || "Denied") + " - denied");
+    d.audio.playSfx("error");
+  }
+
+  d.handleStartItem = function handleStartItem(item) {
+    const id = item.id || item.action || "";
+    const label = item.label || "";
+    d.audio.playSfx("click");
+    if (id === "jimbo" || label === "Jimbo") {
+      d.openJimbo();
+    } else if (id === "inbox" || /inbox|outlook|mail/i.test(label)) {
+      d.openInbox();
+    } else if (id === "tickets" || label.includes("Ticket")) {
+      d.wins.tickets.open = true;
+      d.raise("tickets");
+    } else if (id === "slack" || id === "teams" || /slack|teams/i.test(label)) {
+      d.wins.slack.open = true;
+      d.wins.slack.title = d.teamsCopy.windowTitle || d.wins.slack.title;
+      d.raise("slack");
+    } else if (id === "timesheet" || label === (d.timesheetCopy.desktopLabel || "timesheet.xls") || /timesheet/i.test(label)) {
+      d.openTimesheet({ forced: false });
+    } else if (id === "jiggler" || label === (d.jigglerCopy.menuLabel || "Jimbo Mouse Jiggler") || /jiggler/i.test(label)) {
+      d.toggleJiggler({ fromStart: true });
+    } else if (id === "clockout" || /shut|log off|clock out/i.test(label)) {
+      const conf =
+        d.copy.dialogs?.confirms?.find((c) => /clock/i.test(c.title || "")) ||
+        d.copy.dialogs?.confirms?.[0];
+      d.toast((conf && conf.body) || "Clocking out...");
+      setTimeout(() => d.hooks.onClockOut?.(), 500);
+    } else if (id === "ide" || /notepad|corp\.exe/i.test(label)) {
+      d.wins.ide.open = true;
+      d.raise("ide");
+    } else if (item.submenu) {
+      d.deniedToast(item);
+    } else if (/run/i.test(label)) {
+      d.deniedToast(item);
+    } else {
+      d.deniedToast(item);
+    }
+  }
+
+  d.handleWinClick = function handleWinClick(win, x, y) {
+    if (d.callBlocksBoard() && (win.id === "tickets" || win.id === "ide" || win.id === "pr")) {
+      d.toast(d.teamsCopy.freezeToast || "Tickets frozen -- you are in a meeting (spiritually)");
+      return;
+    }
+    if (win.id === "standup" && d.hit(d.state._standupBtn, x, y)) {
+      d.wins.standup.open = false;
+      d.state.standupDone = true;
+      d.hitSanity(5);
+      d.toast((d.copy.standupToasts && d.copy.standupToasts[0]) || "Standup survived");
+      d.audio.playSfx("click");
+      d.enableDaySystems();
+      d.hooks.onStandupDone?.();
+      return;
+    }
+    if (win.id === "jimbo") {
+      if (d.hit(d.state._jimboAskBtn, x, y)) {
+        d.askJimbo();
+        return;
+      }
+      if (d.hit(d.state._jimboSkipBtn, x, y)) {
+        d.showHrSkip();
+        return;
+      }
+    }
+    if (win.id === "inbox" && d.state.phase === "unsub" && d.state.stub?.kind === "unsub") {
+      if (d.handleStubClick(win, x, y)) return;
+    }
+    if (win.id === "inbox" && !(d.state.phase === "unsub" && d.state.stub?.kind === "unsub")) {
+      if (d.state._outlookHits) {
+        for (const oh of d.state._outlookHits) {
+          if (!d.hit(oh.hit, x, y)) continue;
+          d.audio.playSfx("click");
+          if (oh.kind === "rail") {
+            if (oh.id === "folders") {
+              d.toast(d.outlookCopy.foldersToast || "Folders syncing...");
+              return;
+            }
+            d.setOutlookTab(oh.id);
+            return;
+          }
+          if (oh.kind === "ribbon") {
+            if (oh.id === "new") {
+              d.state.outlookCompose = true;
+              d.toast(d.pick(d.outlookRibbon.new) || "Compose opened.", { jimbo: true });
+              return;
+            }
+            if (oh.id === "delete") {
+              if (d.state.openMailId) {
+                const mail = d.state.inbox.find((m) => m.id === d.state.openMailId);
+                if (mail) {
+                  mail.read = true;
+                  mail.opened = true;
+                }
+                d.state.openMailId = null;
+                d.state.mailReadFully = false;
+                d.state.unread = Math.max(d.emailCopy.unreadFloor || 1, d.unreadCount());
+                d.toast(d.pick(d.outlookRibbon.delete) || "Moved to Deleted (synced to Jimbo)");
+              } else {
+                d.toast(d.pick(d.outlookRibbon.delete) || "Moved to Deleted (synced to Jimbo)");
+              }
+              return;
+            }
+            if (oh.id === "archive") {
+              d.toast(d.pick(d.outlookRibbon.archive) || "Archived for impact");
+              return;
+            }
+            if (oh.id === "tip") {
+              d.toast(d.pick(d.outlookRibbon.tip) || "Focused Inbox shows what matters.");
+              return;
+            }
+          }
+          if (oh.kind === "compose") {
+            if (oh.id === "send") {
+              d.state.outlookCompose = false;
+              d.hitSanity(1);
+              d.toast(d.pick(d.outlookFail) || "Jimbo rewrote your tone. Draft discarded for culture.", {
+                jimbo: true,
+              });
+              d.audio.playSfx("jimboFail", { volume: 0.45 });
+              return;
+            }
+            if (oh.id === "discard") {
+              d.state.outlookCompose = false;
+              return;
+            }
+          }
+        }
+      }
+      if (d.state.openMailId && d.hit(d.state._mailCloseBtn, x, y)) {
+        // treat as read if they've had it open (clicking close after open = read)
+        d.state.mailReadFully = true;
+        d.closeOpenMail(true);
+        return;
+      }
+      if (d.state._mailHits) {
+        for (const mh of d.state._mailHits) {
+          if (d.hit(mh.hit, x, y)) {
+            if (d.state.openMailId && d.state.openMailId !== mh.id) {
+              const prev = d.state.inbox.find((m) => m.id === d.state.openMailId);
+              if (prev && !prev.read) {
+                d.closeOpenMail(true);
+              } else {
+                d.state.openMailId = null;
+                d.state.mailReadFully = false;
+              }
+            }
+            d.state.openMailId = mh.id;
+            d.state.mailReadFully = true;
+            const mail = d.state.inbox.find((m) => m.id === mh.id);
+            if (mail) mail.opened = true;
+            d.audio.playSfx("click");
+            return;
+          }
+        }
+      }
+    }
+    if (win.id === "tickets") {
+      for (const tk of d.state.board) {
+        if (d.hit(tk._hit, x, y)) {
+          d.openTicket(tk);
+          return;
+        }
+      }
+    }
+    if (d.handleStubClick(win, x, y)) return;
+    if (win.id === "ide" && d.state.phase === "semi") {
+      if (d.hit(d.state._submitBtn, x, y) && d.state.pendingFinish?.type === "semi") {
+        d.tryFinishTicket("semi", d.state.pendingFinish.pts);
+        return;
+      }
+      for (const ln of d.copy.semiLines) {
+        if (d.hit(ln._hit, x, y)) {
+          d.trySemi(ln._hit.i);
+          return;
+        }
+      }
+    }
+    if (win.id === "ide" && d.state.phase === "comment") {
+      if (d.hit(d.state._submitBtn, x, y) && d.state.pendingFinish?.type === "comment") {
+        d.tryFinishTicket("comment", d.state.pendingFinish.pts);
+        return;
+      }
+      if (d.hit(d.state._cmtBtn, x, y)) {
+        d.acceptComment();
+        return;
+      }
+    }
+    if (win.id === "pr") {
+      if (
+        d.hit(d.state._submitBtn, x, y) &&
+        (d.state.pendingFinish?.type === "pr" || d.state.pendingFinish?.type === "spacewar")
+      ) {
+        d.tryFinishTicket(d.state.pendingFinish.type, d.state.pendingFinish.pts);
+        return;
+      }
+      if (d.state._prChoices) {
+        for (const c of d.state._prChoices) {
+          if (d.hit(c.hit, x, y)) {
+            d.choosePr(c);
+            return;
+          }
+        }
+      }
+    }
+  
+    if (win.id === "timesheet") {
+      if (d.hit(d.state._tsJimboBtn, x, y)) {
+        d.jimboAutoFillTimesheet();
+        return;
+      }
+      if (d.hit(d.state._tsAcceptBtn, x, y)) {
+        d.acceptTimesheet();
+        return;
+      }
+      if (d.state._tsHits) {
+        for (const th of d.state._tsHits) {
+          if (d.hit(th.hit, x, y)) {
+            d.nudgeTimesheetHour(th.id, th.kind === "plus" ? 0.5 : -0.5);
+            d.audio.playSfx("click");
+            return;
+          }
+        }
+      }
+      return;
+    }
+  }
+
+  d.pushSlack = function pushSlack(msg) {
+    d.state.slackMsgs.unshift(msg);
+    if (d.state.slackMsgs.length > 24) d.state.slackMsgs.length = 24;
+    d.state.unread = Math.max(1, d.state.unread + 1);
+    d.audio.playSfx("teamsPing", { volume: 0.4 });
+  }
+
+  d.onKey = function onKey(e) {
+    d.bumpActivity();
+    if (d.state.phase === "presence") {
+      d.bumpPresenceJiggle(1);
+    }
+    if (d.state.modal && d.state.modal.kind !== "presenceTicket") return;
+    if (d.state.modal && d.state.modal.kind === "presenceTicket") return;
+    if (d.state.phase === "semi" && e.key === ";") {
+      d.ensureSemi();
+      const next = d.copy.semiLines.findIndex((l, i) => l.need && !d.state.semiPlaced[i]);
+      if (next >= 0) d.trySemi(next);
+    }
+    if (d.state.phase === "comment" && e.key === "Enter") d.acceptComment();
+  }
+
+  d.onPointerUp = function onPointerUp() {
+    d.state.mouseDown = false;
+  }
+
+}

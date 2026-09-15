@@ -1,4 +1,4 @@
-# start-menu -- Win95 Start menu jokes
+# start-menu -- classic Start menu jokes
 
 ```json
 {

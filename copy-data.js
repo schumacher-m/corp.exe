@@ -183,7 +183,7 @@ export default {
       ]
     },
     {
-      "kyle": "Blocking: commit message doesn't reference the Jira key in the exact format CORP-###.",
+      "kyle": "Blocking: commit message doesn't reference the Tracker key in the exact format CORP-###.",
       "choices": [
         {
           "t": "Amended. CORP-403.",
@@ -373,6 +373,108 @@ export default {
     "This is fine. This is not fine. Requesting changes.",
     "LGTM after you undo the LGTM-able parts."
   ],
+  "chatPoolAlias": [
+    {
+      "name": "Dana",
+      "color": "#4a7080",
+      "text": "Hey. Do you have time to drink some poison?"
+    },
+    {
+      "name": "Jess",
+      "color": "#5a6a8a",
+      "text": "Standup in 2. I have nothing. You?"
+    },
+    {
+      "name": "Priya",
+      "color": "#7a5a70",
+      "text": "Quick sync? I need a witness for this ticket."
+    },
+    {
+      "name": "Todd",
+      "color": "#6a7060",
+      "text": "Sprint board is a cry for help with swimlanes."
+    },
+    {
+      "name": "Dana",
+      "color": "#4a7080",
+      "text": "Coffee machine is broken. So is the week."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Nit on your draft PR before you even open it."
+    },
+    {
+      "name": "Ops",
+      "color": "#6b8f3a",
+      "text": "Fog density within acceptable corporate range."
+    },
+    {
+      "name": "HR",
+      "color": "#8b3a2a",
+      "text": "Reminder: vibes are a performance metric now."
+    },
+    {
+      "name": "Bot",
+      "color": "#504c40",
+      "text": "Calendar invite: Suffering (recurring)."
+    },
+    {
+      "name": "InsightBot",
+      "color": "#504c40",
+      "text": "You have 47 unread. Tip: ignore 46."
+    },
+    {
+      "name": "Maya",
+      "color": "#4a6070",
+      "text": "Who moved the deploy to Friday at 4:55?"
+    },
+    {
+      "name": "Jess",
+      "color": "#5a6a8a",
+      "text": "I'm in the war room. There's no war. Just rooms."
+    },
+    {
+      "name": "Priya",
+      "color": "#7a5a70",
+      "text": "Blocked on Kyle. Again. Sending thoughts and PRs."
+    },
+    {
+      "name": "Todd",
+      "color": "#6a7060",
+      "text": "Definition of Done includes emotionally finished."
+    },
+    {
+      "name": "Brad",
+      "color": "#6a5080",
+      "text": "Looping you in for visibility (sorry)."
+    },
+    {
+      "name": "Maya",
+      "color": "#4a6070",
+      "text": "Retro notes: we learned nothing and will ship anyway."
+    },
+    {
+      "name": "Jimbo",
+      "color": "#705898",
+      "text": "I summarized this thread into more thread."
+    },
+    {
+      "name": "HR",
+      "color": "#8b3a2a",
+      "text": "Please rate your burnout 1-5. 5 means engaged."
+    },
+    {
+      "name": "Ops",
+      "color": "#6b8f3a",
+      "text": "The plant in 4-B filed a ticket. Priority: Medium."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Main is green. Don't get comfortable."
+    }
+  ],
   "slackPool": [
     {
       "name": "Dana",
@@ -480,7 +582,7 @@ export default {
       "Fixed a bug that wasn't broken.",
       "Attended three syncs about a fourth sync.",
       "Renamed a variable. Kyle renamed it back.",
-      "Closed CORP-2201 emotionally, not in Jira."
+      "Closed CORP-2201 emotionally, not in Tracker."
     ],
     "today": [
       "Will fix the bug I just made.",
@@ -612,7 +714,7 @@ export default {
     },
     {
       "color": "pink",
-      "text": "DON'T mention the fog in Slack"
+      "text": "DON'T mention the fog in Sync"
     },
     {
       "color": "blue",
@@ -658,7 +760,7 @@ export default {
         ]
       },
       {
-        "title": "Jira Connector",
+        "title": "Tracker Connector",
         "body": "CORP-2201 cannot be closed. Status: emotionally unfinished.",
         "buttons": [
           "Retry",
@@ -778,8 +880,8 @@ export default {
     "_writerNote": "Writer copy -- cheerful-wrong corporate-slop; keys stable for Dev."
   },
   "emails": {
-    "inboxTitle": "Outlook",
-    "desktopLabel": "Outlook",
+    "inboxTitle": "Mail",
+    "desktopLabel": "Mail",
     "unreadFloor": 1,
     "messages": [
       {
@@ -840,7 +942,7 @@ export default {
       },
       {
         "id": "e8",
-        "from": "Jira",
+        "from": "Tracker",
         "subject": "CORP-2201 still emotionally open",
         "body": "This ticket cannot be closed. Neither can you. Have a metrics-driven day.",
         "sanity": 6,
@@ -910,7 +1012,7 @@ export default {
         "id": "e16",
         "from": "HR",
         "subject": "Away is a performance conversation",
-        "body": "Your status went red. Please confirm you are still employed. Click OK to pretend you were reading Slack.",
+        "body": "Your status went red. Please confirm you are still employed. Click OK to pretend you were reading Sync.",
         "sanity": 11,
         "presence": true,
         "doom": false,
@@ -936,7 +1038,7 @@ export default {
       {
         "id": "heads-down",
         "label": "Heads down",
-        "hint": "Do not disturb. Except Slack. And email. And Jimbo.",
+        "hint": "Do not disturb. Except Sync. And email. And Jimbo.",
         "keepsActive": true,
         "sanityPerMinute": 0.3
       },
@@ -1032,7 +1134,7 @@ export default {
           "body": [
             "HR opened a ticket about us!",
             "You're welcome!",
-            "Also you're on a watchlist for excellence."
+            "Also you're on a watchlist for greatness."
           ],
           "sanityHit": 8,
           "buttons": [
@@ -1247,7 +1349,7 @@ export default {
     },
     "windowTitle": "Corp Incident - Sev0 (Probably)",
     "liveBadge": "LIVE",
-    "slackVolunteer": "#incidents: you have been volunteered.",
+    "syncVolunteer": "#incidents: you have been volunteered.",
     "headlines": [
       "Checkout is returning HTTP 500 (spiritually).",
       "Latency p99 discovered feelings.",
@@ -1319,7 +1421,7 @@ export default {
         "blurb": "May land on you. Spin again."
       }
     ],
-    "assigneeSlack": [
+    "assigneeSync": [
       {
         "from": "Kyle",
         "text": "lol. also the runbook spacing is wrong."
@@ -1368,7 +1470,7 @@ export default {
       "Reassigned to Cubicle 4-B (you). Synergy!",
       "Jimbo: mitigated by vibes."
     ],
-    "slackPages": [
+    "syncPages": [
       {
         "name": "PagerDuty",
         "color": "#a05030",
@@ -1401,7 +1503,7 @@ export default {
   },
   "ticketStrings": {
     "align": {
-      "windowTitle": "Slack -- #alignment-or-else",
+      "windowTitle": "Sync -- #alignment-or-else",
       "buttons": [
         "Sounds good!",
         "Sounds good (Design)",
@@ -1605,7 +1707,7 @@ export default {
       },
       "windowTitle": "Corp Incident - Sev0 (Probably)",
       "liveBadge": "LIVE",
-      "slackVolunteer": "#incidents: you have been volunteered.",
+      "syncVolunteer": "#incidents: you have been volunteered.",
       "headlines": [
         "Checkout is returning HTTP 500 (spiritually).",
         "Latency p99 discovered feelings.",
@@ -1677,7 +1779,7 @@ export default {
           "blurb": "May land on you. Spin again."
         }
       ],
-      "assigneeSlack": [
+      "assigneeSync": [
         {
           "from": "Kyle",
           "text": "lol. also the runbook spacing is wrong."
@@ -1726,7 +1828,7 @@ export default {
         "Reassigned to Cubicle 4-B (you). Synergy!",
         "Jimbo: mitigated by vibes."
       ],
-      "slackPages": [
+      "syncPages": [
         {
           "name": "PagerDuty",
           "color": "#a05030",
@@ -1821,7 +1923,7 @@ export default {
     },
     "strings": {
       "align": {
-        "windowTitle": "Slack -- #alignment-or-else",
+        "windowTitle": "Sync -- #alignment-or-else",
         "buttons": [
           "Sounds good!",
           "Sounds good (Design)",
@@ -2033,7 +2135,7 @@ export default {
       "pts": 3,
       "type": "align",
       "dod": "Agree with PM, Design, and Kyle in one place so the meeting can be canceled and rebooked.",
-      "meta": "Slack · Alignment theater · Priority: Ritual",
+      "meta": "Sync · Alignment theater · Priority: Ritual",
       "toast": "Stakeholders aligned. Meeting still happening."
     },
     {
@@ -2133,7 +2235,7 @@ export default {
       "dod": "Survive Kyle. Choose peace or tabs."
     }
   ],
-  "kyleSlack": [
+  "kyleSync": [
     {
       "name": "Kyle",
       "color": "#a05030",
@@ -2507,8 +2609,8 @@ export default {
     }
   ],
   "teams": {
-    "desktopLabel": "Teams",
-    "windowTitle": "Teams -- Corporate Chat",
+    "desktopLabel": "Sync",
+    "windowTitle": "Sync -- Corporate Chat",
     "subtitle": "Chat / Calls · Cubicle 4-B",
     "railChat": "Chat",
     "railCalls": "Calls",
@@ -2757,8 +2859,8 @@ export default {
     }
   },
   "outlook": {
-    "windowTitle": "Outlook",
-    "desktopLabel": "Outlook",
+    "windowTitle": "Mail",
+    "desktopLabel": "Mail",
     "ribbonAccent": "modern",
     "composeTitle": "Untitled Message",
     "sendLabel": "Send",
@@ -2818,7 +2920,7 @@ export default {
       "Send blocked: empathy score too low for outbound.",
       "Jimbo says this email needs more alignment. Draft gone.",
       "Your message was optimized into silence.",
-      "Corporate AI rejected the vibe. Try Teams (also doomed).",
+      "Corporate AI rejected the vibe. Try Sync (also doomed).",
       "Draft discarded. Unread remains. Peace denied."
     ]
   }

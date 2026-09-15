@@ -1,14 +1,15 @@
-# outlook -- Outlook Theater (modern Outlook parody on Win95 CRT)
+# mail-theater copy -- Mail app on the CRT desktop
+# Player-facing: Mail (docs/GENERIC_NAMES.md). Bake key: outlook.
 
-Spec: `specs/04-outlook-theater.md`. Bake via `bake_copy.py` -> `copy-data.js` key `outlook`.
+Spec: `specs/04-outlook-theater.md`. Bake via `bake_copy.py` -> `copy-data.js` key `outlook` (player label: Mail).
 ASCII-only. CORP branding. Dark humor. No ableist jokes.
 
 ## chrome + rail
 
 ```json
 {
-  "windowTitle": "Outlook",
-  "desktopLabel": "Outlook",
+  "windowTitle": "Mail",
+  "desktopLabel": "Mail",
   "ribbonAccent": "modern",
   "composeTitle": "Untitled Message",
   "sendLabel": "Send",
@@ -79,7 +80,7 @@ ASCII-only. CORP branding. Dark humor. No ableist jokes.
   "Send blocked: empathy score too low for outbound.",
   "Jimbo says this email needs more alignment. Draft gone.",
   "Your message was optimized into silence.",
-  "Corporate AI rejected the vibe. Try Teams (also doomed).",
+  "Corporate AI rejected the vibe. Try Sync (also doomed).",
   "Draft discarded. Unread remains. Peace denied."
 ]
 ```

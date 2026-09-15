@@ -4,18 +4,26 @@ Cubicle simulator -- PS1 office, Win95 desktop on a CRT, Jimbo, doom-mail, Appea
 
 ## Do not open `index.html` via file://
 
-Chrome blocks `game.js` modules from `file://` (CORS / origin `null`). That looks like a dead **CLOCK IN** button.
+Chrome blocks ES modules from `file://` (CORS / origin `null`). That looks like a dead **CLOCK IN** button. Serve `dist/` over HTTP.
 
-## Run (required)
+## Setup
 
 ```bash
-cd /path/to/corp.html   # or corp-html
-python3 -m http.server 8765
+bun install          # Bun 1.4.2+
+bun run build        # → dist/ (bundle + assets/ + audio/)
+bun run check        # bundle must succeed
 ```
 
-Open [http://127.0.0.1:8765/](http://127.0.0.1:8765/)
+## Run (local)
 
-Mac: double-click `serve.command` instead.
+```bash
+bun run build
+bun run serve        # http://127.0.0.1:8765  (serves dist/)
+# or:
+bunx serve dist -p 8765
+```
+
+Dev one-liner: `bun run dev` (build then serve dist).
 
 ## Play
 
@@ -25,11 +33,13 @@ Mute: `M`
 
 ## Stack
 
-Vanilla HTML/CSS/JS + Three.js (CDN). No build step. Assets under `assets/`, copy under `copy/`, audio under `audio/`.
+Bun bundles `src/` → `dist/game.js`. Three.js stays on CDN (import map). Static `assets/`, `audio/` (incl. `sfx-muffled-call.ogg`), and `copy/` are copied into `dist/` by `bun run build`.
+
+Source layout: `src/main.js`, `src/game/`, `src/desktop/`, `src/apps/`, `src/audio/`, `src/copy/`, `src/util/`.
 
 ## GitHub Pages
 
-On every push to `master`, [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) builds `dist/` and deploys to GitHub Pages.
+On every push to `master`/`main`, [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) runs Bun (`check` + `build`) and deploys **`dist/`**.
 
 1. Repo **Settings -> Pages -> Build and deployment -> Source: GitHub Actions** (one-time).
 2. Site URL (after first green run): `https://schumacher-m.github.io/corp.html/`
@@ -37,6 +47,6 @@ On every push to `master`, [.github/workflows/deploy-pages.yml](.github/workflow
 Local preview of the Pages artifact:
 
 ```bash
-bash scripts/build-pages.sh
-python3 -m http.server 8765 --directory dist
+bun run build
+bunx serve dist -p 8765
 ```

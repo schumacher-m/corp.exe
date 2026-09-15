@@ -1,0 +1,2 @@
+[install]
+# no runtime deps; three stays CDN-external via import map

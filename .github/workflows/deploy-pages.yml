@@ -21,8 +21,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build static site
-        run: bash scripts/build-pages.sh
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install
+        run: bun install
+
+      - name: Check
+        run: bun run check
+
+      - name: Build dist/
+        run: bun run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

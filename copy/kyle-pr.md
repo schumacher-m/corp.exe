@@ -23,7 +23,7 @@ Shape: `{ kyle, choices: [{ t, d: 0|1, s: number }] }`. ``d=`` 1 advances step; 
     ]
   },
   {
-    "kyle": "Blocking: commit message doesn't reference the Jira key in the exact format CORP-###.",
+    "kyle": "Blocking: commit message doesn't reference the Tracker key in the exact format CORP-###.",
     "choices": [
       { "t": "Amended. CORP-403.", "d": 1, "s": -2 },
       { "t": "The key is in the branch name.", "d": 0, "s": -10 },
@@ -117,6 +117,6 @@ Shape: `{ kyle, choices: [{ t, d: 0|1, s: number }] }`. ``d=`` 1 advances step; 
 - `d: 1` advances PR_SCRIPT step; `d: 0` stays/loops with extra dread.
 - `s` is sanity delta (negative = dread). Clamp sanity at 0.
 - Last beat always advances (`d: 1`) so the player can escape.
-- Optional: pipe one-liners into Slack as Kyle during the PR minigame.
+- Optional: pipe one-liners into Sync as Kyle during the PR minigame.
 - No ableist language; Kyle is a rules-lawyer, not a disability joke.
 - Typo in header fixed: paste into `PR_SCRIPT`.

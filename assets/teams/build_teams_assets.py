@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Generate Win95/PS1 low-fi Teams parody glyphs for Call Theater.
+"""Generate Win95/PS1 low-fi Sync (Call Theater) glyphs.
 
 Chunky nearest-neighbor RGBA, muddy purple palette (#6264A7-adjacent).
-Abstract "T" / chat-bubble+phone hybrid — NOT Microsoft Fluent/Teams trademark.
-Unbranded anonymous corp. Uses /workspace/.venv Pillow.
+Abstract purple chat-bubble + small phone/handset hybrid — NO letter "T",
+NOT Microsoft Fluent/Teams trademark. Unbranded anonymous corp.
+Player-facing name: Sync. Folder stays assets/teams/ for Dev path stability.
+Uses /workspace/.venv Pillow.
 
 Outputs (assets/teams/):
   teams_{16,32,48}.png
@@ -73,7 +75,7 @@ def save(name: str, img: Image.Image) -> None:
     print(f"wrote {path} {img.size}")
 
 
-# --- Teams app icon: abstract purple "T" in rounded square (chat/phone vibe) ---
+# --- Sync app icon: abstract purple chat-bubble + phone/handset (NO letter T) ---
 
 TEAMS_MAP = {
     ".": TRANS,
@@ -82,32 +84,33 @@ TEAMS_MAP = {
     "P": PURPLE,
     "H": PURPLE_HI,
     "W": WHITE,
+    "w": OFF_W,
     "B": BLACK,
 }
 
-# 16x16 — chunky T on purple tile
+# 16x16 — chat bubble + tiny handset cue; no lettermark
 TEAMS_16 = [
     "EEEEEEEEEEEEEEEE",
     "EDDDDDDDDDDDDDDE",
-    "EDPPPPPPPPPPPPDE",
-    "EDPHHHHHHHHHHPDE",
+    "EDPPHHHHHHHHPPDE",
     "EDPHWWWWWWWWWPDE",
-    "EDPHWWWWWWWWWPDE",
-    "EDPHHHHWWHHHHPDE",
-    "EDPPPPDWWPPPPPDE",
-    "EDPPPPDWWPPPPPDE",
-    "EDPPPPDWWPPPPPDE",
-    "EDPPPPDWWPPPPPDE",
-    "EDPPPPDWWPPPPPDE",
-    "EDPPPPDDDDPPPPDE",
-    "EDPPPPPPPPPPPPDE",
+    "EDPHW......WWPDE",
+    "EDPHW......WwPDE",
+    "EDPHWWWWWWWWwPDE",
+    "EDPHWWWWWWW..PDE",
+    "EDPPDWWW......DE",
+    "EDPPPDW.......DE",
+    "EDPPP.........DE",
+    "EDPPP.W...W...DE",
+    "EDPPP.WWWWW...DE",
+    "EDPPP.W...W...DE",
     "EDDDDDDDDDDDDDDE",
     "EEEEEEEEEEEEEEEE",
 ]
 
 
 def make_teams(size: int) -> Image.Image:
-    """Procedural muddy purple tile with abstract T (app icon)."""
+    """Procedural muddy purple tile with chat-bubble + handset (app icon)."""
     if size == 16:
         return sprite_to_image(TEAMS_16, TEAMS_MAP, 1)
 
@@ -127,36 +130,62 @@ def make_teams(size: int) -> Image.Image:
             elif x < m + 1 or y < m + 1 or x >= size - m - 1 or y >= size - m - 1:
                 put(x, y, PURPLE_DK)
             else:
-                # slight muddy dither
                 put(x, y, PURPLE_HI if (x + y) % 5 == 0 else PURPLE)
 
     # Highlight strip top
     for x in range(m + 2, size - m - 2):
         put(x, m + 2, PURPLE_HI)
 
-    # Abstract "T" — thick bar + stem (white/off-white for readability)
-    bar_y0 = size // 4
-    bar_y1 = bar_y0 + max(3, size // 8)
-    bar_x0 = size // 5
-    bar_x1 = size - size // 5
-    stem_w = max(3, size // 6)
-    stem_x0 = (size - stem_w) // 2
-    stem_x1 = stem_x0 + stem_w
-    stem_y1 = size - size // 5
+    # Chat bubble body (rounded rect, left-biased)
+    bx0 = size // 6
+    bx1 = size - size // 5
+    by0 = size // 5
+    by1 = size - size // 3
+    rad = max(2, size // 10)
+    for y in range(by0, by1 + 1):
+        for x in range(bx0, bx1 + 1):
+            # soft corner cuts
+            if (x < bx0 + rad and y < by0 + rad and
+                    (x - (bx0 + rad)) ** 2 + (y - (by0 + rad)) ** 2 > rad * rad):
+                continue
+            if (x > bx1 - rad and y < by0 + rad and
+                    (x - (bx1 - rad)) ** 2 + (y - (by0 + rad)) ** 2 > rad * rad):
+                continue
+            if (x > bx1 - rad and y > by1 - rad and
+                    (x - (bx1 - rad)) ** 2 + (y - (by1 - rad)) ** 2 > rad * rad):
+                continue
+            edge = (x == bx0 or y == by0 or x == bx1 or y == by1 or
+                    (x <= bx0 + 1 and y <= by0 + rad) or
+                    (x >= bx1 - 1 and y <= by0 + rad))
+            put(x, y, OFF_W if edge else WHITE)
 
-    for y in range(bar_y0, bar_y1 + 1):
-        for x in range(bar_x0, bar_x1 + 1):
-            put(x, y, WHITE if y > bar_y0 else OFF_W)
-    for y in range(bar_y1, stem_y1 + 1):
-        for x in range(stem_x0, stem_x1 + 1):
-            put(x, y, WHITE if x > stem_x0 and x < stem_x1 - 1 else OFF_W)
+    # Speech-bubble tail (bottom-left notch)
+    tail_x = bx0 + max(2, size // 12)
+    for i in range(max(3, size // 8)):
+        put(tail_x + i // 2, by1 + 1 + i, WHITE if i < 2 else OFF_W)
+        put(tail_x - 1, by1 + 1 + i // 2, PURPLE_DK)
 
-    # Tiny chat-bubble notch bottom-left (hybrid cue, still abstract)
-    bx = m + 2
-    by = size - m - 4
-    for i in range(3):
-        put(bx + i, by, PURPLE_DK)
-        put(bx, by - i, PURPLE_DK)
+    # Small phone/handset hybrid (bottom-right, classic receiver silhouette)
+    hx0 = size // 2 + size // 10
+    hx1 = size - size // 6
+    hy0 = size - size // 4
+    hy1 = size - size // 6
+    # curved handset: two earpieces + bridge
+    for y in range(hy0, hy1 + 1):
+        for x in range(hx0, hx1 + 1):
+            put(x, y, WHITE if y > hy0 and y < hy1 else OFF_W)
+    # earpiece bulbs
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            put(hx0 + dx, hy0 + dy, WHITE)
+            put(hx1 + dx, hy1 + dy, WHITE)
+            put(hx0 + dx, hy1 + dy, OFF_W)
+            put(hx1 + dx, hy0 + dy, OFF_W)
+    # bridge dip (handset curve cue)
+    mid = (hx0 + hx1) // 2
+    for x in range(hx0 + 2, hx1 - 1):
+        put(x, hy0 - 1, OFF_W)
+        put(x, hy1 + 1, PURPLE_DK if abs(x - mid) < 2 else OFF_W)
 
     return img
 

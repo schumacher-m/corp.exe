@@ -73,12 +73,12 @@
     <h1>corp.exe -- IT blocked file://</h1>
     <p>Chrome won’t load ES modules from a double-clicked <code>index.html</code> (CORS / origin null).</p>
     <p>Serve the folder over HTTP, then open the local URL:</p>
-    <pre>cd /Users/m/workspace/corp.html
-python3 -m http.server 8765
+    <pre>bun run build
+bunx serve dist -p 8765
 
 # then open:
 http://127.0.0.1:8765/</pre>
-    <p>Or double-click <code>serve.command</code> in this folder (Mac).</p>
+    <p>Play from <code>dist/</code> after <code>bun run build</code>.</p>
     <p class="hint">IT Security: "Please use the approved local development environment."</p>
   </div>
   <div id="viewport">

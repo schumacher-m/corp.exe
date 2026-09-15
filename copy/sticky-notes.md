@@ -3,7 +3,7 @@
 ```json
 [
   {"color": "yellow", "text": "standup @ 9:01 · bring nothing"},
-  {"color": "pink", "text": "DON'T mention the fog in Slack"},
+  {"color": "pink", "text": "DON'T mention the fog in Sync"},
   {"color": "blue", "text": "Kyle blocks PRs for fun · hydrate"},
   {"color": "yellow", "text": "password: password1 (policy)"},
   {"color": "green", "text": "Definition of Done = emotionally finished"},

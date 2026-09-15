@@ -36,8 +36,8 @@ Babylon / PlayCanvas only if you need an editor — not required for v1.
 | sick | `#6b8f3a` | OK accent |
 | amber | `#c4a035` | sprint / warnings |
 | blood | `#8b3a2a` | unread / danger |
-| slack | `#4a3048` | IM chrome |
-| jira | `#a89030` | ticket sticker |
+| sync | `#4a3048` | Sync / IM chrome |
+| tracker | `#a89030` | ticket sticker |
 
 ## Assets (v1) — load from box paths
 
@@ -93,7 +93,7 @@ Units: Y-up, meters-ish. Desk top ≈ **y=0.74**. Cubicle footprint ≈ **6×6**
 
 ### CRT → Win95 → 2D game UI
 
-Render the Win95 desktop (tickets / Slack / IDE / PR fight + Sanity/Sprint/Unread meters) into a **low-res canvas/DOM**, blit as texture on `screen_quad` at `screen_anchor`. Nearest upscale only. Full chrome rules in **`WIN95.md`**.
+Render the classic desktop (tickets / Sync / Mail / IDE / PR fight + Sanity/Sprint/Unread meters) into a **low-res canvas/DOM**, blit as texture on `screen_quad` at `screen_anchor`. Nearest upscale only. Full chrome rules in **`WIN95.md`**.
 
 ## 2D CSS note
 
@@ -109,14 +109,14 @@ Low-fi nearest-neighbor tray/desktop glyphs (RGBA). Regenerator: `assets/icons/b
 Also Jimbo assistant chrome: `assets/jimbo/` (window title **Jimbo — Corporate AI**). Unbranded — no product marks on these icons.
 
 
-## Call Theater / Teams
+## Call Theater / Sync
 
-Win95-low-fi purple parody glyphs (unbranded — not Fluent/Teams trademark). Regenerator: `assets/teams/build_teams_assets.py`. Window title **Teams (Corp)**. Full glyph paths + call-overlay layout: `assets/teams/TEAMS_UI.md` and `WIN95.md` § Call Theater / Teams. Spec: `specs/03-call-theater.md`.
+Win95-style low-fi purple parody glyphs (unbranded — abstract chat-bubble + handset; no letter "T"). Regenerator: `assets/teams/build_teams_assets.py`. Window / desktop title **Sync**. Folder stays `assets/teams/`. Full glyph paths + call-overlay layout: `assets/teams/TEAMS_UI.md` and `WIN95.md` § Call Theater / Sync. Spec: `specs/03-call-theater.md`. See `docs/GENERIC_NAMES.md`.
 
 
-## Outlook Theater
+## Mail Theater
 
-Win95-low-fi blue/purple parody glyphs (unbranded — not Outlook/Fluent trademark). Regenerator: `assets/outlook/build_outlook_assets.py`. Window title **Outlook**, desktop label **Outlook**. Full glyph paths + rail/ribbon notes: `assets/outlook/OUTLOOK_UI.md` and `WIN95.md` § Outlook Theater. Spec: `specs/04-outlook-theater.md`.
+Win95-style low-fi blue/purple parody glyphs (unbranded — abstract envelope; no mail-client trademark). Regenerator: `assets/outlook/build_outlook_assets.py`. Window / desktop title **Mail**. Folder stays `assets/outlook/`. Full glyph paths + rail/ribbon notes: `assets/outlook/OUTLOOK_UI.md` and `WIN95.md` § Mail Theater. Spec: `specs/04-outlook-theater.md`. See `docs/GENERIC_NAMES.md`.
 
 ## Anti-patterns
 

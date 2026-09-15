@@ -1,14 +1,15 @@
-# teams -- Call Theater (Teams parody chat + muffled calls)
+# call-theater copy -- Sync chat + muffled calls
+# Player-facing: Sync (docs/GENERIC_NAMES.md). Bake key: teams.
 
-Spec: `specs/03-call-theater.md`. Bake via `bake_copy.py` -> `copy-data.js` key `teams`.
+Spec: `specs/03-call-theater.md`. Bake via `bake_copy.py` -> `copy-data.js` key `teams` (player label: Sync).
 ASCII-only. CORP branding. Dark humor. No ableist jokes.
 
 ## chrome
 
 ```json
 {
-  "desktopLabel": "Teams",
-  "windowTitle": "Teams -- Corporate Chat",
+  "desktopLabel": "Sync",
+  "windowTitle": "Sync -- Corporate Chat",
   "subtitle": "Chat / Calls · Cubicle 4-B",
   "railChat": "Chat",
   "railCalls": "Calls",
@@ -31,7 +32,7 @@ ASCII-only. CORP branding. Dark humor. No ableist jokes.
 }
 ```
 
-## chatPool (ex-Slack spam, Teams voice)
+## chatPool (ex-chat spam, Sync voice)
 
 ```json
 [

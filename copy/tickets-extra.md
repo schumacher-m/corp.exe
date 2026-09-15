@@ -1,6 +1,6 @@
 # tickets-extra -- 10 meme tickets + endless queue (Game Design)
 
-Beyond the current three playables (`HS-401` Semicolon Hell, `HS-402` Comment Every Line, `HS-403` Survive Kyle). Prefer **S** stubs that reuse IDE / Slack / Inbox / Standup Win95 windows. Funny corporate hell, not preachy. No ableist jokes.
+Beyond the current three playables (`HS-401` Semicolon Hell, `HS-402` Comment Every Line, `HS-403` Survive Kyle). Prefer **S** stubs that reuse IDE / Sync / Inbox / Standup classic desktop windows. Funny corporate hell, not preachy. No ableist jokes.
 
 IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401..403`).
 
@@ -25,7 +25,7 @@ IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401
 | **Jimbo** | Keep "must Ask Jimbo once per ticket" gate; sabotage lines keyed by `type` (add keys below). |
 | **Sanity/Sprint** | On success: `sprint += pts`, optional small sanity hit for friction. Jimbo sabotage / wrong answer: extra `sanity` hit, ticket stays open or resets progress. |
 
-**Dev note:** minigame stubs can share one IDE click-line pattern (semi/comment/log/rename) and one Slack choice pattern (align/sync/estimate). Writer owns joke strings; keys stay stable.
+**Dev note:** minigame stubs can share one IDE click-line pattern (semi/comment/log/rename) and one Sync choice pattern (align/sync/estimate). Writer owns joke strings; keys stay stable.
 
 ---
 
@@ -34,11 +34,11 @@ IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401
 ### 1) CORP-5101 -- Align the Stakeholders
 
 - **Premise:** Everyone already agreed in separate threads. Your job is to agree with all of them in one DM so the meeting can be canceled and then rebooked.
-- **Player actions:** Open Slack. Reply to 3 stacked DMs (PM / Design / Kyle) by picking the matching "Sounds good!" variant. Order matters only for comedy.
+- **Player actions:** Open Sync. Reply to 3 stacked DMs (PM / Design / Kyle) by picking the matching "Sounds good!" variant. Order matters only for comedy.
 - **Done:** All three replies sent. Toast: `Stakeholders aligned. Meeting still happening.`
 - **Jimbo sabotage:** Auto-replies with "Have we considered a workshop?" to every thread; adds a 4th stakeholder.
 - **Sanity / Sprint:** Done: `+3 SP`, `-2 SAN`. Sabotage / wrong reply: `-4 SAN`, reset that DM.
-- **Complexity:** **S** (reuse Slack choice UI)
+- **Complexity:** **S** (reuse Sync choice UI)
 
 ### 2) CORP-5102 -- Rename Everything to `data2`
 
@@ -52,7 +52,7 @@ IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401
 ### 3) CORP-5103 -- Appear Active
 
 - **Premise:** InsightBot flagged you Idle for 47 seconds. Presence is a performance review input.
-- **Player actions:** Win95 dialog with a progress bar "Engagement". Mash **Jiggle** / press any key / click desktop **8 times within 12s**. Optional: open Jimbo and accept "I jiggled your mouse for you" (counts as 3 jiggles but `-2 SAN`).
+- **Player actions:** classic desktop dialog with a progress bar "Engagement". Mash **Jiggle** / press any key / click desktop **8 times within 12s**. Optional: open Jimbo and accept "I jiggled your mouse for you" (counts as 3 jiggles but `-2 SAN`).
 - **Done:** Bar full before timer. Toast: `Status: Active (allegedly).`
 - **Jimbo sabotage:** Jiggles mouse into Start menu → opens Solitaire; timer keeps running.
 - **Sanity / Sprint:** Done: `+2 SP`, `-1 SAN`. Fail timer: `-6 SAN`, ticket stays open.
@@ -118,7 +118,7 @@ IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401
 - **Premise:** Prod is "degraded" in a way nobody can screenshot. Taxonomy must be satisfied.
 - **Player actions:** Bug form dialog: choose Severity (`Sev0`…`Sev4` / `Unknown` / `It's Fine`). Choose Component (`Platform` / `Fog` / `Other` / `Kyle`). Choose Impact (`Users` / `Metrics` / `Feelings`). Submit.
 - **Done:** Any complete form submits. If Severity is `It's Fine`, auto-rewrite to `Sev3` with toast `Corrected by policy.`
-- **Jimbo sabotage:** Sets Sev0 + pages the whole company Slack; ticket stays open until you downgrade.
+- **Jimbo sabotage:** Sets Sev0 + pages the whole company Sync; ticket stays open until you downgrade.
 - **Sanity / Sprint:** Done: `+3 SP`, `-3 SAN`. Sev0 page event: `-8 SAN`, must downgrade to finish.
 - **Complexity:** **S** (form dialog; good Writer playground)
 
@@ -128,7 +128,7 @@ IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401
 
 | id | type key | pts | window |
 |----|----------|-----|--------|
-| CORP-5101 | `align` | 3 | slack |
+| CORP-5101 | `align` | 3 | sync |
 | CORP-5102 | `rename` | 3 | ide |
 | CORP-5103 | `presence` | 2 | dialog |
 | CORP-5104 | `lint` | 3 | ide |
@@ -139,7 +139,7 @@ IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401
 | CORP-5109 | `spacewar` | 5 | pr |
 | CORP-5110 | `severity` | 3 | dialog |
 
-Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then IDE twins **lint / logspam / rename / merge**, then **standup2 / unsub**, then **`spacewar`** (full bank in copy, deal 5/run -- same as HS-403).
+Ship order suggestion: **presence, severity, align** first (dialogs/Sync), then IDE twins **lint / logspam / rename / merge**, then **standup2 / unsub**, then **`spacewar`** (full bank in copy, deal 5/run -- same as HS-403).
 
 ---
 
@@ -156,7 +156,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "pts": 3,
       "type": "align",
       "dod": "Agree with PM, Design, and Kyle in one place so the meeting can be canceled and rebooked.",
-      "meta": "Slack · Alignment theater · Priority: Ritual",
+      "meta": "Sync · Alignment theater · Priority: Ritual",
       "toast": "Stakeholders aligned. Meeting still happening."
     },
     {

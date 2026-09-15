@@ -1,9 +1,9 @@
-# emails -- Outlook Express / Inbox copy (bleak funny)
+# emails -- Mail app copy (bleak funny)
 # Writer: doom mails popup on timer; presence/force mails force-open on Away.
 
 ```json
 {
-  "inboxTitle": "Inbox -- Outlook Express",
+  "inboxTitle": "Inbox -- Mail",
   "desktopLabel": "Inbox",
   "unreadFloor": 1,
   "messages": [
@@ -65,7 +65,7 @@
     },
     {
       "id": "e8",
-      "from": "Jira",
+      "from": "Tracker",
       "subject": "CORP-2201 still emotionally open",
       "body": "This ticket cannot be closed. Neither can you. Have a metrics-driven day.",
       "sanity": 6,
@@ -135,7 +135,7 @@
       "id": "e16",
       "from": "HR",
       "subject": "Away is a performance conversation",
-      "body": "Your status went red. Please confirm you are still employed. Click OK to pretend you were reading Slack.",
+      "body": "Your status went red. Please confirm you are still employed. Click OK to pretend you were reading Sync.",
       "sanity": 11,
       "presence": true,
       "doom": false,

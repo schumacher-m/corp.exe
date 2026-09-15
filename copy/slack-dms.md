@@ -1,4 +1,4 @@
-# slack-dms -- paste into `SLACK_POOL`
+# sync-chat-pool -- player Sync chat lines (legacy path)
 
 ```json
 [

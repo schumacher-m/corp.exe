@@ -70,7 +70,7 @@ Punch up at process / Kyle / InsightBot / fog -- no ableist jokes.
   },
   "strings": {
     "align": {
-      "windowTitle": "Slack \u2014 #alignment-or-else",
+      "windowTitle": "Sync \u2014 #alignment-or-else",
       "buttons": [
         "Sounds good!",
         "Sounds good (Design)",

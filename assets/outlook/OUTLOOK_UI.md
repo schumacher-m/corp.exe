@@ -1,18 +1,18 @@
-# Outlook — Outlook Theater chrome
+# Mail — Mail Theater chrome
 
 Specs for **Developer**. Chrome / UI glyphs only — **do not implement game logic** here.
 
-Win95-low-fi parody of modern Outlook on CRT. Abstract envelope + blue/purple accent strip — **not** the Microsoft Outlook logo or Fluent trademark UI. Anonymous corp branding (no Helix). See `specs/04-outlook-theater.md`.
+Win95-style low-fi parody of a corporate inbox on CRT. Abstract envelope + blue/purple accent strip — **not** a trademark mail-client logo or Fluent UI. Anonymous corp branding (no Helix). Player-facing name: **Mail**. Internal asset folder stays `assets/outlook/` so Dev paths remain stable. See `docs/GENERIC_NAMES.md` and `specs/04-outlook-theater.md`.
 
 ## Window
 
 | Spec | Value |
 |------|-------|
-| Title | `Outlook` |
-| Desktop label | `Outlook` |
-| Host | Win95 window on CRT desktop (same blit path as `WIN95.md`); inbox / mail host |
+| Title | `Mail` |
+| Desktop label | `Mail` |
+| Host | Classic desktop window on CRT (same blit path as `WIN95.md`); inbox / mail host |
 | Role | Focused / Other inbox + reading pane + New compose stub |
-| Internal id | May stay `inbox` or rename to `outlook` — Dev choice; player-facing strings say Outlook |
+| Internal id / folder | May stay `inbox` / `outlook` — Dev choice; **player-facing** strings say **Mail**. Folder: `assets/outlook/` (do not rename). |
 
 ### App icons
 
@@ -24,7 +24,9 @@ Win95-low-fi parody of modern Outlook on CRT. Abstract envelope + blue/purple ac
 
 Regenerate with: `/workspace/.venv/bin/python assets/outlook/build_outlook_assets.py`
 
-### Accent colors (Win95 gray + blue/purple strip)
+Icon art: abstract envelope on blue tile + purple accent strip. **No lettermark / no Outlook logo.**
+
+### Accent colors (classic gray + blue/purple strip)
 
 | Token | Hex | Use |
 |-------|-----|-----|
@@ -32,18 +34,18 @@ Regenerate with: `/workspace/.venv/bin/python assets/outlook/build_outlook_asset
 | face light | `#FFFFFF` | Bevel highlight |
 | face shadow | `#808080` | Bevel mid |
 | face dark | `#404040` | Bevel dark |
-| title active | `#000080` | Default Win95 title bar |
+| title active | `#000080` | Default classic title bar |
 | accent blue | `#286CC8` | Ribbon accent strip / selected rail |
 | accent blue hi | `#5898E8` | Hover / highlight |
 | accent blue dk | `#184890` | Inset / pressed |
-| accent purple | `#783CBC` | Secondary Fluent-parody strip (top of ribbon / icon) |
+| accent purple | `#783CBC` | Secondary accent strip (top of ribbon / icon) |
 | accent purple hi | `#A064DC` | Strip highlight |
 | accent purple dk | `#503090` | Strip inset |
 | text | `#000000` | Body / list on face |
 | text invert | `#FFFFFF` | Title / selected rail labels |
 | paper | `#F0F0F4` | Reading pane / compose body |
 
-Keep PS1/Win95 crunch — no Fluent glass, no rounded SaaS panels. Sick OK green unused here.
+Keep PS1 / classic-desktop crunch — no Fluent glass, no rounded SaaS panels. Sick OK green unused here.
 
 ## Rail glyphs
 
@@ -70,7 +72,7 @@ Canvas-drawn fallback OK if PNGs missing.
 
 ```
 +------------------------------------------------------------------+
-| title: Outlook                                      [_][ ][X]    |
+| title: Mail                                         [_][ ][X]    |
 +------------------------------------------------------------------+
 | ribbon: [New*] [Delete] [Archive] [Focused tip]  <- blue/purple  |
 +--------+---------------------------+-----------------------------+
@@ -93,7 +95,7 @@ Canvas-drawn fallback OK if PNGs missing.
 ## CSS class hooks (suggested)
 
 ```
-.w95-outlook           /* Outlook window root */
+.w95-outlook           /* Mail window root; class id may stay outlook */
 .w95-outlook-ribbon    /* Fake modern ribbon stub + accent strip */
 .w95-outlook-rail      /* Left Focused/Other/Folders rail */
 .w95-outlook-list      /* Message list */
@@ -104,11 +106,12 @@ Canvas-drawn fallback OK if PNGs missing.
 ## Branding
 
 - Anonymous corp / Corp. Domains `@corp.internal` / `@corp.local`.
-- **No Helix** strings. No real Microsoft Outlook / Fluent product marks beyond parody silhouette energy (abstract envelope + blue/purple accent OK).
+- **No Helix** strings. No real product marks beyond parody silhouette energy (abstract envelope + blue/purple accent OK).
 - Jimbo remains separate (`Jimbo - Corporate AI`); compose Send always fails via Jimbo toast (Writer pack).
 
 ## Out of scope
 
 - Game logic, Focused/Other filtering, Unread meter wiring, SMTP
-- Fluent UI polish, trademark Outlook logo
+- Fluent UI polish, trademark mail-client logos
 - Edits to `game.js` / `win95.js` from this designer pack
+- Renaming `assets/outlook/` folder

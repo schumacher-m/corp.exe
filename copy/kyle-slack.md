@@ -1,6 +1,6 @@
-# kyle-slack -- interrupting DMs mid-task
+# kyle-dms -- Kyle interrupting DMs mid-task (player: Sync)
 
-Append to `SLACK_POOL` or fire on a timer during tickets/PR.
+Append to `SYNC_POOL` or fire on a timer during tickets/PR.
 
 ```json
 [

@@ -798,26 +798,101 @@ def sfx_teams_ring():
     return normalize(out, peak_db=-4.0)
 
 
+
+# --- nonsense babble (Call Theater muffledCall) ---
+_VOWELS = {
+    "a": (800, 1200, 2500),
+    "e": (500, 1800, 2500),
+    "i": (300, 2200, 3000),
+    "o": (500, 900, 2400),
+    "u": (350, 700, 2200),
+    "ae": (700, 1600, 2500),
+    "uh": (600, 1000, 2400),
+}
+
+
+def _formant_resonator(exc, f, bw, sr=SR):
+    r = math.exp(-math.pi * bw / sr)
+    cosw = math.cos(2 * math.pi * f / sr)
+    y = np.zeros_like(exc)
+    a1 = 2 * r * cosw
+    a2 = -(r * r)
+    y1 = 0.0
+    y2 = 0.0
+    for n, x in enumerate(exc):
+        yn = x + a1 * y1 + a2 * y2
+        y[n] = yn
+        y2, y1 = y1, yn
+    return y
+
+
+def _vowel_segment(f0, formants, n, sr=SR):
+    t = np.arange(n) / sr
+    f0_inst = f0 * (1.0 + 0.03 * np.sin(2 * math.pi * 3.5 * t))
+    phase = 2 * math.pi * np.cumsum(f0_inst) / sr
+    buzz = (2 * ((phase / (2 * math.pi)) % 1.0) - 1.0) * 0.35
+    buzz += np.sin(phase) * 0.25
+    buzz += RNG.normal(0, 0.02, n)
+    out = np.zeros(n)
+    for ff, g, bw in zip(formants, [1.0, 0.7, 0.35], [90, 110, 150]):
+        out += _formant_resonator(buzz, ff, bw, sr) * g
+    peak = np.max(np.abs(out)) + 1e-9
+    return out / peak
+
+
+def _babble_phrase(n_syllables, f0_base, sr=SR):
+    chunks = []
+    keys = list(_VOWELS.keys())
+    for i in range(n_syllables):
+        dur = float(RNG.uniform(0.08, 0.18))
+        n = int(dur * sr)
+        key = keys[int(RNG.integers(0, len(keys)))]
+        f0 = f0_base * float(RNG.uniform(0.92, 1.12))
+        if i == n_syllables - 1 and RNG.random() < 0.45:
+            f0 *= 1.08
+        seg = _vowel_segment(f0, _VOWELS[key], n, sr)
+        env = env_adsr(n, 0.01, 0.03, 0.65, 0.04, sr)
+        if RNG.random() < 0.55:
+            puff_n = int(float(RNG.uniform(0.015, 0.04)) * sr)
+            puff = one_pole_lp(noise(puff_n), 2500, sr)
+            puff *= env_adsr(puff_n, 0.001, 0.01, 0.3, 0.015, sr) * 0.35
+            chunks.append(puff)
+        chunks.append(seg * env)
+        chunks.append(np.zeros(int(float(RNG.uniform(0.02, 0.07)) * sr)))
+    chunks.append(np.zeros(int(float(RNG.uniform(0.15, 0.45)) * sr)))
+    return np.concatenate(chunks) if chunks else np.zeros(1)
+
+
 def sfx_muffled_call():
-    """Connected-call bed: muffled murmur, NO intelligible speech. ~12s loop."""
+    """Connected-call bed: nonsense babble — nonsense vowels, NO intelligible speech."""
     dur = 12.0
     n = int(dur * SR)
-    bed = hvac_drone(n) * 0.35 + fluorescent_hum(n) * 0.15
-    murmur = bandpass(noise(n, color="pink"), 300, 1800, SR)
-    t = np.arange(n) / SR
-    talk = 0.55 + 0.45 * (0.5 + 0.5 * np.sin(2 * np.pi * 2.7 * t + 0.3))
-    talk *= 0.6 + 0.4 * (0.5 + 0.5 * np.sin(2 * np.pi * 0.37 * t))
-    gate = (np.sin(2 * np.pi * 0.11 * t) > -0.35).astype(float)
-    gate = one_pole_lp(gate, 8, SR)
-    murmur *= talk * gate * 0.55
-    mur2 = bandpass(noise(n, color="brown"), 200, 900, SR)
-    mur2 *= (0.4 + 0.3 * np.sin(2 * np.pi * 1.9 * t + 1.2)) * 0.25
-    voice = bandpass(murmur + mur2, 350, 2800, SR)
-    voice = bitcrush(voice, bits=8, rate_div=3)
-    out = one_pole_lp(bed + voice * 0.85, 3200, SR)
-    out += one_pole_hp(noise(n), 6000, SR) * 0.02
-    out = make_loopable(out, fade_ms=120, sr=SR)
-    return normalize(out, peak_db=-8.0)
+    bed = hvac_drone(n) * 0.12 + fluorescent_hum(n) * 0.06
+    voices = []
+    for f0_base, amp, pan_delay in [(145.0, 0.9, 0), (190.0, 0.35, int(0.04 * SR))]:
+        buf = []
+        filled = 0
+        while filled < n + SR:
+            phrase = _babble_phrase(int(RNG.integers(3, 9)), f0_base)
+            buf.append(phrase)
+            filled += len(phrase)
+        v = np.concatenate(buf)
+        if pan_delay:
+            delayed = np.zeros(n)
+            src = v[:n]
+            delayed[pan_delay:] = src[: n - pan_delay]
+            v = delayed
+        else:
+            v = v[:n]
+        v = bandpass(v, 320, 3200, SR)
+        v = bitcrush(v, bits=9, rate_div=2)
+        voices.append(v * amp)
+    voice = normalize(voices[0] + voices[1], peak_db=-6.0) * 0.7
+    voice = one_pole_lp(voice, 3400, SR)
+    out = bed + voice + one_pole_hp(noise(n), 7000, SR) * 0.015
+    out = make_loopable(out, fade_ms=150, sr=SR)
+    return normalize(out, peak_db=-7.5)
+
 
 
 def sfx_call_accept():

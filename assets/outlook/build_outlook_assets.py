@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate Win95/PS1 low-fi Outlook Theater parody glyphs.
+"""Generate Win95/PS1 low-fi Mail Theater glyphs.
 
-Chunky nearest-neighbor RGBA. Parody Fluent blue/purple accent on Win95 gray.
-Abstract envelope + blue accent — NOT the real Microsoft Outlook logo/trademark.
+Chunky nearest-neighbor RGBA. Blue/purple accent on classic gray.
+Abstract envelope + blue accent — NOT a trademark mail-client logo.
+Player-facing name: Mail. Folder stays assets/outlook/ for Dev path stability.
 Unbranded anonymous corp. No Helix. Uses /workspace/.venv Pillow.
 
 Outputs (assets/outlook/):
