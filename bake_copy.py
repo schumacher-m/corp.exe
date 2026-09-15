@@ -80,6 +80,24 @@ if pres_path.exists():
     data["presence"] = presence
 
 
+# Outlook Theater -- merge fences from outlook.md
+out_path = COPY / "outlook.md"
+if out_path.exists():
+    parts = fences(out_path)
+    outlook = {}
+    if len(parts) >= 1:
+        outlook.update(parts[0])  # chrome + rail + empty*
+    if len(parts) >= 2:
+        outlook["ribbonToasts"] = parts[1]
+    if len(parts) >= 3:
+        outlook["composeFail"] = parts[2]
+    data["outlook"] = outlook
+    # Prefer Outlook desktop label on Start if Inbox present
+    emails = data.get("emails") or {}
+    if isinstance(emails, dict) and outlook.get("desktopLabel"):
+        emails["desktopLabel"] = outlook["desktopLabel"]
+        emails["inboxTitle"] = outlook.get("windowTitle") or emails.get("inboxTitle")
+
 # Call Theater -- merge fences from teams.md
 teams_path = COPY / "teams.md"
 if teams_path.exists():
@@ -221,4 +239,6 @@ print(
     "teams", "teams" in data,
     "chatPool", len((data.get("teams") or {}).get("chatPool") or []),
     "callers", len((data.get("teams") or {}).get("callers") or []),
+    "outlook", "outlook" in data,
+    "composeFail", len((data.get("outlook") or {}).get("composeFail") or []),
 )

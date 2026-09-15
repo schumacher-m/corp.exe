@@ -28,6 +28,13 @@ const C = {
   teamsHi: "#7B4CB0",
   teamsRail: "#3D1F5C",
   teamsFace: "#E8DCF0",
+  outlook: "#286CC8",
+  outlookHi: "#5898E8",
+  outlookDk: "#184890",
+  outlookFace: "#E8ECF4",
+  outlookRail: "#D0D8E8",
+  outlookSel: "#C8D8F0",
+  outlookAccent: "#783CBC",
 };
 
 export const W = 320;
@@ -99,6 +106,10 @@ export function createWin95(copy, hooks) {
   const teamsCallers = teamsCopy.callers || [];
   const teamsChips = teamsCopy.replyChips || [];
   const teamsFollowUps = teamsCopy.followUps || {};
+  const outlookCopy = copy.outlook || {};
+  const outlookRail = outlookCopy.rail || {};
+  const outlookRibbon = outlookCopy.ribbonToasts || {};
+  const outlookFail = outlookCopy.composeFail || [];
 
   function tStr(type, key, fallback) {
     const block = ticketStrings[type] || {};
@@ -131,6 +142,12 @@ export function createWin95(copy, hooks) {
     callHangup: loadImg("assets/teams/call_hangup.png"),
     callAvatar: loadImg("assets/teams/avatar_caller.png"),
     callSelf: loadImg("assets/teams/avatar_blank.png"),
+    ol16: loadImg("assets/outlook/outlook_16.png"),
+    ol32: loadImg("assets/outlook/outlook_32.png"),
+    ol48: loadImg("assets/outlook/outlook_48.png"),
+    olFocused: loadImg("assets/outlook/focused.png"),
+    olOther: loadImg("assets/outlook/other.png"),
+    olNew: loadImg("assets/outlook/new_mail.png"),
   };
 
   function imgReady(im) {
@@ -146,10 +163,66 @@ export function createWin95(copy, hooks) {
     return false;
   }
 
-  const inboxMails = (emailCopy.messages || []).map((m) => ({
+  function mailBucket(m) {
+    if (m && (m.bucket === "focused" || m.bucket === "other")) return m.bucket;
+    if (!m) return "focused";
+    if (m.doom || m.presence || m.force) return "focused";
+    const san = Number(m.sanity != null ? m.sanity : m.sanityHit) || 0;
+    if (san >= 5) return "focused";
+    const blob = String(m.from || "") + " " + String(m.subject || "") + " " + String(m.id || "");
+    if (/HR|audit|incident|Compliance|PresenceBot|Security|Manager|Facilities|Payroll/i.test(blob)) {
+      return "focused";
+    }
+    if (/newsletter|digest|AllHands|FYI|\[External\]|filler|CorpHub|marketing/i.test(blob)) {
+      return "other";
+    }
+    return "other";
+  }
+
+  const otherSeed = [
+    {
+      id: "o-digest",
+      from: "AllHands Digest <digest@corp.internal>",
+      subject: "Digest: Q3 vibes you already skipped",
+      body: "Highlights: synergy, snacks (metaphorical), and a survey about surveys.",
+      sanity: 1,
+      doom: false,
+      bucket: "other",
+    },
+    {
+      id: "o-news",
+      from: "Corp Newsletter <news@corp.local>",
+      subject: "Newsletter: Plant of the Month is still dying",
+      body: "Cubicle flora remains a metaphor. Unsubscribe is decorative.",
+      sanity: 1,
+      doom: false,
+      bucket: "other",
+    },
+    {
+      id: "o-fyi",
+      from: "FYI Bot <fyi@corp.internal>",
+      subject: "FYI: Parking lot mindfulness webinar",
+      body: "Optional. Attendance is tracked. Spirits are not.",
+      sanity: 2,
+      doom: false,
+      bucket: "other",
+    },
+    {
+      id: "o-ext",
+      from: "Vendor <noreply@external.example>",
+      subject: "[External] Unlock your potential (and wallet)",
+      body: "Limited offer on tools that generate more email.",
+      sanity: 1,
+      doom: false,
+      bucket: "other",
+    },
+  ];
+
+  const inboxMails = [...(emailCopy.messages || []), ...otherSeed].map((m) => ({
     ...m,
     read: false,
     opened: false,
+    bucket: mailBucket(m),
   }));
 
   // Endless ticket queue (GD tickets-extra refill)
@@ -255,6 +328,8 @@ export function createWin95(copy, hooks) {
     inbox: inboxMails,
     openMailId: null,
     mailReadFully: false,
+    outlookTab: "focused", // focused | other
+    outlookCompose: false,
     emailQueue: [],
     emailCooldown: EMAIL_MIN + Math.random() * (EMAIL_MAX - EMAIL_MIN),
     emailEnabled: false,
@@ -357,11 +432,11 @@ export function createWin95(copy, hooks) {
     },
     inbox: {
       id: "inbox",
-      title: emailCopy.inboxTitle || "Inbox - Outlook Express",
-      x: 40,
-      y: 16,
-      w: 240,
-      h: 170,
+      title: outlookCopy.windowTitle || emailCopy.inboxTitle || "Outlook",
+      x: 18,
+      y: 10,
+      w: 284,
+      h: 188,
       open: false,
     },
     timesheet: {
@@ -379,7 +454,7 @@ export function createWin95(copy, hooks) {
 
   const deskIcons = [
     { id: "jimbo", label: "Jimbo", x: 8, y: 8, img: "j32" },
-    { id: "inbox", label: emailCopy.desktopLabel || "Inbox", x: 8, y: 56, img: null },
+    { id: "inbox", label: outlookCopy.desktopLabel || emailCopy.desktopLabel || "Outlook", x: 8, y: 56, img: null },
     {
       id: "timesheet",
       label: timesheetCopy.desktopLabel || "timesheet.xls",
@@ -899,6 +974,14 @@ export function createWin95(copy, hooks) {
       ctx.fillStyle = C.teams;
       ctx.fillRect(win.x + 3, win.y + 3, win.w - 6, 14);
       ctx.drawImage(imgs.t16, win.x + 5, win.y + 4, 12, 12);
+      ctx.fillStyle = C.inv;
+      ctx.font = "bold 9px Tahoma, 'MS Sans Serif', sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillText(win.title.slice(0, 24), win.x + 20, win.y + 10);
+    } else if (win.id === "inbox" && imgReady(imgs.ol16)) {
+      ctx.fillStyle = C.outlookDk;
+      ctx.fillRect(win.x + 3, win.y + 3, win.w - 6, 14);
+      ctx.drawImage(imgs.ol16, win.x + 5, win.y + 4, 12, 12);
       ctx.fillStyle = C.inv;
       ctx.font = "bold 9px Tahoma, 'MS Sans Serif', sans-serif";
       ctx.textBaseline = "middle";
@@ -1615,48 +1698,236 @@ export function createWin95(copy, hooks) {
     return Math.max(emailCopy.unreadFloor || 1, n || 1);
   }
 
+  function mailSnippet(m) {
+    const body = Array.isArray(m.body) ? m.body.join(" ") : String(m.body || "");
+    return body.replace(/\s+/g, " ").trim().slice(0, 42);
+  }
+
+  function inboxForTab() {
+    const tab = state.outlookTab === "other" ? "other" : "focused";
+    return state.inbox.filter((m) => mailBucket(m) === tab);
+  }
+
+  function setOutlookTab(tab) {
+    if (tab !== "focused" && tab !== "other") return;
+    if (state.outlookTab === tab) return;
+    state.outlookTab = tab;
+    state.outlookCompose = false;
+    if (state.openMailId) {
+      const mail = state.inbox.find((m) => m.id === state.openMailId);
+      if (!mail || mailBucket(mail) !== tab) {
+        state.openMailId = null;
+        state.mailReadFully = false;
+      }
+    }
+    try {
+      audio.playSfx("outlookWhoosh", { volume: 0.3 });
+    } catch (_) {}
+  }
+
   function drawInbox(x, y, w, h) {
-    bevelSunken(x, y, w, h, C.white);
+    bevelSunken(x, y, w, h, C.outlookFace);
     ctx.font = "7px Tahoma, sans-serif";
     if (state.phase === "unsub" && state.stub?.kind === "unsub") {
-      // Don't let stale Outlook hits steal Unsub clicks
       state._mailHits = null;
       state._mailCloseBtn = null;
+      state._outlookHits = null;
       state.openMailId = null;
+      state.outlookCompose = false;
       drawUnsubStub(x, y, w, h);
       return;
     }
+
+    state._outlookHits = [];
+    state._mailHits = [];
+    state._mailCloseBtn = null;
+
+    const ribH = 16;
+    ctx.fillStyle = C.outlookAccent;
+    ctx.fillRect(x, y, w, 3);
+    ctx.fillStyle = C.face;
+    ctx.fillRect(x, y + 3, w, ribH - 3);
+    ctx.fillStyle = C.outlook;
+    ctx.fillRect(x, y + ribH - 1, w, 1);
+
+    const ribY = y + 4;
+    const ribBtns = [
+      { id: "new", label: "New", x: x + 4, w: 34 },
+      { id: "delete", label: "Delete", x: x + 40, w: 42 },
+      { id: "archive", label: "Archive", x: x + 84, w: 48 },
+      { id: "tip", label: "Focused tip", x: x + 134, w: 62 },
+    ];
+    for (const b of ribBtns) {
+      bevelRaised(b.x, ribY, b.w, 11, C.face);
+      if (b.id === "new" && imgReady(imgs.olNew)) {
+        ctx.drawImage(imgs.olNew, b.x + 1, ribY + 1, 9, 9);
+        ctx.fillStyle = C.text;
+        ctx.font = "bold 6px Tahoma, sans-serif";
+        ctx.fillText(b.label, b.x + 11, ribY + 8);
+      } else {
+        ctx.fillStyle = C.text;
+        ctx.font = "bold 6px Tahoma, sans-serif";
+        ctx.fillText(b.label, b.x + 4, ribY + 8);
+      }
+      state._outlookHits.push({ kind: "ribbon", id: b.id, hit: { x: b.x, y: ribY, w: b.w, h: 11 } });
+    }
+
+    const bodyY = y + ribH + 1;
+    const bodyH = h - ribH - 1;
+    const railW = 58;
+    const listW = Math.max(86, Math.floor((w - railW) * 0.42));
+    const readX = x + railW + listW;
+    const readW = w - railW - listW;
+
+    ctx.fillStyle = C.outlookRail;
+    ctx.fillRect(x, bodyY, railW, bodyH);
+    ctx.fillStyle = C.outlookDk;
+    ctx.fillRect(x + railW - 1, bodyY, 1, bodyH);
+
+    const railItems = [
+      { id: "focused", label: outlookRail.focused || "Focused", y: bodyY + 4, glyph: imgs.olFocused },
+      { id: "other", label: outlookRail.other || "Other", y: bodyY + 36, glyph: imgs.olOther },
+      { id: "folders", label: outlookRail.folders || "Folders", y: bodyY + 68, glyph: null },
+    ];
+    for (const it of railItems) {
+      const sel = it.id === state.outlookTab;
+      if (sel) {
+        ctx.fillStyle = C.outlookSel;
+        ctx.fillRect(x + 1, it.y - 2, railW - 3, 28);
+        ctx.fillStyle = C.outlook;
+        ctx.fillRect(x + 1, it.y - 2, 3, 28);
+      }
+      if (it.glyph && imgReady(it.glyph)) {
+        ctx.drawImage(it.glyph, x + 18, it.y, 16, 16);
+      } else if (it.id === "folders") {
+        ctx.fillStyle = C.shadow;
+        ctx.fillRect(x + 20, it.y + 4, 16, 14);
+        ctx.fillStyle = C.face;
+        ctx.fillRect(x + 22, it.y + 6, 12, 3);
+        ctx.fillRect(x + 22, it.y + 11, 12, 3);
+      }
+      ctx.fillStyle = sel ? C.outlookDk : C.text;
+      ctx.font = "bold 6px Tahoma, sans-serif";
+      ctx.fillText(String(it.label).slice(0, 8), x + 6, it.y + 24);
+      state._outlookHits.push({ kind: "rail", id: it.id, hit: { x: x + 1, y: it.y - 2, w: railW - 3, h: 28 } });
+    }
+
+    if (state.outlookCompose) {
+      const cx0 = x + railW;
+      const cw0 = w - railW;
+      bevelSunken(cx0, bodyY, cw0, bodyH, C.white);
+      ctx.fillStyle = C.outlook;
+      ctx.fillRect(cx0, bodyY, cw0, 12);
+      ctx.fillStyle = C.inv;
+      ctx.font = "bold 7px Tahoma, sans-serif";
+      ctx.fillText(String(outlookCopy.composeTitle || "Untitled Message").slice(0, 28), cx0 + 4, bodyY + 9);
+      ctx.fillStyle = C.text;
+      ctx.font = "7px Tahoma, sans-serif";
+      ctx.fillText((outlookCopy.toLabel || "To") + ": kyle@corp.internal", cx0 + 4, bodyY + 24);
+      ctx.fillText((outlookCopy.subjectLabel || "Subject") + ": Re: alignment (draft)", cx0 + 4, bodyY + 34);
+      ctx.fillStyle = C.shadow;
+      let dy = bodyY + 48;
+      for (const ln of wrap("Per my last anxiety -- looping Jimbo for tone.", 34).slice(0, 6)) {
+        ctx.fillText(ln, cx0 + 4, dy);
+        dy += 9;
+      }
+      const by = bodyY + bodyH - 18;
+      bevelRaised(cx0 + 4, by, 48, 14, C.outlookHi);
+      ctx.fillStyle = C.inv;
+      ctx.font = "bold 8px Tahoma, sans-serif";
+      ctx.fillText(outlookCopy.sendLabel || "Send", cx0 + 14, by + 10);
+      state._outlookHits.push({ kind: "compose", id: "send", hit: { x: cx0 + 4, y: by, w: 48, h: 14 } });
+      bevelRaised(cx0 + 56, by, 54, 14, C.face);
+      ctx.fillStyle = C.text;
+      ctx.fillText(outlookCopy.discardLabel || "Discard", cx0 + 64, by + 10);
+      state._outlookHits.push({ kind: "compose", id: "discard", hit: { x: cx0 + 56, y: by, w: 54, h: 14 } });
+      state._mailHits = null;
+      state._mailCloseBtn = null;
+      return;
+    }
+
+    const lx = x + railW;
+    bevelSunken(lx, bodyY, listW, bodyH, C.white);
+    const list = inboxForTab();
+    let yy = bodyY + 2;
+    if (!list.length) {
+      ctx.fillStyle = C.shadow;
+      ctx.font = "6px Tahoma, sans-serif";
+      const empty =
+        state.outlookTab === "other"
+          ? outlookCopy.emptyOther || "Other is empty."
+          : outlookCopy.emptyFocused || "You're all caught up. That's worse.";
+      let ey = bodyY + 14;
+      for (const ln of wrap(empty, Math.max(12, Math.floor(listW / 5))).slice(0, 5)) {
+        ctx.fillText(ln, lx + 4, ey);
+        ey += 9;
+      }
+    } else {
+      const rowH = 22;
+      for (const m of list) {
+        if (yy + rowH > bodyY + bodyH) break;
+        const sel = state.openMailId === m.id;
+        if (sel) {
+          ctx.fillStyle = C.outlookSel;
+          ctx.fillRect(lx + 1, yy, listW - 2, rowH);
+        }
+        if (!m.read) {
+          ctx.fillStyle = C.outlook;
+          ctx.fillRect(lx + 3, yy + 4, 6, 6);
+        } else {
+          ctx.strokeStyle = C.shadow;
+          ctx.strokeRect(lx + 3, yy + 4, 6, 6);
+        }
+        ctx.fillStyle = sel ? C.outlookDk : m.read ? C.shadow : C.text;
+        ctx.font = m.read ? "6px Tahoma, sans-serif" : "bold 6px Tahoma, sans-serif";
+        const from = String(m.from || "?").split("<")[0].trim().slice(0, 14);
+        ctx.fillText(from, lx + 12, yy + 6);
+        ctx.font = "6px Tahoma, sans-serif";
+        ctx.fillStyle = sel ? C.text : C.dark;
+        ctx.fillText(String(m.subject || "").slice(0, 18), lx + 12, yy + 13);
+        ctx.fillStyle = C.shadow;
+        ctx.fillText(mailSnippet(m).slice(0, 18), lx + 12, yy + 20);
+        state._mailHits.push({ id: m.id, hit: { x: lx + 1, y: yy, w: listW - 2, h: rowH } });
+        yy += rowH;
+      }
+    }
+
+    bevelSunken(readX, bodyY, readW, bodyH, C.white);
     const mail = state.openMailId ? state.inbox.find((m) => m.id === state.openMailId) : null;
     if (mail) {
-      ctx.fillStyle = C.title;
-      ctx.fillText(`From: ${mail.from}`, x + 4, y + 10);
+      ctx.fillStyle = C.outlookDk;
+      ctx.font = "bold 6px Tahoma, sans-serif";
+      ctx.fillText(String(mail.from || "?").slice(0, 28), readX + 3, bodyY + 9);
       ctx.fillStyle = C.text;
-      ctx.fillText(String(mail.subject).slice(0, 36), x + 4, y + 20);
-      let yy = y + 32;
-      for (const ln of wrap(mail.body, 40).slice(0, 10)) {
-        ctx.fillText(ln, x + 4, yy);
-        yy += 9;
+      ctx.font = "bold 7px Tahoma, sans-serif";
+      let ry = bodyY + 20;
+      for (const ln of wrap(String(mail.subject || ""), Math.max(14, Math.floor(readW / 5))).slice(0, 2)) {
+        ctx.fillText(ln, readX + 3, ry);
+        ry += 9;
       }
-      bevelRaised(x + 4, y + h - 18, 60, 14, C.face);
-      ctx.fillStyle = C.text;
-      ctx.font = "bold 8px Tahoma, sans-serif";
-      ctx.fillText("Close", x + 18, y + h - 9);
-      state._mailCloseBtn = { x: x + 4, y: y + h - 18, w: 60, h: 14 };
-      state._mailHits = null;
-    } else {
-      state._mailCloseBtn = null;
-      state._mailHits = [];
-      let yy = y + 4;
       ctx.fillStyle = C.shadow;
-      ctx.fillText(`Inbox (${unreadCount()} unreadinf)`, x + 4, yy + 6);
-      yy += 12;
-      for (const m of state.inbox.slice(0, 10)) {
-        ctx.fillStyle = m.read ? C.shadow : C.text;
-        const mark = m.read ? " " : "*";
-        ctx.fillText(`${mark} ${m.from}: ${String(m.subject).slice(0, 28)}`, x + 4, yy + 7);
-        state._mailHits.push({ id: m.id, hit: { x: x + 2, y: yy, w: w - 4, h: 12 } });
-        yy += 12;
-        if (yy > y + h - 8) break;
+      ctx.fillRect(readX + 2, ry, readW - 4, 1);
+      ry += 8;
+      ctx.fillStyle = C.text;
+      ctx.font = "6px Tahoma, sans-serif";
+      const body = Array.isArray(mail.body) ? mail.body.join(" ") : String(mail.body || "");
+      for (const ln of wrap(body, Math.max(16, Math.floor(readW / 4.5))).slice(0, 9)) {
+        ctx.fillText(ln, readX + 3, ry);
+        ry += 8;
+        if (ry > bodyY + bodyH - 20) break;
+      }
+      bevelRaised(readX + 3, bodyY + bodyH - 16, 52, 12, C.face);
+      ctx.fillStyle = C.text;
+      ctx.font = "bold 7px Tahoma, sans-serif";
+      ctx.fillText("Close", readX + 14, bodyY + bodyH - 8);
+      state._mailCloseBtn = { x: readX + 3, y: bodyY + bodyH - 16, w: 52, h: 12 };
+    } else {
+      ctx.fillStyle = C.shadow;
+      ctx.font = "6px Tahoma, sans-serif";
+      let ry = bodyY + 16;
+      for (const ln of wrap(outlookCopy.readingEmpty || "Select a message.", Math.max(14, Math.floor(readW / 5))).slice(0, 6)) {
+        ctx.fillText(ln, readX + 4, ry);
+        ry += 9;
       }
     }
   }
@@ -1742,18 +2013,22 @@ export function createWin95(copy, hooks) {
       if (ic.id === "jimbo" && imgs.j32.complete && imgs.j32.naturalWidth) {
         ctx.drawImage(imgs.j32, bx + 8, by, 32, 32);
       } else if (ic.id === "inbox") {
-        // Outlook-ish envelope icon
-        bevelRaised(bx + 8, by + 4, 28, 22, C.face);
-        ctx.fillStyle = C.title;
-        ctx.fillRect(bx + 10, by + 8, 24, 14);
-        ctx.fillStyle = C.amber;
-        ctx.beginPath();
-        ctx.moveTo(bx + 10, by + 8);
-        ctx.lineTo(bx + 22, by + 16);
-        ctx.lineTo(bx + 34, by + 8);
-        ctx.closePath();
-        ctx.fill();
-        // unread badge
+        if (imgReady(imgs.ol32)) {
+          ctx.drawImage(imgs.ol32, bx + 8, by, 32, 32);
+        } else if (imgReady(imgs.ol48)) {
+          ctx.drawImage(imgs.ol48, bx + 4, by, 40, 40);
+        } else {
+          bevelRaised(bx + 8, by + 4, 28, 22, C.face);
+          ctx.fillStyle = C.outlook;
+          ctx.fillRect(bx + 10, by + 8, 24, 14);
+          ctx.fillStyle = C.outlookHi;
+          ctx.beginPath();
+          ctx.moveTo(bx + 10, by + 8);
+          ctx.lineTo(bx + 22, by + 16);
+          ctx.lineTo(bx + 34, by + 8);
+          ctx.closePath();
+          ctx.fill();
+        }
         const u = unreadCount();
         ctx.fillStyle = C.blood;
         ctx.fillRect(bx + 30, by + 2, 12, 10);
@@ -2122,10 +2397,16 @@ export function createWin95(copy, hooks) {
 
   function openInbox(forceMail) {
     wins.inbox.open = true;
+    wins.inbox.title = outlookCopy.windowTitle || emailCopy.inboxTitle || "Outlook";
     raise("inbox");
+    state.outlookCompose = false;
     if (forceMail) {
+      if (!forceMail.bucket) forceMail.bucket = mailBucket(forceMail);
+      state.outlookTab = forceMail.bucket === "other" ? "other" : "focused";
       state.openMailId = forceMail.id;
       state.mailReadFully = false;
+    } else if (!state.outlookTab) {
+      state.outlookTab = "focused";
     }
   }
 
@@ -2855,6 +3136,7 @@ export function createWin95(copy, hooks) {
       read: false,
       opened: false,
     };
+    mail.bucket = mailBucket(mail);
     state.inbox.push(mail);
     queueOrDeliver(mail);
   }
@@ -3550,15 +3832,20 @@ export function createWin95(copy, hooks) {
   function closeOpenMail(readFully) {
     const mail = state.inbox.find((m) => m.id === state.openMailId);
     if (mail) {
+      const already = !!mail.read;
       mail.opened = true;
-      if (readFully || state.mailReadFully) {
-        mail.read = true;
-        hitSanity(mail.sanity || 5);
+      if (!already) {
+        if (readFully || state.mailReadFully) {
+          mail.read = true;
+          hitSanity(mail.sanity || 5);
+        } else {
+          // close without reading - smaller hit, Jimbo marks read
+          mail.read = true;
+          hitSanity(Math.max(2, Math.floor((mail.sanity || 5) / 2)));
+          toast(jimboCopy.markedRead || "Marked as read by Jimbo");
+        }
       } else {
-        // close without reading - smaller hit, Jimbo marks read
         mail.read = true;
-        hitSanity(Math.max(2, Math.floor((mail.sanity || 5) / 2)));
-        toast(jimboCopy.markedRead || "Marked as read by Jimbo");
       }
     }
     state.openMailId = null;
@@ -3807,6 +4094,66 @@ export function createWin95(copy, hooks) {
       if (handleStubClick(win, x, y)) return;
     }
     if (win.id === "inbox" && !(state.phase === "unsub" && state.stub?.kind === "unsub")) {
+      if (state._outlookHits) {
+        for (const oh of state._outlookHits) {
+          if (!hit(oh.hit, x, y)) continue;
+          audio.playSfx("click");
+          if (oh.kind === "rail") {
+            if (oh.id === "folders") {
+              toast(outlookCopy.foldersToast || "Folders syncing...");
+              return;
+            }
+            setOutlookTab(oh.id);
+            return;
+          }
+          if (oh.kind === "ribbon") {
+            if (oh.id === "new") {
+              state.outlookCompose = true;
+              toast(pick(outlookRibbon.new) || "Compose opened.", { jimbo: true });
+              return;
+            }
+            if (oh.id === "delete") {
+              if (state.openMailId) {
+                const mail = state.inbox.find((m) => m.id === state.openMailId);
+                if (mail) {
+                  mail.read = true;
+                  mail.opened = true;
+                }
+                state.openMailId = null;
+                state.mailReadFully = false;
+                state.unread = Math.max(emailCopy.unreadFloor || 1, unreadCount());
+                toast(pick(outlookRibbon.delete) || "Moved to Deleted (synced to Jimbo)");
+              } else {
+                toast(pick(outlookRibbon.delete) || "Moved to Deleted (synced to Jimbo)");
+              }
+              return;
+            }
+            if (oh.id === "archive") {
+              toast(pick(outlookRibbon.archive) || "Archived for impact");
+              return;
+            }
+            if (oh.id === "tip") {
+              toast(pick(outlookRibbon.tip) || "Focused Inbox shows what matters.");
+              return;
+            }
+          }
+          if (oh.kind === "compose") {
+            if (oh.id === "send") {
+              state.outlookCompose = false;
+              hitSanity(1);
+              toast(pick(outlookFail) || "Jimbo rewrote your tone. Draft discarded for culture.", {
+                jimbo: true,
+              });
+              audio.playSfx("jimboFail", { volume: 0.45 });
+              return;
+            }
+            if (oh.id === "discard") {
+              state.outlookCompose = false;
+              return;
+            }
+          }
+        }
+      }
       if (state.openMailId && hit(state._mailCloseBtn, x, y)) {
         // treat as read if they've had it open (clicking close after open = read)
         state.mailReadFully = true;
@@ -3816,6 +4163,15 @@ export function createWin95(copy, hooks) {
       if (state._mailHits) {
         for (const mh of state._mailHits) {
           if (hit(mh.hit, x, y)) {
+            if (state.openMailId && state.openMailId !== mh.id) {
+              const prev = state.inbox.find((m) => m.id === state.openMailId);
+              if (prev && !prev.read) {
+                closeOpenMail(true);
+              } else {
+                state.openMailId = null;
+                state.mailReadFully = false;
+              }
+            }
             state.openMailId = mh.id;
             state.mailReadFully = true;
             const mail = state.inbox.find((m) => m.id === mh.id);

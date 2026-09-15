@@ -858,6 +858,22 @@ def sfx_teams_ping():
     return normalize(fade_edges(out, 8), peak_db=-4.0)
 
 
+
+def sfx_outlook_whoosh():
+    """Soft Focused/Other tab whoosh — quiet UI breeze."""
+    n = int(0.18 * SR)
+    t = np.arange(n) / SR
+    nz = noise(n, color="pink")
+    env = np.sin(np.pi * t / max(float(t[-1]), 1e-9)) ** 1.2
+    hi = one_pole_hp(nz, 2000, SR)
+    lo = one_pole_lp(hi, 4500, SR)
+    out = lo * env * 0.55
+    ck = int(0.012 * SR)
+    out[:ck] += sine(1200, ck) * env_adsr(ck, 0.0005, 0.004, 0.2, 0.005, SR) * 0.08
+    out = bitcrush(out, bits=11, rate_div=2)
+    return normalize(fade_edges(out, 3), peak_db=-10.0)
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -909,6 +925,7 @@ def main():
         ("sfx-call-accept.wav", sfx_call_accept),
         ("sfx-call-decline.wav", sfx_call_decline),
         ("sfx-teams-ping.wav", sfx_teams_ping),
+        ("sfx-outlook-whoosh.wav", sfx_outlook_whoosh),
     ]
     for name, fn in sfx:
         print(f"  {name}...")

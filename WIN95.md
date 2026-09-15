@@ -196,6 +196,29 @@ Purple parody of corporate chat + call overlay. Replaces Slack player-facing chr
 
 Purple chrome: `#5A588E` / `#7A76B0` / `#3A3868` / `#282648`. Defaults: **Mute ON**, **Camera OFF**. Classes: `.w95-teams` `.w95-call-overlay` `.w95-call-chip` `.w95-attentiveness`.
 
+
+## Outlook Theater
+
+Modern Outlook parody on Win95 CRT. Abstract envelope + blue/purple accent — **not** Microsoft Outlook / Fluent trademark. Anonymous corp (no Helix). Spec: `specs/04-outlook-theater.md`. Dev notes: `assets/outlook/OUTLOOK_UI.md`.
+
+| Spec | Value |
+|------|-------|
+| Window title | `Outlook` |
+| Desktop label | `Outlook` |
+| Role | Focused / Other inbox + reading pane + New compose stub |
+| Regenerator | `assets/outlook/build_outlook_assets.py` |
+
+| Asset | Path | Size | Use |
+|-------|------|------|-----|
+| App 16 | `assets/outlook/outlook_16.png` | 16×16 | Title / taskbar |
+| App 32 | `assets/outlook/outlook_32.png` | 32×32 | Start / alt |
+| App 48 | `assets/outlook/outlook_48.png` | 48×48 | Desktop |
+| Focused | `assets/outlook/focused.png` | 16×16 | Rail glyph (star/pin) |
+| Other | `assets/outlook/other.png` | 16×16 | Rail glyph (folder/overflow) |
+| New | `assets/outlook/new_mail.png` | 16×16 | Ribbon New / compose |
+
+Accent strip: `#286CC8` / `#5898E8` / `#184890` + purple `#783CBC` / `#A064DC` / `#503090` on face `#C0C0C0`. Classes: `.w95-outlook` `.w95-outlook-ribbon` `.w95-outlook-rail` `.w95-outlook-list` `.w95-outlook-read` `.w95-outlook-compose`.
+
 ## Anti-patterns
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.

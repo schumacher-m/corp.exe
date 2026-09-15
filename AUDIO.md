@@ -148,6 +148,15 @@ Jiggler is intentionally quieter than Away (−12 dBFS) — almost subliminal. P
 
 Helpers in `audio.js`: `playLoop(name)` / `stopLoop(name)` / `stopAllLoops()`. Stop ring on Accept/Decline; start muffled on Accept; stop muffled on hang-up. Keep or map old `slack` → `teamsPing` for chat.
 
+
+### Outlook Theater (optional)
+
+| File | When | Loop | Key | Vol |
+|------|------|------|-----|-----|
+| `audio/sfx-outlook-whoosh.wav` | Focused ↔ Other tab switch | No | `outlookWhoosh` | 0.25–0.35 |
+
+Soft whoosh (−10 dBFS). Not required to ship Outlook Theater.
+
 ## Dev integration checklist
 
 1. Preload BGM + critical SFX on boot (or first user gesture — browsers block autoplay).

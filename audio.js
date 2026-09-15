@@ -51,6 +51,7 @@ const FILES = {
   callAccept: "sfx-call-accept.wav",
   callDecline: "sfx-call-decline.wav",
   teamsPing: "sfx-teams-ping.wav",
+  outlookWhoosh: "sfx-outlook-whoosh.wav",
 };
 
 const EXHAUSTED_ONESHOTS = [

@@ -113,6 +113,11 @@ Also Jimbo assistant chrome: `assets/jimbo/` (window title **Jimbo — Corporate
 
 Win95-low-fi purple parody glyphs (unbranded — not Fluent/Teams trademark). Regenerator: `assets/teams/build_teams_assets.py`. Window title **Teams (Corp)**. Full glyph paths + call-overlay layout: `assets/teams/TEAMS_UI.md` and `WIN95.md` § Call Theater / Teams. Spec: `specs/03-call-theater.md`.
 
+
+## Outlook Theater
+
+Win95-low-fi blue/purple parody glyphs (unbranded — not Outlook/Fluent trademark). Regenerator: `assets/outlook/build_outlook_assets.py`. Window title **Outlook**, desktop label **Outlook**. Full glyph paths + rail/ribbon notes: `assets/outlook/OUTLOOK_UI.md` and `WIN95.md` § Outlook Theater. Spec: `specs/04-outlook-theater.md`.
+
 ## Anti-patterns
 
 Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded SaaS panels, neon glow, caricature likeness for Kyle, Win95 full-screen instead of on the CRT face.
