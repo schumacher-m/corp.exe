@@ -42,7 +42,7 @@ Source layout: `src/main.js`, `src/game/`, `src/desktop/`, `src/apps/`, `src/aud
 On every push to `master`/`main`, [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) runs Bun (`check` + `build`) and deploys **`dist/`**.
 
 1. Repo **Settings -> Pages -> Build and deployment -> Source: GitHub Actions** (one-time).
-2. Site URL (after first green run): `https://schumacher-m.github.io/corp.html/`
+2. Site URL (after first green run): `https://schumacher-m.github.io/corp.exe/`
 
 Local preview of the Pages artifact:
 
@@ -50,3 +50,11 @@ Local preview of the Pages artifact:
 bun run build
 bunx serve dist -p 8765
 ```
+
+## Docs
+
+- [WIN95.md](docs/WIN95.md) — CRT desktop chrome
+- [VISUAL.md](docs/VISUAL.md) — PS1 look + anchors
+- [AUDIO.md](docs/AUDIO.md) — BGM/SFX keys
+- [FARM.md](docs/FARM.md) — cubicle farm
+- [GENERIC_NAMES.md](docs/GENERIC_NAMES.md) — Sync / Mail / Tracker lexicon

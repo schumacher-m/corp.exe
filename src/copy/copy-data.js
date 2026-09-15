@@ -1134,7 +1134,7 @@ export default {
           "body": [
             "HR opened a ticket about us!",
             "You're welcome!",
-            "Also you're on a watchlist for excellence."
+            "Also you're on a watchlist for greatness."
           ],
           "sanityHit": 8,
           "buttons": [

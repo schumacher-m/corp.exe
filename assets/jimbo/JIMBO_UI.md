@@ -9,7 +9,7 @@ Original purple blob mascot (antenna + pink bobble). **Not** Clippy / Office Ass
 | Spec | Value |
 |------|-------|
 | Title | `Jimbo - Corporate AI` |
-| Host | Win95 window on CRT desktop (same blit path as `WIN95.md`) |
+| Host | Win95 window on CRT desktop (same blit path as `docs/WIN95.md`) |
 | Role | AI-assistant chrome / ask panel host |
 
 ### Icons
@@ -66,7 +66,7 @@ Cheerful confirmation after a “save” / assist beat:
 .w95-jimbo-toast    /* balloon or dialog toast */
 ```
 
-Paste-ready styles: `assets/jimbo/jimbo.css` (optional; matches `WIN95.md` palette + Jimbo purple).
+Paste-ready styles: `assets/jimbo/jimbo.css` (optional; matches `docs/WIN95.md` palette + Jimbo purple).
 
 ## Out of scope
 

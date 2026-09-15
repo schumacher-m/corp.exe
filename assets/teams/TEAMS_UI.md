@@ -10,7 +10,7 @@ Win95-style low-fi purple parody of corporate chat + call overlay. Abstract chat
 |------|-------|
 | Title | `Sync` |
 | Desktop label | `Sync` |
-| Host | Classic desktop window on CRT (same blit path as `WIN95.md`); chat + call chrome |
+| Host | Classic desktop window on CRT (same blit path as `docs/WIN95.md`); chat + call chrome |
 | Role | Chat spam host + incoming/connected call overlay |
 | Internal id / folder | May stay `slack` / `teams` — Dev choice; **player-facing** strings say **Sync**. Folder: `assets/teams/` (do not rename). |
 

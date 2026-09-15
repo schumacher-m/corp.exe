@@ -32,7 +32,7 @@ def fences(path):
 def fence(path):
     return fences(path)[0]
 
-src = (ROOT / "copy-data.js").read_text()
+src = (ROOT / "src" / "copy" / "copy-data.js").read_text()
 m = re.search(r"export\s+default\s+", src)
 rest = src[m.end():].strip()
 if rest.endswith(";"):
@@ -216,7 +216,7 @@ if ts_label not in labels and "timesheet" not in [i.get("id") for i in items]:
 
 data = deep_rebrand(data)
 
-(ROOT / "copy-data.js").write_text(
+(ROOT / "src" / "copy" / "copy-data.js").write_text(
     "/* Auto-baked from copy/*.md -- re-run bake_copy.py */\nexport default "
     + json.dumps(data, indent=2, ensure_ascii=False)
     + ";\n"

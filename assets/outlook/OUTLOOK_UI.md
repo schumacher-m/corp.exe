@@ -10,7 +10,7 @@ Win95-style low-fi parody of a corporate inbox on CRT. Abstract envelope + blue/
 |------|-------|
 | Title | `Mail` |
 | Desktop label | `Mail` |
-| Host | Classic desktop window on CRT (same blit path as `WIN95.md`); inbox / mail host |
+| Host | Classic desktop window on CRT (same blit path as `docs/WIN95.md`); inbox / mail host |
 | Role | Focused / Other inbox + reading pane + New compose stub |
 | Internal id / folder | May stay `inbox` / `outlook` — Dev choice; **player-facing** strings say **Mail**. Folder: `assets/outlook/` (do not rename). |
 

@@ -3,7 +3,7 @@
 Original synthesized BGM + SFX for corp.exe (PS1–Win95 cubicle-farm / generic corporate software-dev aesthetic).  
 **No copyrighted stems or samples** — everything is generated with NumPy (+ light bitcrush / downsample) and encoded with ffmpeg (`libvorbis` for OGG).
 
-**Mute:** All playback must respect `state.muted` in `game.js` (mute button currently toggles toast-only mute). When muted, pause/stop BGM and skip SFX (or set gain to 0).
+**Mute:** All playback must respect `state.muted` in `src/game/Game.js` (mute button currently toggles toast-only mute). When muted, pause/stop BGM and skip SFX (or set gain to 0).
 
 **Regen:** From repo root (or `corp-html/`):
 
@@ -146,7 +146,7 @@ Jiggler is intentionally quieter than Away (−12 dBFS) — almost subliminal. P
 | `audio/sfx-call-decline.wav` | Decline / ring timeout | No | `callDecline` | 0.5 |
 | `audio/sfx-teams-ping.wav` | Sync chat spam (aliases older Slack-style ping) | No | `teamsPing` | 0.4 |
 
-Helpers in `audio.js`: `playLoop(name)` / `stopLoop(name)` / `stopAllLoops()`.
+Helpers in `src/audio/Audio.js`: `playLoop(name)` / `stopLoop(name)` / `stopAllLoops()`.
 Babble bed is original formant synth (not sampled speech). Never name third-party voice products in docs or UI. Path/key unchanged (`muffledCall`). Stop ring on Accept/Decline; start muffled on Accept; stop muffled on hang-up. Map chat pings to `teamsPing` (or legacy `slack`) for Sync.
 
 
