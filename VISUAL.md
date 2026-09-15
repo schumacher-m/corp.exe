@@ -108,6 +108,11 @@ Low-fi nearest-neighbor tray/desktop glyphs (RGBA). Regenerator: `assets/icons/b
 
 Also Jimbo assistant chrome: `assets/jimbo/` (window title **Jimbo — Corporate AI**). Unbranded — no product marks on these icons.
 
+
+## Call Theater / Teams
+
+Win95-low-fi purple parody glyphs (unbranded — not Fluent/Teams trademark). Regenerator: `assets/teams/build_teams_assets.py`. Window title **Teams (Corp)**. Full glyph paths + call-overlay layout: `assets/teams/TEAMS_UI.md` and `WIN95.md` § Call Theater / Teams. Spec: `specs/03-call-theater.md`.
+
 ## Anti-patterns
 
 Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded SaaS panels, neon glow, caricature likeness for Kyle, Win95 full-screen instead of on the CRT face.

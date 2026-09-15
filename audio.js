@@ -3,7 +3,7 @@
  * Expected under audio/: bgm-*.ogg, amb-cubicle-exhausted.ogg,
  * sfx-*.wav one-shots (incl. tired farm: grunt/sigh/creak/ugh/key-dead/murmur/keys-far),
  * sfx-win95-*, sfx-key-01..03, sfx-mouse-click, sfx-slack-ping,
- * sfx-jiggler-tick, sfx-timesheet-save, exhausted farm pack, etc.
+ * sfx-jiggler-tick, sfx-timesheet-save, sfx-teams-ring, sfx-muffled-call, sfx-call-accept, sfx-call-decline, sfx-teams-ping, exhausted farm pack, etc.
  */
 const BASE = "audio/";
 
@@ -46,6 +46,11 @@ const FILES = {
   keyDead5: "sfx-key-dead-05.wav",
   murmurDistant: "sfx-murmur-distant.wav",
   keysFar: "sfx-keys-far.wav",
+  teamsRing: "sfx-teams-ring.wav",
+  muffledCall: "sfx-muffled-call.ogg",
+  callAccept: "sfx-call-accept.wav",
+  callDecline: "sfx-call-decline.wav",
+  teamsPing: "sfx-teams-ping.wav",
 };
 
 const EXHAUSTED_ONESHOTS = [
@@ -214,4 +219,33 @@ export function stopExhaustedBed() {
   exhaustedBedActive = false;
   _clearExhaustedTimer();
   stopAmbExhausted();
+}
+
+const loops = new Map();
+
+/** Loop a keyed clip (ring / muffled bed). Stops prior instance of same name. */
+export function playLoop(name, { volume = 0.4 } = {}) {
+  stopLoop(name);
+  if (muted) return;
+  const a = el(name);
+  if (a._missing) return;
+  try {
+    const c = a.cloneNode();
+    c.loop = true;
+    c.volume = volume;
+    loops.set(name, c);
+    c.play().catch(() => {});
+  } catch (_) {}
+}
+
+export function stopLoop(name) {
+  const c = loops.get(name);
+  if (c) {
+    try { c.pause(); } catch (_) {}
+    loops.delete(name);
+  }
+}
+
+export function stopAllLoops() {
+  for (const name of [...loops.keys()]) stopLoop(name);
 }

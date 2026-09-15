@@ -24,6 +24,10 @@ const C = {
   green: "#00a000",
   yellow: "#c0a000",
   red: "#c00000",
+  teams: "#5B2C8A",
+  teamsHi: "#7B4CB0",
+  teamsRail: "#3D1F5C",
+  teamsFace: "#E8DCF0",
 };
 
 export const W = 320;
@@ -91,6 +95,10 @@ export function createWin95(copy, hooks) {
   const timesheetTarget = Number(timesheetCopy.targetHours != null ? timesheetCopy.targetHours : 8.0);
   const timesheetValidation = timesheetCopy.validation || {};
   const timesheetJimboFill = timesheetCopy.jimboFill || {};
+  const teamsCopy = copy.teams || {};
+  const teamsCallers = teamsCopy.callers || [];
+  const teamsChips = teamsCopy.replyChips || [];
+  const teamsFollowUps = teamsCopy.followUps || {};
 
   function tStr(type, key, fallback) {
     const block = ticketStrings[type] || {};
@@ -110,7 +118,33 @@ export function createWin95(copy, hooks) {
     ts16: loadImg("assets/timesheet/timesheet_xls_16.png"),
     ts32: loadImg("assets/timesheet/timesheet_xls_32.png"),
     ts48: loadImg("assets/timesheet/timesheet_xls_48.png"),
+    t16: loadImg("assets/teams/teams_16.png"),
+    t32: loadImg("assets/teams/teams_32.png"),
+    t48: loadImg("assets/teams/teams_48.png"),
+    callAccept: loadImg("assets/teams/call_accept.png"),
+    callDecline: loadImg("assets/teams/call_decline.png"),
+    callMute: loadImg("assets/teams/call_mute.png"),
+    callMuteOff: loadImg("assets/teams/call_mute_off.png"),
+    callCam: loadImg("assets/teams/call_cam.png"),
+    callCamOff: loadImg("assets/teams/call_cam_off.png"),
+    callShare: loadImg("assets/teams/call_share.png"),
+    callHangup: loadImg("assets/teams/call_hangup.png"),
+    callAvatar: loadImg("assets/teams/avatar_caller.png"),
+    callSelf: loadImg("assets/teams/avatar_blank.png"),
   };
+
+  function imgReady(im) {
+    return !!(im && im.complete && im.naturalWidth);
+  }
+
+  function drawImgOr(im, x, y, w, h, fallback) {
+    if (imgReady(im)) {
+      ctx.drawImage(im, x, y, w, h);
+      return true;
+    }
+    if (fallback) fallback();
+    return false;
+  }
 
   const inboxMails = (emailCopy.messages || []).map((m) => ({
     ...m,
@@ -253,6 +287,24 @@ export function createWin95(copy, hooks) {
     jigglerAuditArmed: false,
     jigglerAuditDone: false,
     jigglerAuditAt: 0,
+    // Call Theater (Teams parody)
+    callPhase: null, // null | ringing | connected
+    callQueued: false,
+    callCd: 30 + Math.random() * 30, // first eligible 30-60s after enableDaySystems
+    callRingLeft: 0,
+    callConnLeft: 0,
+    callAttent: 1,
+    callAttentEmpty: 0,
+    callMute: true,
+    callCam: false,
+    callSharing: false,
+    callShareAcc: 0,
+    callSinceFeed: 0,
+    callCaller: null,
+    callOpener: "",
+    callChipDone: false,
+    callMissedBadge: false,
+    callJimboJoined: false,
   };
 
   // Remove already-dealt types from the first shuffle
@@ -288,7 +340,7 @@ export function createWin95(copy, hooks) {
 
   const wins = {
     tickets: { id: "tickets", title: "Tickets - Corp", x: 8, y: 18, w: 150, h: 140, open: true },
-    slack: { id: "slack", title: "Slack - #general", x: 165, y: 14, w: 145, h: 120, open: true },
+    slack: { id: "slack", title: teamsCopy.windowTitle || "Teams -- Corporate Chat", x: 165, y: 14, w: 145, h: 120, open: true },
     ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
     pr: { id: "pr", title: "PR #884 - Kyle", x: 30, y: 20, w: 260, h: 175, open: false },
     standup: { id: "standup", title: "Daily Standup", x: 50, y: 40, w: 220, h: 130, open: true },
@@ -342,6 +394,13 @@ export function createWin95(copy, hooks) {
       y: 152,
       img: "jig32",
     },
+    {
+      id: "teams",
+      label: teamsCopy.desktopLabel || "Teams",
+      x: 8,
+      y: 200,
+      img: "t32",
+    },
   ];
 
   function raise(id) {
@@ -377,10 +436,208 @@ export function createWin95(copy, hooks) {
     return !!state.presenceForced || (state.modal && state.modal.kind === "presence");
   }
 
+  function callBlocksBoard() {
+    return state.callPhase === "connected";
+  }
+
   function canClaimTicket() {
     if (presenceBlocksBoard()) return false;
     if (state.timesheetGateOpen) return false;
+    if (callBlocksBoard()) return false;
     return true;
+  }
+
+  function callBusy() {
+    return state.callPhase === "ringing" || state.callPhase === "connected";
+  }
+
+  function canOpenCall() {
+    if (!state.emailEnabled) return false;
+    if (callBusy()) return false;
+    if (state.presenceForced) return false;
+    if (state.timesheetGateOpen) return false;
+    if (state.modal && state.modal.kind === "presence") return false;
+    if (state.modal && state.modal.kind === "hr") return false;
+    return true;
+  }
+
+  function pickCallFollowUp(kind) {
+    const pool = teamsFollowUps[kind] || teamsFollowUps.decline || ["tried calling..."];
+    return pick(pool) || "tried calling...";
+  }
+
+  function pushTeamsFollowUp(callerName, kind) {
+    const text = pickCallFollowUp(kind);
+    const name = callerName || (state.callCaller && state.callCaller.name) || "Teams";
+    const color = (state.callCaller && state.callCaller.color) || "#6a5080";
+    pushSlack({ name, color, text });
+  }
+
+  function feedCallAttentiveness(amount) {
+    if (state.callPhase !== "connected") return;
+    state.callAttent = Math.min(1, state.callAttent + (amount == null ? 0.35 : amount));
+    state.callSinceFeed = 0;
+    if (state.callSharing) state.callShareAcc = 0;
+  }
+
+  function stopCallAudio() {
+    audio.stopLoop("teamsRing");
+    audio.stopLoop("muffledCall");
+  }
+
+  function scheduleNextCall() {
+    state.callCd = 45 + Math.random() * 45;
+    state.callQueued = false;
+  }
+
+  function resetCallUiState() {
+    state.callRingLeft = 0;
+    state.callConnLeft = 0;
+    state.callAttent = 1;
+    state.callAttentEmpty = 0;
+    state.callMute = true;
+    state.callCam = false;
+    state.callSharing = false;
+    state.callShareAcc = 0;
+    state.callSinceFeed = 0;
+    state.callChipDone = false;
+    state.callJimboJoined = false;
+    state._callHits = null;
+  }
+
+  function endCall({ reason } = {}) {
+    stopCallAudio();
+    const wasConnected = state.callPhase === "connected";
+    state.callPhase = null;
+    resetCallUiState();
+    scheduleNextCall();
+    if (wasConnected) {
+      toast(teamsCopy.unfreezeToast || "Call ended. Back to the board.");
+      flushBoardRefill();
+    }
+  }
+
+  function failCallMissedChip() {
+    hitSanity(6);
+    state.sprint = Math.max(0, state.sprint);
+    pushTeamsFollowUp(null, "freeze");
+    toast(pickCallFollowUp("freeze") || "you froze");
+    endCall({ reason: "missed-chip" });
+  }
+
+  function startCallRing(forceCaller) {
+    if (!canOpenCall() && !forceCaller) {
+      state.callQueued = true;
+      return false;
+    }
+    const caller = forceCaller || pick(teamsCallers) || {
+      id: "brad",
+      name: "Brad from Synergy",
+      color: "#6a5080",
+      openers: ["Do you have a minute?"],
+    };
+    state.callPhase = "ringing";
+    state.callQueued = false;
+    resetCallUiState();
+    state.callCaller = caller;
+    state.callOpener = pick(caller.openers) || "Do you have a minute?";
+    state.callRingLeft = 8 + Math.random() * 4; // 8-12s
+    state.callMissedBadge = false;
+    wins.slack.open = true;
+    raise("slack");
+    audio.playLoop("teamsRing", { volume: 0.4 });
+    return true;
+  }
+
+  function declineCall({ timedOut } = {}) {
+    if (state.callPhase !== "ringing") return;
+    stopCallAudio();
+    audio.playSfx("callDecline", { volume: 0.55 });
+    if (timedOut) {
+      hitSanity(5);
+      state.callMissedBadge = true;
+      pushTeamsFollowUp(null, "timeout");
+    } else {
+      hitSanity(4);
+      pushTeamsFollowUp(null, "decline");
+    }
+    state.unread = Math.max(1, state.unread + 1);
+    state.callPhase = null;
+    resetCallUiState();
+    scheduleNextCall();
+  }
+
+  function acceptCall() {
+    if (state.callPhase !== "ringing") return;
+    audio.stopLoop("teamsRing");
+    audio.playSfx("callAccept", { volume: 0.55 });
+    state.callPhase = "connected";
+    state.callMute = true;
+    state.callCam = false;
+    state.callAttent = 1;
+    state.callAttentEmpty = 0;
+    state.callSinceFeed = 0;
+    state.callSharing = false;
+    state.callShareAcc = 0;
+    state.callChipDone = false;
+    state.callConnLeft = 12 + Math.random() * 8; // 12-20s
+    audio.playLoop("muffledCall", { volume: 0.3 });
+    toast(teamsCopy.freezeToast || "Tickets frozen -- you are in a meeting (spiritually)");
+    if (Math.random() < 0.25) {
+      state.callJimboJoined = true;
+      toast(teamsCopy.jimboJoinedToast || "Jimbo joined as a silent stakeholder!", { jimbo: true });
+    }
+    wins.slack.open = true;
+    raise("slack");
+  }
+
+  function landCallChip(chip) {
+    if (state.callPhase !== "connected" || state.callChipDone) return;
+    state.callChipDone = true;
+    const sprint = Number(chip.sprint || 0);
+    const san = Number(chip.sanity || 0);
+    if (sprint) state.sprint += sprint;
+    if (san < 0) hitSanity(-san);
+    else if (san > 0) state.sanity = Math.min(100, state.sanity + san);
+    feedCallAttentiveness(0.5);
+    audio.playSfx("click");
+    toast(pickCallFollowUp("thanks") || "Cool thanks bye");
+    if (state.callJimboJoined && Math.random() < 0.5) {
+      pushSlack({
+        name: "Jimbo",
+        color: "#705898",
+        text: pickCallFollowUp("jimboDm") || "Jimbo: Call summary: people spoke.",
+      });
+    }
+    endCall({ reason: "chip" });
+  }
+
+  function hangUpCall() {
+    if (state.callPhase !== "connected") return;
+    if (!state.callChipDone) {
+      failCallMissedChip();
+      return;
+    }
+    endCall({ reason: "hangup" });
+  }
+
+  function forceCall(opts) {
+    // Debug: window.corpForceCall() -- bypass deferral gates
+    if (callBusy()) {
+      stopCallAudio();
+      state.callPhase = null;
+      resetCallUiState();
+    }
+    state.callQueued = false;
+    state.emailEnabled = true;
+    const caller = (opts && opts.caller) || pick(teamsCallers) || {
+      id: "debug",
+      name: "Brad from Synergy",
+      color: "#6a5080",
+      openers: ["Do you have a minute?"],
+    };
+    // startCallRing treats truthy forceCaller as bypass for canOpenCall
+    return startCallRing(caller);
   }
 
   function canSubmitTicket() {
@@ -442,13 +699,29 @@ export function createWin95(copy, hooks) {
     );
   }
 
-  function openTimesheet({ forced }
+  function openTimesheet({ forced } = {}) {
+    if (!Object.keys(state.timesheetHours || {}).length) resetTimesheetHours();
+    state.timesheetAcceptedOpen = false;
+    wins.timesheet.open = true;
+    wins.timesheet.title = timesheetCopy.windowTitle || "timesheet.xls -- Time Entry";
+    raise("timesheet");
+    if (forced) {
+      // gate already set by requestTimesheetGate
+    }
+  }
 
   function requestTimesheetGate(reason) {
     if (presenceBlocksBoard()) {
       state.timesheetQueued = true;
       toast(timesheetCopy.waitingAway || "Timesheet waiting -- clear Away first");
       return false;
+    }
+    // Never stack timesheet over an active call -- queue call and clear overlay
+    if (callBusy()) {
+      stopCallAudio();
+      state.callPhase = null;
+      resetCallUiState();
+      state.callQueued = true;
     }
     state.timesheetQueued = false;
     state.timesheetGateOpen = true;
@@ -465,10 +738,17 @@ export function createWin95(copy, hooks) {
     requestTimesheetGate("queued-after-away");
   }
 
+  function tryFlushCallQueue() {
+    if (!state.callQueued || callBusy()) return;
+    if (!canOpenCall()) return;
+    startCallRing();
+  }
+
   function clearTimesheetGate() {
     state.timesheetGateOpen = false;
     state.timesheetQueued = false;
     flushBoardRefill();
+    tryFlushCallQueue();
   }
 
   function nudgeTimesheetHour(id, delta) {
@@ -608,8 +888,17 @@ export function createWin95(copy, hooks) {
     const bar = win.jimboChrome ? C.jimboBar : active ? C.title : C.titleIn;
     ctx.fillStyle = bar;
     ctx.fillRect(win.x + 3, win.y + 3, win.w - 6, 14);
-    if (win.jimboChrome && imgs.j16.complete && imgs.j16.naturalWidth) {
+    if (win.jimboChrome && imgReady(imgs.j16)) {
       ctx.drawImage(imgs.j16, win.x + 5, win.y + 4, 12, 12);
+      ctx.fillStyle = C.inv;
+      ctx.font = "bold 9px Tahoma, 'MS Sans Serif', sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillText(win.title.slice(0, 24), win.x + 20, win.y + 10);
+    } else if (win.id === "slack" && imgReady(imgs.t16)) {
+      // optional purple title for Teams
+      ctx.fillStyle = C.teams;
+      ctx.fillRect(win.x + 3, win.y + 3, win.w - 6, 14);
+      ctx.drawImage(imgs.t16, win.x + 5, win.y + 4, 12, 12);
       ctx.fillStyle = C.inv;
       ctx.font = "bold 9px Tahoma, 'MS Sans Serif', sans-serif";
       ctx.textBaseline = "middle";
@@ -720,21 +1009,39 @@ export function createWin95(copy, hooks) {
   }
 
   function drawSlack(x, y, w, h) {
-    bevelSunken(x, y, w, h, C.white);
+    // Teams parody chrome (internal id stays slack)
+    bevelSunken(x, y, w, h, C.teamsFace);
+    const railW = 28;
+    ctx.fillStyle = C.teamsRail;
+    ctx.fillRect(x, y, railW, h);
+    ctx.fillStyle = C.inv;
+    ctx.font = "bold 6px Tahoma, sans-serif";
+    ctx.fillText(String(teamsCopy.railChat || "Chat").slice(0, 5), x + 3, y + 12);
+    ctx.fillStyle = "#c8b0e0";
+    ctx.fillText(String(teamsCopy.railCalls || "Calls").slice(0, 5), x + 3, y + 26);
+    if (state.callMissedBadge) {
+      ctx.fillStyle = C.blood;
+      ctx.fillRect(x + 2, y + 30, 24, 9);
+      ctx.fillStyle = C.inv;
+      ctx.font = "bold 6px Tahoma, sans-serif";
+      ctx.fillText(String(teamsCopy.missedBadge || "Missed").slice(0, 5), x + 4, y + 37);
+    }
+    const mx = x + railW + 2;
+    const mw = w - railW - 3;
     ctx.font = "7px Tahoma, sans-serif";
     if (state.phase === "align" && state.stub?.kind === "align") {
-      drawAlignStub(x, y, w, h);
+      drawAlignStub(mx, y, mw, h);
       return;
     }
     let yy = y + 3;
     const msgs = state.slackMsgs.slice(0, 8);
     for (const m of msgs) {
-      ctx.fillStyle = "#000080";
-      ctx.fillText(m.name, x + 3, yy + 7);
+      ctx.fillStyle = m.color || C.teams;
+      ctx.fillText(String(m.name || "?").slice(0, 14), mx + 2, yy + 7);
       ctx.fillStyle = C.text;
-      const lines = wrap(m.text, 28);
+      const lines = wrap(m.text, 22);
       for (const ln of lines.slice(0, 2)) {
-        ctx.fillText(ln, x + 3, yy + 15);
+        ctx.fillText(ln, mx + 2, yy + 15);
         yy += 8;
       }
       yy += 6;
@@ -742,10 +1049,157 @@ export function createWin95(copy, hooks) {
     }
     if (!msgs.length) {
       ctx.fillStyle = C.shadow;
-      ctx.fillText("No messages. Suspicious.", x + 4, y + 12);
+      ctx.fillText(String(teamsCopy.emptyThread || "No unread. Lie.").slice(0, 28), mx + 2, y + 12);
     }
   }
 
+  function drawCallOverlay() {
+    if (!state.callPhase) {
+      state._callHits = null;
+      return;
+    }
+    state._callHits = [];
+    ctx.fillStyle = "rgba(40,20,60,0.45)";
+    ctx.fillRect(0, 0, W, H - TASK_H);
+
+    if (state.callPhase === "ringing") {
+      const mw = 210;
+      const mh = 96;
+      const mx = (W - mw) / 2;
+      const my = 44;
+      bevelRaised(mx, my, mw, mh, C.face);
+      ctx.fillStyle = C.teams;
+      ctx.fillRect(mx + 3, my + 3, mw - 6, 14);
+      if (imgReady(imgs.t16)) ctx.drawImage(imgs.t16, mx + 5, my + 4, 12, 12);
+      ctx.fillStyle = C.inv;
+      ctx.font = "bold 8px Tahoma, sans-serif";
+      ctx.fillText("Incoming call", mx + 20, my + 13);
+      const caller = state.callCaller || {};
+      drawImgOr(imgs.callAvatar, mx + 10, my + 24, 32, 32, () => {
+        ctx.fillStyle = caller.color || "#4A6A8A";
+        ctx.fillRect(mx + 10, my + 24, 32, 32);
+        ctx.fillStyle = C.inv;
+        ctx.font = "bold 10px Tahoma, sans-serif";
+        const ini = String(caller.name || "?").split(" ").map((p) => p[0]).join("").slice(0, 2);
+        ctx.fillText(ini, mx + 16, my + 44);
+      });
+      ctx.fillStyle = C.text;
+      ctx.font = "bold 8px Tahoma, sans-serif";
+      ctx.fillText(String(caller.name || "Caller").slice(0, 26), mx + 48, my + 34);
+      ctx.font = "7px Tahoma, sans-serif";
+      ctx.fillStyle = C.shadow;
+      ctx.fillText(String(state.callOpener || "Do you have a minute?").slice(0, 30), mx + 48, my + 46);
+      ctx.fillText("Ring " + Math.ceil(state.callRingLeft) + "s", mx + 48, my + 56);
+
+      const ay = my + mh - 24;
+      bevelRaised(mx + 18, ay, 80, 16, C.face);
+      drawImgOr(imgs.callAccept, mx + 22, ay + 0, 16, 16, null);
+      ctx.fillStyle = C.text;
+      ctx.font = "bold 8px Tahoma, sans-serif";
+      ctx.fillText(teamsCopy.acceptLabel || "Accept", mx + 40, ay + 11);
+      state._callHits.push({ kind: "accept", hit: { x: mx + 18, y: ay, w: 80, h: 16 } });
+
+      bevelRaised(mx + 112, ay, 80, 16, C.face);
+      drawImgOr(imgs.callDecline, mx + 116, ay + 0, 16, 16, null);
+      ctx.fillText(teamsCopy.declineLabel || "Decline", mx + 134, ay + 11);
+      state._callHits.push({ kind: "decline", hit: { x: mx + 112, y: ay, w: 80, h: 16 } });
+      return;
+    }
+
+    // connected
+    const mw = 268;
+    const mh = 172;
+    const mx = (W - mw) / 2;
+    const my = 14;
+    bevelRaised(mx, my, mw, mh, C.face);
+    ctx.fillStyle = C.teams;
+    ctx.fillRect(mx + 3, my + 3, mw - 6, 14);
+    if (imgReady(imgs.t16)) ctx.drawImage(imgs.t16, mx + 5, my + 4, 12, 12);
+    ctx.fillStyle = C.inv;
+    ctx.font = "bold 8px Tahoma, sans-serif";
+    const caller = state.callCaller || {};
+    ctx.fillText(("Call: " + (caller.name || "Meeting")).slice(0, 34), mx + 20, my + 13);
+
+    // caller tile
+    ctx.fillStyle = "#2a2848";
+    ctx.fillRect(mx + 10, my + 22, 76, 52);
+    drawImgOr(imgs.callAvatar, mx + 14, my + 26, 32, 32, () => {
+      ctx.fillStyle = caller.color || "#4A6A8A";
+      ctx.fillRect(mx + 14, my + 26, 32, 32);
+    });
+    ctx.fillStyle = C.inv;
+    ctx.font = "7px Tahoma, sans-serif";
+    ctx.fillText(String(caller.name || "Them").slice(0, 10), mx + 50, my + 40);
+    ctx.fillText("muffled...", mx + 50, my + 52);
+
+    // self tile
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(mx + 96, my + 22, 76, 52);
+    if (state.callCam) {
+      drawImgOr(imgs.callCam, mx + 118, my + 34, 16, 16, () => {
+        ctx.fillStyle = "#606060";
+        ctx.fillRect(mx + 118, my + 34, 28, 28);
+      });
+    } else {
+      drawImgOr(imgs.callSelf, mx + 110, my + 28, 32, 32, () => {
+        ctx.fillStyle = "#505050";
+        ctx.fillRect(mx + 118, my + 34, 28, 28);
+      });
+    }
+    ctx.fillStyle = "#a0a0a0";
+    ctx.font = "6px Tahoma, sans-serif";
+    ctx.fillText(state.callCam ? "You" : "You (cam off)", mx + 100, my + 68);
+
+    // attentiveness
+    ctx.fillStyle = C.text;
+    ctx.font = "6px Tahoma, sans-serif";
+    ctx.fillText(teamsCopy.attentivenessLabel || "Attentiveness", mx + 180, my + 28);
+    bevelSunken(mx + 180, my + 32, 74, 8, C.white);
+    const ap = Math.max(0, Math.min(1, state.callAttent));
+    ctx.fillStyle = ap < 0.3 ? C.blood : C.sick;
+    ctx.fillRect(mx + 181, my + 33, Math.max(1, 72 * ap), 6);
+    ctx.fillStyle = C.shadow;
+    ctx.fillText("Reply " + Math.ceil(Math.max(0, state.callConnLeft)) + "s", mx + 180, my + 50);
+
+    const btnY = my + 82;
+    function controlBtn(kind, bx, glyph, label) {
+      bevelRaised(bx, btnY, 48, 16, C.face);
+      drawImgOr(glyph, bx + 2, btnY, 16, 16, null);
+      ctx.fillStyle = C.text;
+      ctx.font = "bold 6px Tahoma, sans-serif";
+      ctx.fillText(String(label).slice(0, 6), bx + 18, btnY + 11);
+      state._callHits.push({ kind, hit: { x: bx, y: btnY, w: 48, h: 16 } });
+    }
+    // Mute ON default => crossed mic (callMuteOff). Unmuted => callMute.
+    controlBtn("mute", mx + 10, state.callMute ? imgs.callMuteOff : imgs.callMute, state.callMute ? "Mute" : "Unmute");
+    controlBtn("cam", mx + 62, state.callCam ? imgs.callCam : imgs.callCamOff, state.callCam ? "Cam" : "CamOff");
+    controlBtn("share", mx + 114, imgs.callShare, teamsCopy.shareLabel || "Share");
+    bevelRaised(mx + 200, btnY, 54, 16, C.face);
+    drawImgOr(imgs.callHangup, mx + 202, btnY, 16, 16, null);
+    ctx.fillStyle = C.text;
+    ctx.font = "bold 6px Tahoma, sans-serif";
+    ctx.fillText(String(teamsCopy.hangUpLabel || "Hang up").slice(0, 7), mx + 218, btnY + 11);
+    state._callHits.push({ kind: "hangup", hit: { x: mx + 200, y: btnY, w: 54, h: 16 } });
+
+    const chips = teamsChips.length
+      ? teamsChips.slice(0, 4)
+      : [
+          { id: "uh_huh", label: "Uh-huh", sprint: 1, sanity: -1 },
+          { id: "send_chat", label: "Can you send that in chat?", sprint: 2, sanity: -2 },
+          { id: "on_mute", label: "Sorry -- on mute", sprint: 1, sanity: -2 },
+          { id: "circle_back", label: "I'll circle back", sprint: 1, sanity: -3 },
+        ];
+    let cy = my + 106;
+    chips.forEach((chip) => {
+      const cw = mw - 20;
+      bevelRaised(mx + 10, cy, cw, 13, C.face);
+      ctx.fillStyle = C.text;
+      ctx.font = "7px Tahoma, sans-serif";
+      ctx.fillText(String(chip.label || chip.id).slice(0, 36), mx + 14, cy + 9);
+      state._callHits.push({ kind: "chip", chip, hit: { x: mx + 10, y: cy, w: cw, h: 13 } });
+      cy += 15;
+    });
+  }
 
   function drawAlignStub(x, y, w, h) {
     const st = state.stub;
@@ -1308,13 +1762,26 @@ export function createWin95(copy, hooks) {
         ctx.fillText(String(Math.min(99, u)), bx + 32, by + 10);
       } else if (ic.id === "timesheet") {
         const im = imgs.ts32;
-        if (im.complete && im.naturalWidth) {
+        if (imgReady(im)) {
           ctx.drawImage(im, bx + 8, by, 32, 32);
         } else {
           bevelRaised(bx + 8, by + 2, 28, 30, "#e8e0c8");
           ctx.fillStyle = "#2a7a3a";
           ctx.fillRect(bx + 10, by + 4, 24, 6);
         }
+      } else if (ic.id === "teams") {
+        if (imgReady(imgs.t32)) {
+          ctx.drawImage(imgs.t32, bx + 8, by, 32, 32);
+        } else if (imgReady(imgs.t48)) {
+          ctx.drawImage(imgs.t48, bx + 4, by, 40, 40);
+        } else {
+          bevelRaised(bx + 8, by + 2, 28, 30, C.teams);
+          ctx.fillStyle = C.inv;
+          ctx.font = "bold 14px Tahoma, sans-serif";
+          ctx.fillText("T", bx + 16, by + 22);
+        }
+      } else if (ic.id === "jiggler") {
+        if (imgReady(imgs.jig32)) ctx.drawImage(imgs.jig32, bx + 8, by, 32, 32);
       }
       ctx.fillStyle = C.inv;
       ctx.font = "7px Tahoma, sans-serif";
@@ -1637,6 +2104,7 @@ export function createWin95(copy, hooks) {
       ctx.font = "8px Tahoma, sans-serif";
       ctx.fillText(String(state.toast).slice(0, 40), W / 2 - 84, 16);
     }
+    drawCallOverlay();
     drawModal();
     drawCursor();
   }
@@ -1684,7 +2152,7 @@ export function createWin95(copy, hooks) {
         })),
       };
       if (sab) state.stub.threads.push({ who: "Also Kyle", ask: "Have we considered a workshop?", opts: btns.slice(), correct: 0 });
-      wins.slack.title = S.windowTitle || "Slack - #alignment-or-else";
+      wins.slack.title = S.windowTitle || (teamsCopy.windowTitle || "Teams -- Corporate Chat");
     } else if (type === "rename") {
       const S = ticketStrings.rename || {};
       const ids = ["fog", "tmp", "unread", "badge", "clockIn"];
@@ -1832,7 +2300,7 @@ export function createWin95(copy, hooks) {
       state.modal = {
         title: S.windowTitle || "Bug - taxonomy must be satisfied",
         body: sab
-          ? "Jimbo set Sev0 and paged Slack. Downgrade to finish."
+          ? "Jimbo set Sev0 and paged Teams. Downgrade to finish."
           : "Severity - Component - Impact - taxonomy must be satisfied.",
         kind: "severityTicket",
         buttons,
@@ -1860,6 +2328,7 @@ export function createWin95(copy, hooks) {
     if (!canClaimTicket()) {
       if (presenceBlocksBoard()) toast("Clear Away before claiming tickets");
       else if (state.timesheetGateOpen) toast("Timesheet incomplete -- hours first");
+      else if (callBlocksBoard()) toast(teamsCopy.freezeToast || "Tickets frozen -- you are in a meeting (spiritually)");
       return;
     }
     state.activeTicket = tk;
@@ -1908,7 +2377,7 @@ export function createWin95(copy, hooks) {
     } else if (mech === "align") {
       initStub(mech);
       wins.slack.open = true;
-      wins.slack.title = tStr("align", "windowTitle", wins.slack.title || "Slack");
+      wins.slack.title = tStr("align", "windowTitle", wins.slack.title || teamsCopy.windowTitle || "Teams");
       raise("slack");
     } else if (mech === "standup2") {
       initStub(mech);
@@ -2281,6 +2750,13 @@ export function createWin95(copy, hooks) {
       state.timesheetQueued = true;
       if (wins.timesheet) wins.timesheet.open = false;
     }
+    // Defer Call Theater over Away -- queue and stop ring/bed
+    if (callBusy()) {
+      stopCallAudio();
+      state.callPhase = null;
+      resetCallUiState();
+      state.callQueued = true;
+    }
     const prompt = awayExcuseCopy.prompt || "Why were you Away?";
     state.modal = {
       title: "Mandatory -- Appear Active",
@@ -2328,9 +2804,38 @@ export function createWin95(copy, hooks) {
     flushTimesheetQueue();
     flushEmailQueue();
     flushBoardRefill();
+    tryFlushCallQueue();
   }
 
-  function toggleJiggler({ fromStart }
+  function toggleJiggler({ fromStart } = {}) {
+    if (state.jimboJiggler) {
+      state.jimboJiggler = false;
+      toast(jigglerCopy.stopToast || "Jiggler off. Welcome back to manual despair.");
+      audio.playSfx("click");
+      // Hard rule: if already past Away threshold, fire immediately
+      if (!state.presenceForced && state.idleAcc >= IDLE_AWAY) {
+        state.presence = Presence.AWAY;
+        forceAwayMail();
+      }
+      return;
+    }
+    if (fromStart && state.jigglerInstalled) {
+      // already used install today -- allow toggle off path only; re-enable ok if was installed
+      // Spec: 1 install/day; toggle off/on after install is fine within day
+    }
+    if (!state.jigglerInstalled) {
+      state.jigglerInstalled = true;
+      state.jigglerAuditArmed = true;
+      state.jigglerAuditAt = JIGGLER_AUDIT_MIN + Math.random() * JIGGLER_AUDIT_SPAN;
+      state.jigglerAuditDone = false;
+    }
+    state.jimboJiggler = true;
+    state.jigglerPulseAcc = 0;
+    state.jigglerSanityAcc = 0;
+    state.jigglerMaskAcc = 0;
+    toast(pick(jigglerCopy.startToasts) || "Jimbo optimized your presence!", { jimbo: true });
+    audio.playSfx("jimboChime", { volume: 0.4 });
+  }
 
   function maybeJigglerAudit() {
     if (!state.jimboJiggler || state.jigglerAuditDone || !state.jigglerAuditArmed) return;
@@ -2352,6 +2857,59 @@ export function createWin95(copy, hooks) {
     };
     state.inbox.push(mail);
     queueOrDeliver(mail);
+  }
+
+  function tickCallTheater(dt) {
+    if (!state.emailEnabled) return;
+
+    if (state.callPhase === "ringing") {
+      state.callRingLeft -= dt;
+      if (state.callRingLeft <= 0) {
+        declineCall({ timedOut: true });
+      }
+      return;
+    }
+
+    if (state.callPhase === "connected") {
+      state.callConnLeft -= dt;
+      state.callSinceFeed += dt;
+      // attentiveness drains ~12s full bar
+      state.callAttent = Math.max(0, state.callAttent - dt / 12);
+      if (state.callSharing) {
+        state.callShareAcc += dt;
+        if (state.callShareAcc >= 8 && state.callSinceFeed >= 8) {
+          state.callShareAcc = 0;
+          hitSanity(2);
+          toast(pickCallFollowUp("noCursor") || teamsCopy.noCursorToast || "I can't see your cursor moving");
+        }
+      }
+      if (state.callAttent <= 0) {
+        state.callAttentEmpty += 1;
+        if (state.callAttentEmpty >= 2) {
+          failCallMissedChip();
+          return;
+        }
+        hitSanity(3);
+        toast(pickCallFollowUp("stillThere") || teamsCopy.stillThereToast || "Are you still there?");
+        state.callAttent = 0.45;
+        state.callSinceFeed = 0;
+      }
+      if (state.callConnLeft <= 0 && !state.callChipDone) {
+        failCallMissedChip();
+      }
+      return;
+    }
+
+    // idle: countdown / queue
+    if (state.callCd > 0) state.callCd -= dt;
+    if (state.callQueued || state.callCd <= 0) {
+      if (canOpenCall()) {
+        startCallRing();
+      } else {
+        state.callQueued = true;
+        if (state.callCd <= 0) state.callCd = 2 + Math.random() * 3;
+      }
+    }
   }
 
   function tick(dt) {
@@ -2418,6 +2976,7 @@ export function createWin95(copy, hooks) {
       !state.presenceForced &&
       !minigameFocused() &&
       !state.timesheetGateOpen &&
+      !callBusy() &&
       state.incidentPagerCooldown <= 0
     ) {
       state.incidentPagerCd -= dt;
@@ -2431,7 +2990,10 @@ export function createWin95(copy, hooks) {
         }
       }
     }
+
+
     flushEmailQueue();
+    tickCallTheater(dt);
     // keep unread floor
     state.unread = Math.max(emailCopy.unreadFloor || 1, unreadCount());
   }
@@ -2465,12 +3027,25 @@ export function createWin95(copy, hooks) {
     state.incidentPagerCd = 45 + Math.random() * 45;
     state.incidentPagerCooldown = 0;
     state.incidentFromPager = false;
+    stopCallAudio();
+    state.callPhase = null;
+    state.callQueued = false;
+    state.callCd = 30 + Math.random() * 30;
+    resetCallUiState();
+    state.callMissedBadge = false;
+    state.callCaller = null;
+    state.callOpener = "";
+    wins.slack.title = teamsCopy.windowTitle || "Teams -- Corporate Chat";
   }
 
   function onPointerMove(nx, ny) {
     state.cursor.x = Math.max(0, Math.min(W - 1, nx));
     state.cursor.y = Math.max(0, Math.min(H - 1, ny));
     bumpActivity();
+    if (state.callPhase === "connected") {
+      // feed only from call-UI motion (whole overlay is call UI while connected)
+      feedCallAttentiveness(0.08);
+    }
   }
 
   function handleModalClick(x, y) {
@@ -2699,7 +3274,7 @@ export function createWin95(copy, hooks) {
       kind: "incidentTicket",
       buttons: incidentButtons(S),
     };
-    // Slack page noise
+    // Teams page noise
     const pages = S.slackPages || copy.incident?.slackPages;
     if (pages?.length && state.slackMsgs) {
       const m = pick(pages);
@@ -2820,7 +3395,7 @@ export function createWin95(copy, hooks) {
     if (st.sev === "Sev0") {
       hitSanity(4);
       st.sev0 = true;
-      if (state.modal) state.modal.body = "Sev0 paged Slack. Pick Sev1+ to finish.";
+      if (state.modal) state.modal.body = "Sev0 paged Teams. Pick Sev1+ to finish.";
       toast("Company paged. Downgrade required - pick a lower severity.");
       return;
     }
@@ -2834,6 +3409,55 @@ export function createWin95(copy, hooks) {
     requestFinish({ toastMsg: msg, sanHit: 3 });
   }
 
+  function handleCallClick(x, y) {
+    if (!state.callPhase || !state._callHits) return false;
+    for (const h of state._callHits) {
+      if (!hit(h.hit, x, y)) continue;
+      feedCallAttentiveness(0.4);
+      if (h.kind === "accept") {
+        acceptCall();
+        return true;
+      }
+      if (h.kind === "decline") {
+        declineCall({ timedOut: false });
+        return true;
+      }
+      if (h.kind === "mute") {
+        const was = state.callMute;
+        state.callMute = !state.callMute;
+        // briefly unmuted counts as feed
+        if (was && !state.callMute) feedCallAttentiveness(0.5);
+        audio.playSfx("click");
+        return true;
+      }
+      if (h.kind === "cam") {
+        state.callCam = !state.callCam;
+        audio.playSfx("click");
+        return true;
+      }
+      if (h.kind === "share") {
+        state.callSharing = !state.callSharing;
+        if (state.callSharing) {
+          state.callShareAcc = 0;
+          feedCallAttentiveness(0.25);
+        }
+        audio.playSfx("click");
+        return true;
+      }
+      if (h.kind === "hangup") {
+        hangUpCall();
+        return true;
+      }
+      if (h.kind === "chip" && h.chip) {
+        landCallChip(h.chip);
+        return true;
+      }
+    }
+    // any click on overlay while connected feeds a little
+    if (state.callPhase === "connected") feedCallAttentiveness(0.15);
+    return state.callPhase === "ringing" || state.callPhase === "connected";
+  }
+
   function onPointerDown() {
     const x = state.cursor.x;
     const y = state.cursor.y;
@@ -2841,6 +3465,11 @@ export function createWin95(copy, hooks) {
     bumpActivity();
     audio.playSfx("mouse", { volume: 0.35 });
     hooks.onClick?.();
+
+    if (state.callPhase) {
+      handleCallClick(x, y);
+      return;
+    }
 
     if (state.modal) {
       const before = state.stub?.jiggles;
@@ -2886,6 +3515,11 @@ export function createWin95(copy, hooks) {
             audio.playSfx("click");
           } else if (ic.id === "jiggler") {
             toggleJiggler({ fromStart: false });
+          } else if (ic.id === "teams" || ic.id === "slack") {
+            wins.slack.open = true;
+            wins.slack.title = teamsCopy.windowTitle || wins.slack.title;
+            raise("slack");
+            audio.playSfx("click");
           }
           return;
         }
@@ -2955,9 +3589,14 @@ export function createWin95(copy, hooks) {
     } else if (id === "tickets" || label.includes("Ticket")) {
       wins.tickets.open = true;
       raise("tickets");
-    } else if (id === "slack" || label.includes("Slack")) {
+    } else if (id === "slack" || id === "teams" || /slack|teams/i.test(label)) {
       wins.slack.open = true;
+      wins.slack.title = teamsCopy.windowTitle || wins.slack.title;
       raise("slack");
+    } else if (id === "timesheet" || label === (timesheetCopy.desktopLabel || "timesheet.xls") || /timesheet/i.test(label)) {
+      openTimesheet({ forced: false });
+    } else if (id === "jiggler" || label === (jigglerCopy.menuLabel || "Jimbo Mouse Jiggler") || /jiggler/i.test(label)) {
+      toggleJiggler({ fromStart: true });
     } else if (id === "clockout" || /shut|log off|clock out/i.test(label)) {
       const conf =
         copy.dialogs?.confirms?.find((c) => /clock/i.test(c.title || "")) ||
@@ -2968,16 +3607,7 @@ export function createWin95(copy, hooks) {
       wins.ide.open = true;
       raise("ide");
     } else if (item.submenu) {
-      
-    if (id === "timesheet" || lab === (timesheetCopy.desktopLabel || "timesheet.xls") || /timesheet/i.test(lab)) {
-      openTimesheet({ forced: false });
-      return;
-    }
-    if (id === "jiggler" || lab === (jigglerCopy.menuLabel || "Jimbo Mouse Jiggler") || /jiggler/i.test(lab)) {
-      toggleJiggler({ fromStart: true });
-      return;
-    }
-    deniedToast(item);
+      deniedToast(item);
     } else if (/run/i.test(label)) {
       deniedToast(item);
     } else {
@@ -3149,6 +3779,10 @@ export function createWin95(copy, hooks) {
   }
 
   function handleWinClick(win, x, y) {
+    if (callBlocksBoard() && (win.id === "tickets" || win.id === "ide" || win.id === "pr")) {
+      toast(teamsCopy.freezeToast || "Tickets frozen -- you are in a meeting (spiritually)");
+      return;
+    }
     if (win.id === "standup" && hit(state._standupBtn, x, y)) {
       wins.standup.open = false;
       state.standupDone = true;
@@ -3367,8 +4001,9 @@ export function createWin95(copy, hooks) {
 
   function pushSlack(msg) {
     state.slackMsgs.unshift(msg);
+    if (state.slackMsgs.length > 24) state.slackMsgs.length = 24;
     state.unread = Math.max(1, state.unread + 1);
-    audio.playSfx("slack", { volume: 0.4 });
+    audio.playSfx("teamsPing", { volume: 0.4 });
   }
 
   function onKey(e) {
@@ -3414,6 +4049,7 @@ export function createWin95(copy, hooks) {
     Presence,
     toggleJiggler,
     presenceBlocksBoard,
+    callBlocksBoard,
     canClaimTicket,
     canSubmitTicket,
     requestBoardRefill,
@@ -3424,6 +4060,10 @@ export function createWin95(copy, hooks) {
     acceptTimesheet,
     needsTimesheetForClockOut,
     openIncident,
+    forceCall,
+    startCallRing,
+    acceptCall,
+    declineCall,
   };
 }
 

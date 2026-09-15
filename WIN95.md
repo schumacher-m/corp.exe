@@ -169,6 +169,33 @@ Desktop icon for locked timesheet spreadsheet (`timesheet.xls` vibe). Beige shee
 | 48 | `assets/icons/timesheet_xls_48.png` | 48×48 RGBA | Desktop icon |
 | Mirrors | `assets/timesheet/timesheet_xls_{16,32,48}.png` | same | Alias copies |
 
+
+## Call Theater / Teams
+
+Purple parody of corporate chat + call overlay. Replaces Slack player-facing chrome. Abstract muddy-purple "T" tile — **not** Microsoft Fluent / Teams trademark. Anonymous corp (no Helix). Spec: `specs/03-call-theater.md`. Dev notes: `assets/teams/TEAMS_UI.md`.
+
+| Spec | Value |
+|------|-------|
+| Window title | `Teams (Corp)` |
+| Role | Chat spam host + incoming / connected call overlay |
+| Regenerator | `assets/teams/build_teams_assets.py` |
+
+| Asset | Path | Size | Use |
+|-------|------|------|-----|
+| App 16 | `assets/teams/teams_16.png` | 16×16 | Title / taskbar |
+| App 32 | `assets/teams/teams_32.png` | 32×32 | Start / alt |
+| App 48 | `assets/teams/teams_48.png` | 48×48 | Desktop |
+| Accept | `assets/teams/call_accept.png` | 16×16 | Green check |
+| Decline | `assets/teams/call_decline.png` | 16×16 | Red X |
+| Mute / Mute off | `assets/teams/call_mute.png`, `call_mute_off.png` | 16×16 | Mic (crossed = muted) |
+| Cam / Cam off | `assets/teams/call_cam.png`, `call_cam_off.png` | 16×16 | Camera (crossed = off) |
+| Share | `assets/teams/call_share.png` | 16×16 | Screen share |
+| Hang up | `assets/teams/call_hangup.png` | 16×16 | Red hangup |
+| Self avatar | `assets/teams/avatar_blank.png` | 32×32 | Cam-off silhouette |
+| Caller avatar | `assets/teams/avatar_caller.png` | 32×32 | Flat initials-friendly |
+
+Purple chrome: `#5A588E` / `#7A76B0` / `#3A3868` / `#282648`. Defaults: **Mute ON**, **Camera OFF**. Classes: `.w95-teams` `.w95-call-overlay` `.w95-call-chip` `.w95-attentiveness`.
+
 ## Anti-patterns
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.

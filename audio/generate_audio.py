@@ -777,6 +777,87 @@ def sfx_timesheet_save():
     return normalize(fade_edges(out, 6), peak_db=-4.0)
 
 
+
+def sfx_teams_ring():
+    """Corporate Teams parody ring — dual-tone, loopable ~2s."""
+    period = 2.0
+    n = int(period * SR)
+    out = np.zeros(n)
+    for start, dur in [(0.0, 0.38), (1.0, 0.38)]:
+        d = int(dur * SR)
+        st = int(start * SR)
+        t = np.arange(d) / SR
+        a = sine(440 * 1.02, d) * 0.35
+        b = sine(523.25 * 0.98, d) * 0.32
+        env = env_adsr(d, 0.01, 0.05, 0.7, 0.08, SR)
+        wob = 1.0 + 0.08 * np.sin(2 * np.pi * 8 * t)
+        out[st : st + d] += (a + b) * env * wob
+    out = one_pole_lp(out, 4500, SR)
+    out = bitcrush(out, bits=10, rate_div=2)
+    out = make_loopable(out, fade_ms=40, sr=SR)
+    return normalize(out, peak_db=-4.0)
+
+
+def sfx_muffled_call():
+    """Connected-call bed: muffled murmur, NO intelligible speech. ~12s loop."""
+    dur = 12.0
+    n = int(dur * SR)
+    bed = hvac_drone(n) * 0.35 + fluorescent_hum(n) * 0.15
+    murmur = bandpass(noise(n, color="pink"), 300, 1800, SR)
+    t = np.arange(n) / SR
+    talk = 0.55 + 0.45 * (0.5 + 0.5 * np.sin(2 * np.pi * 2.7 * t + 0.3))
+    talk *= 0.6 + 0.4 * (0.5 + 0.5 * np.sin(2 * np.pi * 0.37 * t))
+    gate = (np.sin(2 * np.pi * 0.11 * t) > -0.35).astype(float)
+    gate = one_pole_lp(gate, 8, SR)
+    murmur *= talk * gate * 0.55
+    mur2 = bandpass(noise(n, color="brown"), 200, 900, SR)
+    mur2 *= (0.4 + 0.3 * np.sin(2 * np.pi * 1.9 * t + 1.2)) * 0.25
+    voice = bandpass(murmur + mur2, 350, 2800, SR)
+    voice = bitcrush(voice, bits=8, rate_div=3)
+    out = one_pole_lp(bed + voice * 0.85, 3200, SR)
+    out += one_pole_hp(noise(n), 6000, SR) * 0.02
+    out = make_loopable(out, fade_ms=120, sr=SR)
+    return normalize(out, peak_db=-8.0)
+
+
+def sfx_call_accept():
+    n = int(0.22 * SR)
+    out = np.zeros(n)
+    for f, start, amp in [(523.25, 0.0, 0.4), (659.25, 0.05, 0.35)]:
+        d = int(0.12 * SR)
+        st = int(start * SR)
+        tone = sine(f, d) * amp * env_adsr(d, 0.002, 0.03, 0.35, 0.06, SR)
+        out[st : st + d] += tone
+    out = bitcrush(one_pole_lp(out, 5000, SR), bits=10)
+    return normalize(fade_edges(out, 4), peak_db=-3.0)
+
+
+def sfx_call_decline():
+    n = int(0.28 * SR)
+    out = np.zeros(n)
+    for f, start, amp in [(440.0, 0.0, 0.4), (329.63, 0.07, 0.35)]:
+        d = int(0.14 * SR)
+        st = int(start * SR)
+        tone = (sine(f, d) * amp + triangle(f, d) * 0.08) * env_adsr(d, 0.002, 0.04, 0.3, 0.08, SR)
+        out[st : st + d] += tone
+    out = bitcrush(one_pole_lp(out, 4500, SR), bits=10)
+    return normalize(fade_edges(out, 5), peak_db=-3.0)
+
+
+def sfx_teams_ping():
+    """Teams chat ping — dread cousin of Slack ping."""
+    n = int(0.4 * SR)
+    out = hollow_chord(n) * 0.8
+    d = int(0.15 * SR)
+    out[:d] += sine(740, d) * env_adsr(d, 0.001, 0.04, 0.25, 0.08, SR) * 0.2
+    delay = int(0.08 * SR)
+    delayed = np.zeros(n)
+    delayed[delay:] = out[: n - delay] * 0.32
+    out = one_pole_lp(out + delayed, 4200, SR)
+    out = bitcrush(out, bits=10)
+    return normalize(fade_edges(out, 8), peak_db=-4.0)
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -824,12 +905,23 @@ def main():
         ("sfx-away-tick.wav", sfx_away_tick),
         ("sfx-jiggler-tick.wav", sfx_jiggler_tick),
         ("sfx-timesheet-save.wav", sfx_timesheet_save),
+        ("sfx-teams-ring.wav", sfx_teams_ring),
+        ("sfx-call-accept.wav", sfx_call_accept),
+        ("sfx-call-decline.wav", sfx_call_decline),
+        ("sfx-teams-ping.wav", sfx_teams_ping),
     ]
     for name, fn in sfx:
         print(f"  {name}...")
         audio = fn()
         write_wav(OUT / name, audio)
         print(f"    -> {(OUT / name).stat().st_size} bytes")
+
+    print("  sfx-muffled-call.ogg...")
+    muffled = sfx_muffled_call()
+    wav_path = TMP / "sfx-muffled-call.wav"
+    write_wav(wav_path, muffled)
+    wav_to_ogg(wav_path, OUT / "sfx-muffled-call.ogg", bitrate="80k")
+    print(f"    -> {(OUT / 'sfx-muffled-call.ogg').stat().st_size} bytes")
 
     # cleanup temp wavs
     for p in TMP.glob("*.wav"):

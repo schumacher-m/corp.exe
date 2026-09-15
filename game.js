@@ -240,6 +240,14 @@ const win95 = createWin95(copy, {
   },
 });
 
+
+/* Call Theater debug */
+try {
+  window.corpForceCall = (opts) => win95.forceCall(opts);
+  window.corpAcceptCall = () => win95.acceptCall();
+  window.corpDeclineCall = () => win95.declineCall({ timedOut: false });
+} catch (_) {}
+
 const crtTex = new THREE.CanvasTexture(win95.canvas);
 crtTex.magFilter = THREE.NearestFilter;
 crtTex.minFilter = THREE.NearestFilter;

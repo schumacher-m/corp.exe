@@ -80,6 +80,25 @@ if pres_path.exists():
     data["presence"] = presence
 
 
+# Call Theater -- merge fences from teams.md
+teams_path = COPY / "teams.md"
+if teams_path.exists():
+    parts = fences(teams_path)
+    teams = {}
+    if len(parts) >= 1:
+        teams.update(parts[0])  # chrome
+    if len(parts) >= 2:
+        teams["chatPool"] = parts[1]
+    if len(parts) >= 3:
+        teams["callers"] = parts[2]
+    if len(parts) >= 4:
+        teams["replyChips"] = parts[3]
+    if len(parts) >= 5:
+        teams["followUps"] = parts[4]
+    data["teams"] = teams
+    # Alias for Dev still reading slackPool
+    data["slackPool"] = teams.get("chatPool") or data.get("slackPool")
+
 # Incident pager / Sev0 softlock -- copy/incident.md
 inc_path = COPY / "incident.md"
 if inc_path.exists():
@@ -199,4 +218,7 @@ print(
     "incident", bool(inc),
     "ticketPool", len(data.get("ticketPool") or []),
     "ticketStrings", len(data.get("ticketStrings") or {}),
+    "teams", "teams" in data,
+    "chatPool", len((data.get("teams") or {}).get("chatPool") or []),
+    "callers", len((data.get("teams") or {}).get("callers") or []),
 )
