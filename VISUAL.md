@@ -33,7 +33,7 @@ Babylon / PlayCanvas only if you need an editor — not required for v1.
 | skin | `#8c7864` | FP hands / Kyle skin |
 | teal | `#008080` | Win95 desktop / screen_quad |
 | gray | `#C0C0C0` | Win95 face / keyboard / mouse |
-| sick | `#6b8f3a` | HelixStack / OK |
+| sick | `#6b8f3a` | OK accent |
 | amber | `#c4a035` | sprint / warnings |
 | blood | `#8b3a2a` | unread / danger |
 | slack | `#4a3048` | IM chrome |
@@ -41,7 +41,7 @@ Babylon / PlayCanvas only if you need an editor — not required for v1.
 
 ## Assets (v1) — load from box paths
 
-All under `/workspace/corp-html/assets/`. Regenerators: `assets/build_ps1_assets.py`, farm extras `assets/build_neighbor_assets.py`.
+All under `/workspace/corp-html/assets/`. Regenerator: `assets/build_ps1_assets.py`.
 
 | File | Tris (approx) | Role |
 |------|----------------|------|
@@ -57,11 +57,6 @@ All under `/workspace/corp-html/assets/`. Regenerators: `assets/build_ps1_assets
 | `models/prop_stickies.glb` | 36 | Sticky stack |
 | `models/prop_dead_plant.glb` | 48 | Dead plant |
 | `models/prop_ticket.glb` | 12 | Yellow ticket sticker |
-| `models/neighbor_bay.glb` | ~110 | Dense-farm bay + chunky CRT; empty `screen_face` |
-| `models/neighbor_crt.glb` | ~50 | Standalone chunky PS1 CRT; empty `screen_face` |
-| `models/crt_glow.glb` | 2 | Optional bright screen quad |
-| `models/worker_seated.glb` | ~96 | Seated clerk; empties `head`/`torso`/`arm_L`/`arm_R` |
-| `models/worker_seated_b.glb` | ~96 | Shirt/hair tint variant |
 
 Textures: `assets/textures/*.png` (16–64px, Bayer-dithered, embedded in GLBs too). Samplers already **NEAREST**.
 
@@ -77,12 +72,6 @@ Textures: `assets/textures/*.png` (16–64px, Bayer-dithered, embedded in GLBs t
 **`hands.glb`**
 - `left_wrist` `[-0.18, 0, 0]`
 - `right_wrist` `[0.18, 0, 0]`
-
-**`neighbor_bay.glb` / `neighbor_crt.glb`**
-- `screen_face` — screen center; Dev emissive / MeshBasic swap (see FARM.md)
-
-**`worker_seated.glb` / `worker_seated_b.glb`**
-- `head`, `torso`, `arm_L`, `arm_R` — fidget pivots (exact names)
 
 ### Suggested scene graph
 
@@ -110,6 +99,15 @@ Render the Win95 desktop (tickets / Slack / IDE / PR fight + Sanity/Sprint/Unrea
 
 `style.css` is a leftover PS1-flat HUD pass (palette aligned). Prefer 3D world + Win95-on-CRT; scrap full-screen CRT scanline habits if they sneak back. Optional DOM chrome classes: `.w95-desktop` `.w95-window` `.w95-titlebar` `.w95-btn` `.w95-taskbar` `.w95-start` (see WIN95.md).
 
+## Win95 app icons (Presence + Timesheet)
+
+Low-fi nearest-neighbor tray/desktop glyphs (RGBA). Regenerator: `assets/icons/build_presence_timesheet.py`.
+
+- **Jimbo Mouse Jiggler** (Presence): `assets/jimbo/jiggler_16.png`, `jiggler_32.png` (mirrors under `assets/presence/`). Start label: **Jimbo Mouse Jiggler**. See `WIN95.md` § Presence.
+- **Timesheet Lock**: `assets/icons/timesheet_xls_{16,32,48}.png` (mirrors under `assets/timesheet/`). Desktop `timesheet.xls` energy. See `WIN95.md` § Timesheet Lock.
+
+Also Jimbo assistant chrome: `assets/jimbo/` (window title **Jimbo — Corporate AI**). Unbranded — no product marks on these icons.
+
 ## Anti-patterns
 
 Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded SaaS panels, neon glow, caricature likeness for Kyle, Win95 full-screen instead of on the CRT face.
@@ -117,12 +115,3 @@ Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded 
 ## Preview
 
 Open `assets/preview/index.html` (Three.js CDN + GLTFLoader) to eyeball models. Not the game — Dev owns `index.html` game loop.
-
-## Cubicle farm hellscape
-
-Dense packed grid + chunky CRT emissive + seated workers: see **`FARM.md`**.
-
-- Bay / CRT: `neighbor_bay.glb` or `neighbor_crt.glb` — MeshBasic/emissive on empty **`screen_face`**
-- Workers: `worker_seated.glb` (+ optional `worker_seated_b.glb`); empties **`head` / `torso` / `arm_L` / `arm_R`**; phase fidget by `hash(ix,iz)`
-- Pitch 2.2×2.6 m; ~270 instances — tris budget in FARM.md
-- Player cell keeps full cubicle + Win95 CRT

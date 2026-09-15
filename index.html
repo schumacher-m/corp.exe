@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>corp.exe — HelixStack</title>
+  <title>corp.exe</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="assets/jimbo/jimbo.css" />
   <style>
@@ -37,7 +37,7 @@
     #desktop-overlay.show { display: block; }
     #desktop-overlay canvas {
       width: 100% !important; height: 100% !important;
-      /* hi-res supersample — smooth, not nearest-neighbor mush */
+      /* hi-res supersample -- smooth, not nearest-neighbor mush */
       image-rendering: auto;
       cursor: crosshair;
     }
@@ -70,7 +70,7 @@
 <body>
 
   <div id="file-gate">
-    <h1>corp.exe — IT blocked file://</h1>
+    <h1>corp.exe -- IT blocked file://</h1>
     <p>Chrome won’t load ES modules from a double-clicked <code>index.html</code> (CORS / origin null).</p>
     <p>Serve the folder over HTTP, then open the local URL:</p>
     <pre>cd /Users/m/workspace/corp.html
@@ -79,7 +79,7 @@ python3 -m http.server 8765
 # then open:
 http://127.0.0.1:8765/</pre>
     <p>Or double-click <code>serve.command</code> in this folder (Mac).</p>
-    <p class="hint">HelixStack Security: “Please use the approved local development environment.”</p>
+    <p class="hint">IT Security: "Please use the approved local development environment."</p>
   </div>
   <div id="viewport">
     <div id="stage">
@@ -89,7 +89,7 @@ http://127.0.0.1:8765/</pre>
 
       <div id="screen-title" class="screen active">
         <div class="logo">corp.exe</div>
-        <p class="tagline" id="title-tagline">HelixStack · Cubicle 4-B</p>
+        <p class="tagline" id="title-tagline">Cubicle 4-B</p>
         <p class="blink">INSERT BADGE</p>
         <button type="button" class="btn primary" id="btn-clock-in" style="pointer-events:auto">CLOCK IN</button>
       </div>

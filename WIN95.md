@@ -122,10 +122,10 @@ Example sketch (non-binding):
 
 ## Jimbo
 
-HelixStack AI assistant chrome — original purple blob (antenna/bobble), **not** Clippy. See **`assets/jimbo/`**:
+Corporate AI assistant chrome — original purple blob (antenna/bobble), **not** Clippy. See **`assets/jimbo/`**:
 
 - Icons: `jimbo_16.png`, `jimbo_32.png`, `jimbo_48.png`, `jimbo_toolbar.png` (20×20), `jimbo_banner.png` (96×64)
-- Specs for Dev: `assets/jimbo/JIMBO_UI.md` (window title `Jimbo — HelixStack AI`, Ask Jimbo button, toast, classes `.w95-jimbo` / `.w95-jimbo-ask` / `.w95-jimbo-toast`)
+- Specs for Dev: `assets/jimbo/JIMBO_UI.md` (window title `Jimbo — Corporate AI`, Ask Jimbo button, toast, classes `.w95-jimbo` / `.w95-jimbo-ask` / `.w95-jimbo-toast`)
 - Optional CSS paste: `assets/jimbo/jimbo.css`
 - Accents: `#783CBC` / `#A064DC` / optional active title `#503090` (else navy `#000080`)
 
@@ -133,3 +133,42 @@ HelixStack AI assistant chrome — original purple blob (antenna/bobble), **not*
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.
 
+## Presence — Jimbo Mouse Jiggler
+
+Tray / Start-menu glyph for the Presence Theater mouse-jiggler toy. Purple Jimbo-adjacent energy + cursor / jiggle arrows. **Not** Clippy. Unbranded.
+
+| Spec | Value |
+|------|-------|
+| Start menu label | **Jimbo Mouse Jiggler** |
+| Role | System-tray / Start glyph |
+| Regenerator | `assets/icons/build_presence_timesheet.py` |
+
+| Asset | Path | Size | Use |
+|-------|------|------|-----|
+| 16 | `assets/presence/jiggler_16.png` | 16×16 RGBA | Tray / Start glyph |
+| 32 | `assets/presence/jiggler_32.png` | 32×32 RGBA | Larger Start / alt |
+| Mirror 16 | `assets/jimbo/jiggler_16.png` | 16×16 | Same bytes |
+| Mirror 32 | `assets/jimbo/jiggler_32.png` | 32×32 | Same bytes |
+
+Accents: `#783CBC` / `#A064DC` / `#503090` + amber jiggle `#E8A028`. Nearest-neighbor only.
+
+## Timesheet Lock
+
+Desktop icon for locked timesheet spreadsheet (`timesheet.xls` vibe). Beige sheet + generic green header bar + tiny hourglass overlay. Classic Win95 document icon energy — **not** a Microsoft Excel trademark logo. Unbranded.
+
+| Spec | Value |
+|------|-------|
+| Desktop label | `timesheet.xls` (suggested) |
+| Role | Desktop / Explorer document icon |
+| Regenerator | `assets/icons/build_presence_timesheet.py` |
+
+| Asset | Path | Size | Use |
+|-------|------|------|-----|
+| 16 | `assets/icons/timesheet_xls_16.png` | 16×16 RGBA | Small / list |
+| 32 | `assets/icons/timesheet_xls_32.png` | 32×32 RGBA | Explorer |
+| 48 | `assets/icons/timesheet_xls_48.png` | 48×48 RGBA | Desktop icon |
+| Mirrors | `assets/timesheet/timesheet_xls_{16,32,48}.png` | same | Alias copies |
+
+## Anti-patterns
+
+Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.

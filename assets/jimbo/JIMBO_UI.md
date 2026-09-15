@@ -1,4 +1,4 @@
-# Jimbo — HelixStack AI (Win95 chrome)
+# Jimbo - Corporate AI (Win95 chrome)
 
 Specs for **Developer**. Chrome / UI only — **do not implement game logic** here.
 
@@ -8,7 +8,7 @@ Original purple blob mascot (antenna + pink bobble). **Not** Clippy / Office Ass
 
 | Spec | Value |
 |------|-------|
-| Title | `Jimbo — HelixStack AI` |
+| Title | `Jimbo - Corporate AI` |
 | Host | Win95 window on CRT desktop (same blit path as `WIN95.md`) |
 | Role | AI-assistant chrome / ask panel host |
 

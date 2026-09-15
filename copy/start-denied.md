@@ -1,6 +1,6 @@
-# start-denied — toast lines when Start submenu items are clicked
+# start-denied -- toast lines when Start submenu items are clicked
 
-Dev currently appends " — denied". Prefer picking from this pool instead (or append a random suffix).
+Dev currently appends " -- denied". Prefer picking from this pool instead (or append a random suffix).
 
 ```json
 [

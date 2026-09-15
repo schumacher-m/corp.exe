@@ -1,4 +1,4 @@
-# eod-review — paste into `clockOut` / ending screen
+# eod-review -- paste into `clockOut` / ending screen
 
 Thresholds checked top-down. Placeholders: `{{sprint}}` `{{sanity}}` `{{unread}}`.
 

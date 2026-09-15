@@ -1,6 +1,6 @@
-# incident — P0 production meme (Writer)
+# incident -- P0 production meme (Writer)
 
-Type key: `incident` · id: `HELIX-5201`  
+Type key: `incident` · id: `CORP-5201`  
 Win: **Disable Monitor** + **Assign (not self)**. Trap: “Actually fix prod.”  
 Bake into `ticketStrings.incident` / `sabotage.incident`. See also `incidents.md` (GD).
 
@@ -8,7 +8,7 @@ Bake into `ticketStrings.incident` / `sabotage.incident`. See also `incidents.md
 {
   "type": "incident",
   "ticket": {
-    "id": "HELIX-5201",
+    "id": "CORP-5201",
     "title": "P0: Something is On Fire",
     "pts": 4,
     "type": "incident",
@@ -16,7 +16,7 @@ Bake into `ticketStrings.incident` / `sabotage.incident`. See also `incidents.md
     "meta": "Sev0 · On-call · Observability optional",
     "toast": "Incident owned by someone who isn't you."
   },
-  "windowTitle": "HelixStack Incident — Sev0 (Probably)",
+  "windowTitle": "Corp Incident - Sev0 (Probably)",
   "liveBadge": "LIVE",
   "slackVolunteer": "#incidents: you have been volunteered.",
   "headlines": [

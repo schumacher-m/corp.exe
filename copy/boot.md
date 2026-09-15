@@ -1,11 +1,15 @@
-# boot — title / clock-in flavor
-
-**Note (2026-09-07):** BIOS overlay removed per Michael — CLOCK IN goes straight into the farm. Do **not** re-wire `biosLines` / `runBoot` theater.
+# boot -- title / BIOS / clock-in flavor
 
 ```json
 {
-  "biosLines": [],
-  "titleTagline": "HelixStack · Cubicle 4-B · Please clock in. The fog does not clock out.",
+  "biosLines": [
+    "Workstation BIOS 4.7b · Cubicle firmware OK",
+    "Memory check: 640K ought to be enough for anyone",
+    "Detecting fog... found",
+    "Loading corp.exe...",
+    "Press any key to pretend you have a choice"
+  ],
+  "titleTagline": "Cubicle 4-B · Please clock in. The fog does not clock out.",
   "clockInButton": "CLOCK IN",
   "bootToasts": [
     "Badge scanned. Welcome back, mid-level.",

@@ -1,25 +1,36 @@
 #!/usr/bin/env python3
-"""Overlay copy/*.md into copy-data.js."""
+"""Overlay copy/*.md JSON fences into copy-data.js."""
 import json, re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+
+def deep_rebrand(o):
+    if isinstance(o, str):
+        s = (o.replace("HelixStack", "Corp").replace("HelixHub", "CorpHub")
+             .replace("HELIX-", "CORP-").replace("HELIX", "CORP").replace("Helix", "Corp"))
+        for u, a in [("—", "--"), ("–", "-"), ("‘", "'"), ("’", "'"),
+                     ("“", '"'), ("”", '"')]:
+            s = s.replace(u, a)
+        return s
+    if isinstance(o, list):
+        return [deep_rebrand(x) for x in o]
+    if isinstance(o, dict):
+        return {k: deep_rebrand(v) for k, v in o.items()}
+    return o
+
 COPY = ROOT / "copy"
 
-def fence(path):
-    m = re.search(r"```json\s*(\{.*?\}|\[.*?\])\s*```", path.read_text(), re.S)
-    if not m:
+def fences(path):
+    """Return all ```json fences in a markdown file."""
+    text = path.read_text()
+    found = re.findall(r"```json\s*(.*?)\s*```", text, re.S)
+    if not found:
         raise SystemExit(f"no json fence in {path}")
-    return json.loads(m.group(1))
+    return [json.loads(f) for f in found]
 
-def fence_all(path):
-    return [json.loads(m.group(1)) for m in re.finditer(r"```json\s*(\{.*?\}|\[.*?\])\s*```", path.read_text(), re.S)]
-
-def first_list(path):
-    for blob in fence_all(path):
-        if isinstance(blob, list):
-            return blob
-    return None
+def fence(path):
+    return fences(path)[0]
 
 src = (ROOT / "copy-data.js").read_text()
 m = re.search(r"export\s+default\s+", src)
@@ -28,95 +39,119 @@ if rest.endswith(";"):
     rest = rest[:-1]
 data = json.loads(rest)
 
-# Boot flavor (biosLines may be [] — BIOS overlay removed)
-boot_path = COPY / "boot.md"
-if boot_path.exists():
-    boot = fence(boot_path)
-    if isinstance(boot, dict):
-        data["boot"] = {**(data.get("boot") or {}), **boot}
-
-for key, fname in [("startDenied", "start-denied.md"), ("jimbo", "jimbo.md"), ("emails", "emails.md")]:
+# Single-fence overlays
+for key, fname in [
+    ("startDenied", "start-denied.md"),
+    ("jimbo", "jimbo.md"),
+    ("emails", "emails.md"),
+]:
     p = COPY / fname
     if p.exists():
         data[key] = fence(p)
 
-# Kyle PR pack → thicken prScript
-kyle_pr = COPY / "kyle-pr.md"
-if kyle_pr.exists():
-    beats = first_list(kyle_pr)
-    if beats:
-        data["prScript"] = beats
-
-# Kyle Slack interrupts
-kyle_slack_path = COPY / "kyle-slack.md"
-if kyle_slack_path.exists():
-    ks = first_list(kyle_slack_path)
-    if ks:
-        data["kyleSlack"] = ks
-        pool = list(data.get("slackPool") or [])
-        seen = {m.get("text") for m in pool}
-        for m in ks:
-            if m.get("text") not in seen:
-                pool.append(m)
-                seen.add(m.get("text"))
-        data["slackPool"] = pool
-
-# Whitespace diplomacy → spaceWarScript + HS-404 / spacewar
-sw_path = COPY / "kyle-space-war.md"
-if sw_path.exists():
-    blobs = fence_all(sw_path)
-    script = next((b for b in blobs if isinstance(b, list)), None)
-    ticket = next((b for b in blobs if isinstance(b, dict) and b.get("id")), None)
-    if script:
-        data["spaceWarScript"] = script
-    if ticket:
-        ticket = {
-            **ticket,
-            "type": "spacewar",
-            "toast": ticket.get("toast") or "Whitespace survived. Kyle has notes.",
-        }
-        tickets = list(data.get("tickets") or [])
-        tickets = [t for t in tickets if t.get("id") != ticket["id"] and t.get("type") != "spacewar"]
-        cores = [t for t in tickets if t.get("type") in ("semi", "comment", "pr")]
-        others = [t for t in tickets if t.get("type") not in ("semi", "comment", "pr")]
-        data["tickets"] = cores + [ticket] + others
-        pool = list(data.get("ticketPool") or [])
-        pool = [t for t in pool if t.get("id") != ticket["id"] and t.get("type") != "spacewar"]
-        pool.append(ticket)
-        data["ticketPool"] = pool
-
-# tickets-extra → ticketPool (merge)
-extra = COPY / "tickets-extra.md"
-if extra.exists():
-    for blob in fence_all(extra):
-        extra_pool = None
-        if isinstance(blob, dict) and "ticketPool" in blob:
-            extra_pool = blob["ticketPool"]
-        elif isinstance(blob, list) and blob and isinstance(blob[0], dict) and str(blob[0].get("id", "")).startswith("HELIX-51"):
-            extra_pool = blob
-        if extra_pool:
-            existing = {t.get("id"): t for t in (data.get("ticketPool") or [])}
-            for t in extra_pool:
-                existing[t.get("id")] = t
-            data["ticketPool"] = list(existing.values())
-
-# Writer ticket-strings → jimbo.sabotage + ticketStrings
-ts_path = COPY / "ticket-strings.md"
+# Timesheet Lock -- merge fences from timesheet.md
+ts_path = COPY / "timesheet.md"
 if ts_path.exists():
-    ts = fence(ts_path)
-    data["ticketStrings"] = ts.get("strings") or {}
-    sab = data.setdefault("jimbo", {}).setdefault("sabotage", {})
-    for k, lines in (ts.get("sabotage") or {}).items():
-        sab[k] = lines  # Writer wins
-    # Prefer Writer toast on HS-404
-    sw_toast = (data.get("ticketStrings") or {}).get("spacewar", {}).get("toast")
-    if sw_toast:
-        for t in data.get("tickets") or []:
-            if t.get("type") == "spacewar":
-                t["toast"] = sw_toast
-        for t in data.get("ticketPool") or []:
-            if t.get("type") == "spacewar":
-                t["toast"] = sw_toast
+    parts = fences(ts_path)
+    timesheet = {}
+    if len(parts) >= 1:
+        timesheet.update(parts[0])  # chrome
+    if len(parts) >= 2:
+        timesheet["buckets"] = parts[1]
+    if len(parts) >= 3:
+        timesheet["validation"] = parts[2]
+    if len(parts) >= 4:
+        timesheet["jimboFill"] = parts[3]
+    data["timesheet"] = timesheet
+
+# Presence Theater -- merge all fences from presence.md
+pres_path = COPY / "presence.md"
+if pres_path.exists():
+    parts = fences(pres_path)
+    presence = {}
+    if len(parts) >= 1:
+        presence.update(parts[0])  # badgeLabels, statuses, picker*
+    if len(parts) >= 2:
+        presence["jiggler"] = parts[1]
+    if len(parts) >= 3:
+        presence["hrAudit"] = parts[2]
+    if len(parts) >= 4:
+        presence["awayExcuses"] = parts[3]
+    data["presence"] = presence
+
+
+# Incident pager / Sev0 softlock -- copy/incident.md
+inc_path = COPY / "incident.md"
+if inc_path.exists():
+    parts = fences(inc_path)
+    incident = parts[0] if parts else {}
+    # CORP branding for ids/titles
+    def rebrand_obj(o):
+        if isinstance(o, str):
+            return (o.replace("HelixStack", "Corp").replace("HelixHub", "CorpHub")
+                    .replace("HELIX-", "CORP-").replace("HELIX", "CORP").replace("Helix", "Corp")
+                    .replace("\u2014", "--").replace("\u2013", "-"))
+        if isinstance(o, list):
+            return [rebrand_obj(x) for x in o]
+        if isinstance(o, dict):
+            return {k: rebrand_obj(v) for k, v in o.items()}
+        return o
+    incident = rebrand_obj(incident)
+    data["incident"] = incident
+    ts = data.setdefault("ticketStrings", {})
+    ts["incident"] = incident
+
+# ticketStrings from ticket-strings.md (multiple fences keyed by type if present)
+tss_path = COPY / "ticket-strings.md"
+if tss_path.exists():
+    parts = fences(tss_path)
+    ts = data.setdefault("ticketStrings", {})
+    for part in parts:
+        if isinstance(part, dict):
+            if "type" in part and len(part) > 1:
+                t = part.get("type")
+                ts[t] = rebrand_obj({k: v for k, v in part.items() if k != "type"}) if "rebrand_obj" in dir() else part
+            else:
+                # whole map of type -> strings
+                for k, v in part.items():
+                    if isinstance(v, dict):
+                        ts[k] = v
+
+# tickets-extra.md -> ticketPool (+ ensure CORP ids)
+te_path = COPY / "tickets-extra.md"
+if te_path.exists():
+    parts = fences(te_path)
+    pool = []
+    for part in parts:
+        if isinstance(part, list):
+            pool.extend(part)
+        elif isinstance(part, dict) and "ticketPool" in part:
+            pool.extend(part.get("ticketPool") or [])
+        elif isinstance(part, dict) and part.get("type") and part.get("id"):
+            pool.append(part)
+        elif isinstance(part, dict) and "tickets" in part:
+            pool.extend(part["tickets"])
+    if pool:
+        def rb(o):
+            if isinstance(o, str):
+                return (o.replace("HelixStack", "Corp").replace("HELIX-", "CORP-")
+                        .replace("HELIX", "CORP").replace("Helix", "Corp")
+                        .replace("HS-", "CORP-"))
+            if isinstance(o, list):
+                return [rb(x) for x in o]
+            if isinstance(o, dict):
+                return {k: rb(v) for k, v in o.items()}
+            return o
+        data["ticketPool"] = rb(pool)
+        if not any(t.get("type") == "spacewar" for t in data["ticketPool"]):
+            data["ticketPool"].append({
+                "id": "CORP-404",
+                "title": "Whitespace Diplomacy",
+                "pts": 5,
+                "type": "spacewar",
+                "dod": "Survive Kyle. Choose peace or tabs.",
+            })
+
 
 items = data.setdefault("startMenu", {}).setdefault("items", [])
 labels = [i.get("label") for i in items]
@@ -124,50 +159,44 @@ if "Jimbo" not in labels:
     items.insert(0, {"label": "Jimbo", "id": "jimbo"})
 if "Inbox" not in labels:
     items.insert(1, {"label": "Inbox", "id": "inbox"})
+# Jimbo Mouse Jiggler Start item (Presence Theater)
+jiggler_label = (data.get("presence") or {}).get("jiggler", {}).get("menuLabel") or "Jimbo Mouse Jiggler"
+if jiggler_label not in labels and "jiggler" not in [i.get("id") for i in items]:
+    # insert after Jimbo/Inbox if present
+    insert_at = 0
+    for idx, it in enumerate(items):
+        if it.get("id") in ("jimbo", "inbox") or it.get("label") in ("Jimbo", "Inbox"):
+            insert_at = idx + 1
+    items.insert(insert_at, {"label": jiggler_label, "id": "jiggler"})
 
+ts_label = (data.get("timesheet") or {}).get("desktopLabel") or "timesheet.xls"
+if ts_label not in labels and "timesheet" not in [i.get("id") for i in items]:
+    insert_at = 0
+    for idx, it in enumerate(items):
+        if it.get("id") in ("jimbo", "inbox", "jiggler") or it.get("label") in ("Jimbo", "Inbox", jiggler_label):
+            insert_at = idx + 1
+    items.insert(insert_at, {"label": ts_label, "id": "timesheet"})
 
-# Incident meme (Writer incident.md)
-inc_path = COPY / "incident.md"
-if inc_path.exists():
-    inc = fence(inc_path)
-    data["incident"] = inc
-    # Merge ticketStrings.incident + ticket into pool
-    ts = data.setdefault("ticketStrings", {})
-    strings = dict(ts.get("incident") or {})
-    if isinstance(inc, dict):
-        for k in ("windowTitle", "body", "disableLabel", "assignLabel", "fixLabel", "submitLabel",
-                  "toast", "toastDisable", "toastAssign", "toastFix", "toastSelf", "assignees",
-                  "headlines", "toasts", "slackPages"):
-            if k in inc:
-                strings[k] = inc[k]
-        if "strings" in inc and isinstance(inc["strings"], dict):
-            strings.update(inc["strings"])
-        ts["incident"] = strings
-        sab = data.setdefault("jimbo", {}).setdefault("sabotage", {})
-        if inc.get("sabotage"):
-            sab["incident"] = inc["sabotage"] if isinstance(inc["sabotage"], list) else inc.get("sabotage", {}).get("incident") or sab.get("incident")
-        if isinstance(inc.get("sabotage"), dict) and inc["sabotage"].get("incident"):
-            sab["incident"] = inc["sabotage"]["incident"]
-        ticket = inc.get("ticket")
-        if ticket and ticket.get("type") == "incident":
-            pool = {t.get("id"): t for t in (data.get("ticketPool") or [])}
-            pool[ticket["id"]] = ticket
-            data["ticketPool"] = list(pool.values())
-            tickets = [t for t in (data.get("tickets") or []) if t.get("type") != "incident"]
-            # keep cores; incident stays in pool for refill
-            data["tickets"] = tickets
+data = deep_rebrand(data)
 
 (ROOT / "copy-data.js").write_text(
-    "/* Auto-baked from copy/*.md — re-run bake_copy.py */\nexport default "
+    "/* Auto-baked from copy/*.md -- re-run bake_copy.py */\nexport default "
     + json.dumps(data, indent=2, ensure_ascii=False)
     + ";\n"
 )
+pres = data.get("presence") or {}
+inc = data.get("incident") or {}
 print(
-    "baked prScript", len(data.get("prScript") or []),
-    "spaceWar", len(data.get("spaceWarScript") or []),
-    "kyleSlack", len(data.get("kyleSlack") or []),
-    "ticketStrings", len(data.get("ticketStrings") or {}),
-    "sabotage", sorted((data.get("jimbo") or {}).get("sabotage") or {}),
-    "tickets", [t.get("id")+":"+t.get("type") for t in data.get("tickets") or []],
+    "baked:",
+    "jimbo", "jimbo" in data,
+    "emails", len(data.get("emails", {}).get("messages", [])),
+    "denied", len(data.get("startDenied", [])),
+    "presence", bool(pres),
+    "excuses", len((pres.get("awayExcuses") or {}).get("excuses") or []),
+    "jiggler", "jiggler" in (pres or {}),
+    "timesheet", "timesheet" in data,
+    "buckets", len((data.get("timesheet") or {}).get("buckets") or []),
+    "incident", bool(inc),
     "ticketPool", len(data.get("ticketPool") or []),
+    "ticketStrings", len(data.get("ticketStrings") or {}),
 )

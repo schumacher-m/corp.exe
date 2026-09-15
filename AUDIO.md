@@ -1,6 +1,6 @@
 # corp.exe Audio Pack
 
-Original synthesized BGM + SFX for HelixStack / corp.exe (PS1–Win95 cubicle-farm aesthetic).  
+Original synthesized BGM + SFX for corp.exe (PS1–Win95 cubicle-farm / generic corporate software-dev aesthetic).  
 **No copyrighted stems or samples** — everything is generated with NumPy (+ light bitcrush / downsample) and encoded with ffmpeg (`libvorbis` for OGG).
 
 **Mute:** All playback must respect `state.muted` in `game.js` (mute button currently toggles toast-only mute). When muted, pause/stop BGM and skip SFX (or set gain to 0).
@@ -25,11 +25,9 @@ Crossfade or equal-power fade (~400–800 ms) when switching phase. Keep BGM qui
 
 | File | Phase / when | Loop | Notes |
 |------|----------------|------|-------|
-| `audio/bgm-cubicle-walk.ogg` | **Cubicle walk** — empty office roam before sitting | Yes | HVAC/fluorescent bed + **shifting minor pads** (chord/root every ~12 bars), sparse lonely notes that follow the root, soft lo-fi perc that morphs. Lonelier. ~76 s. |
-| `audio/bgm-seated-desktop.ogg` | **Seated desktop** — the daily grind / coding loop | Yes | Repetitive tracker ostinato with **root drift** every 8 bars, layered pad bed, kick/hat pattern banks that change over the loop — drifting / a little wrong. ~72 s. |
-| `audio/bgm-pr-fight.ogg` | **PR fight / minigames** — review combat, tense tasks | Yes | Tenser cheap tracker + **chord pressure** (Am→Bb→Am→Gm), denser perc in the back half; still not cinematic. ~68 s. |
-
-**BGM movement (2026-09):** Beds are no longer static drones — subtle chord/root shifts every 8–16 bars, light percussion variation, and evolving melodic layers. Filenames and Dev wiring keys unchanged.
+| `audio/bgm-cubicle-walk.ogg` | **Cubicle walk** — empty office roam before sitting | Yes | HVAC drone, fluorescent hum, distant printer chatter, sparse lonely notes. ~72 s. |
+| `audio/bgm-seated-desktop.ogg` | **Seated desktop** — the daily grind / coding loop | Yes | Muted, repetitive, slightly detuned / off-kilter tracker ostinato. ~68 s. |
+| `audio/bgm-pr-fight.ogg` | **PR fight / minigames** — review combat, tense tasks | Yes | Slightly more tense cheap tracker; still not cinematic. ~64 s. |
 
 Suggested hook:
 
@@ -127,57 +125,15 @@ sfx("audio/sfx-crt-whine.wav", 0.3);
 
 All original synth. Away tick is intentionally quiet (−8 dBFS) — do not boost into alarm territory.
 
-## Exhausted cubicle farm (ambience bed + tired one-shots)
 
-Low-energy fluorescent farm for **cubicle walk** (and optionally **seated** while still “in the farm”). Dense farm (~272 bays / hundreds of seated neighbors): overlapping muffled human energy + unsynced keyboard mush baked into the loop bed — oppressed tiredness, **not** horror stingers, **not** melodic happy BGM. Can sit under or replace walk BGM.
+### Presence Theater / Timesheet Lock (optional)
 
-### Loop bed
+| File | When | Loop | Suggested `playSfx` key | Vol |
+|------|------|------|-------------------------|-----|
+| `audio/sfx-jiggler-tick.wav` | Auto mouse-jiggle / Presence Theater keep-alive | No | `jigglerTick` | 0.2–0.25 |
+| `audio/sfx-timesheet-save.wav` | Timesheet Lock save / submit confirm | No | `timesheetSave` | 0.45 |
 
-| File | `FILES` key | When | Loop | Suggested vol |
-|------|-------------|------|------|---------------|
-| `audio/amb-cubicle-exhausted.ogg` | `ambExhausted` | Cubicle walk / farm presence | Yes (~82 s) | **0.28–0.35** (~−8…−10 dBFS peak asset) |
-
-Helpers:
-- `playAmbExhausted({ volume })` — loop the bed only
-- `stopAmbExhausted()` — pause/reset bed
-- `startExhaustedBed({ volume, intervalMinMs, intervalMaxMs })` — bed + schedules occasional one-shots (default **4–10 s**)
-- `stopExhaustedBed()` — stops bed **and** clears one-shot timers
-
-Dev wiring (call sites in game logic — not auto-wired):
-- Call `startExhaustedBed()` on cubicle walk (and optionally while seated if still in the farm).
-- Call `stopExhaustedBed()` when leaving that phase / CRT focus if desired.
-- All helpers respect `muted` (`setMuted`).
-
-### Tired one-shots
-
-| File | `FILES` key | When | Loop | Suggested vol |
-|------|-------------|------|------|---------------|
-| `audio/sfx-grunt.wav` | `grunt` | Sparse tired human grunt | No | 0.35–0.45 |
-| `audio/sfx-sigh.wav` | `sigh` | Exhausted sigh | No | 0.35–0.45 |
-| `audio/sfx-chair-creak-tired.wav` | `creakTired` | Slow lean/shift creak (≠ sit) | No | 0.35–0.45 |
-| `audio/sfx-ugh.wav` | `ugh` | Muffled distant “ugh” | No | 0.25–0.35 |
-| `audio/sfx-key-dead-01.wav` … `05` | `keyDead1`…`keyDead5` | Mushy/dead keyboard clacks | No | 0.2–0.3 |
-| `audio/sfx-murmur-distant.wav` | `murmurDistant` | Quiet distant murmur mush (no words) | No | 0.25–0.35 |
-| `audio/sfx-keys-far.wav` | `keysFar` | Far unsynced mushy key burst | No | 0.2–0.3 |
-
-`exhaustedOneShot()` picks randomly from grunt / sigh / creakTired / ugh / keyDead1–5 / murmurDistant / keysFar (quieter for ugh, murmur, dead/far keys). Used internally by `startExhaustedBed`.
-
-```js
-import {
-  startExhaustedBed,
-  stopExhaustedBed,
-  exhaustedOneShot,
-  setMuted,
-} from "./audio.js";
-
-// cubicle walk enter:
-startExhaustedBed({ volume: 0.32, intervalMinMs: 4000, intervalMaxMs: 10000 });
-
-// leave farm / CRT focus:
-stopExhaustedBed();
-```
-
----
+Jiggler is intentionally quieter than Away (−12 dBFS) — almost subliminal. Presence can ship without these; hook when ready.
 
 ## Dev integration checklist
 
@@ -192,6 +148,6 @@ stopExhaustedBed();
 
 ## Aesthetic reminder
 
-Fluorescent hell, HVAC drone, cheap carpet, tracker/MOD grit, 8–12-bit crunch, exhausted dense cubicle-farm bed (~272 bays; muffled workers, keyboard mush, dead keys). Dark humor. Not Hollywood orchestra.
+Fluorescent hell, HVAC drone, cheap carpet, tracker/MOD grit, 8–12-bit crunch. Dark humor. Not Hollywood orchestra.
 
 Assets are **original synth only**. If something sounds wrong after a pull, regenerate with `python3 audio/generate_audio.py`.

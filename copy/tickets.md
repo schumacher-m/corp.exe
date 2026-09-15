@@ -1,11 +1,11 @@
-# tickets + line pools — paste into `TICKETS` / `SEMI_LINES` / `COMMENT_*`
+# tickets + line pools -- paste into `TICKETS` / `SEMI_LINES` / `COMMENT_*`
 
 ## tickets
 
 ```json
 [
   {
-    "id": "HS-401",
+    "id": "CORP-401",
     "title": "Semicolon Hell",
     "pts": 3,
     "type": "semi",
@@ -13,7 +13,7 @@
     "meta": "Priority: Existential · Sprint 47 · Assigned: Cubicle 4-B"
   },
   {
-    "id": "HS-402",
+    "id": "CORP-402",
     "title": "Comment Every Line",
     "pts": 5,
     "type": "comment",
@@ -21,8 +21,8 @@
     "meta": "Policy · Mandatory · Audit trail · InsightBot watching"
   },
   {
-    "id": "HS-403",
-    "title": "PR #884 — Survive Kyle",
+    "id": "CORP-403",
+    "title": "PR #884 -- Survive Kyle",
     "pts": 8,
     "type": "pr",
     "dod": "Survive the review. Do not mention the fog. Do not win on principles.",
@@ -31,12 +31,12 @@
 ]
 ```
 
-## fillers (board flavor — not wired to minigames)
+## fillers (board flavor -- not wired to minigames)
 
 ```json
 [
   {
-    "id": "HELIX-1188",
+    "id": "CORP-1188",
     "title": "Rename tmp to something temporary",
     "pts": 1,
     "type": "filler",
@@ -44,7 +44,7 @@
     "meta": "Nitfarm · Platform · Priority: Petty"
   },
   {
-    "id": "HELIX-2201",
+    "id": "CORP-2201",
     "title": "Standup bot wants feelings",
     "pts": 2,
     "type": "filler",
@@ -52,7 +52,7 @@
     "meta": "Ritual · Recurring · Cannot close"
   },
   {
-    "id": "HELIX-3044",
+    "id": "CORP-3044",
     "title": "Coffee machine returns HTTP 418",
     "pts": 2,
     "type": "filler",
@@ -60,7 +60,7 @@
     "meta": "Ops · Sev: Mood · Labels: beverage, despair"
   },
   {
-    "id": "HELIX-4096",
+    "id": "CORP-4096",
     "title": "Delete the unused feature flag (don't)",
     "pts": 3,
     "type": "filler",

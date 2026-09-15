@@ -1,12 +1,12 @@
-# tickets-extra — 10 meme tickets + endless queue (Game Design)
+# tickets-extra -- 10 meme tickets + endless queue (Game Design)
 
 Beyond the current three playables (`HS-401` Semicolon Hell, `HS-402` Comment Every Line, `HS-403` Survive Kyle). Prefer **S** stubs that reuse IDE / Slack / Inbox / Standup Win95 windows. Funny corporate hell, not preachy. No ableist jokes.
 
-IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-401..403`).
+IDs: `CORP-51xx` (avoids existing fillers `CORP-1188/2201/3044/4096` and `HS-401..403`).
 
-**Update:** Slot 9 (`HELIX-5109`) = **Whitespace Diplomacy / Kyle space war**. Fibonacci Estimate deferred.
+**Update:** Slot 9 (`CORP-5109`) = **Whitespace Diplomacy / Kyle space war**. Fibonacci Estimate deferred.
 
-**PR length (Michael):** Max **5 Kyle beats per run**. Keep the full bank in copy; each open of `pr` / `spacewar` **deals 5 at random** from that pool. Same rule for HS-403 and HELIX-5109.
+**PR length (Michael):** Max **5 Kyle beats per run**. Keep the full bank in copy; each open of `pr` / `spacewar` **deals 5 at random** from that pool. Same rule for HS-403 and CORP-5109.
 
 ---
 
@@ -17,10 +17,10 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 | Rule | Spec |
 |------|------|
 | **Pool** | All playable ticket types that are implemented (start: 3 core + these 10 as they land). Include `type: filler` stubs as padding so the board never looks empty. |
-| **Active slots** | Keep **2–3** tickets visible on the Tickets board at once (matches current UI density). |
+| **Active slots** | Keep **2-3** tickets visible on the Tickets board at once (matches current UI density). |
 | **On complete** | Mark done → toast → **immediately** draw 1 unused type from the remaining pool (uniform random). If every type was completed this "day", **reshuffle** the full pool (allow repeats across the shift). |
-| **Never empty** | If draw would leave 0 open tickets, force-draw a **filler** (`type: filler`) with `pts: 1–2` and a one-click / 5-second stub so the loop never softlocks. |
-| **Filler OK** | Existing board-flavor fillers (`HELIX-1188` etc.) can become playable micro-stubs OR stay as 1-tap "document & close" so Dev can ship the loop before every minigame exists. |
+| **Never empty** | If draw would leave 0 open tickets, force-draw a **filler** (`type: filler`) with `pts: 1-2` and a one-click / 5-second stub so the loop never softlocks. |
+| **Filler OK** | Existing board-flavor fillers (`CORP-1188` etc.) can become playable micro-stubs OR stay as 1-tap "document & close" so Dev can ship the loop before every minigame exists. |
 | **Done tracking** | Replace hard-coded `ticketsDone: { semi, comment, pr }` with a map/set keyed by `type` (or instance id). EOD grade should count **completions this shift**, not `/3`. |
 | **Jimbo** | Keep "must Ask Jimbo once per ticket" gate; sabotage lines keyed by `type` (add keys below). |
 | **Sanity/Sprint** | On success: `sprint += pts`, optional small sanity hit for friction. Jimbo sabotage / wrong answer: extra `sanity` hit, ticket stays open or resets progress. |
@@ -31,7 +31,7 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 
 ## Ticket specs (10)
 
-### 1) HELIX-5101 — Align the Stakeholders
+### 1) CORP-5101 -- Align the Stakeholders
 
 - **Premise:** Everyone already agreed in separate threads. Your job is to agree with all of them in one DM so the meeting can be canceled and then rebooked.
 - **Player actions:** Open Slack. Reply to 3 stacked DMs (PM / Design / Kyle) by picking the matching "Sounds good!" variant. Order matters only for comedy.
@@ -40,16 +40,16 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 - **Sanity / Sprint:** Done: `+3 SP`, `-2 SAN`. Sabotage / wrong reply: `-4 SAN`, reset that DM.
 - **Complexity:** **S** (reuse Slack choice UI)
 
-### 2) HELIX-5102 — Rename Everything to `data2`
+### 2) CORP-5102 -- Rename Everything to `data2`
 
 - **Premise:** Kyle blocked on naming. Policy says be specific. Jimbo says `data2`. You do what ships.
 - **Player actions:** IDE shows 5 identifiers. Click each → pick rename target from dropdown (`data2` always present). Must rename ≥4 to `data2`.
 - **Done:** ≥4 renames applied + Save. Toast: `Clarity achieved.`
 - **Jimbo sabotage:** Bulk-renames to `data2_final_FINAL`; one identifier becomes `atmosphericDensityCoefficient`.
-- **Sanity / Sprint:** Done: `+3 SP`, `-3 SAN`. Leave a meaningful name: `-1 SAN` pity bonus? No — punish virtue: ticket incomplete until you cave.
+- **Sanity / Sprint:** Done: `+3 SP`, `-3 SAN`. Leave a meaningful name: `-1 SAN` pity bonus? No -- punish virtue: ticket incomplete until you cave.
 - **Complexity:** **S** (IDE click + dropdown)
 
-### 3) HELIX-5103 — Appear Active
+### 3) CORP-5103 -- Appear Active
 
 - **Premise:** InsightBot flagged you Idle for 47 seconds. Presence is a performance review input.
 - **Player actions:** Win95 dialog with a progress bar "Engagement". Mash **Jiggle** / press any key / click desktop **8 times within 12s**. Optional: open Jimbo and accept "I jiggled your mouse for you" (counts as 3 jiggles but `-2 SAN`).
@@ -58,7 +58,7 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 - **Sanity / Sprint:** Done: `+2 SP`, `-1 SAN`. Fail timer: `-6 SAN`, ticket stays open.
 - **Complexity:** **S** (timer + click counter dialog)
 
-### 4) HELIX-5104 — Suppress Until Green
+### 4) CORP-5104 -- Suppress Until Green
 
 - **Premise:** The linter is not wrong. The linter is policy. Make the badge green without fixing anything real.
 - **Player actions:** IDE problem list (5 warnings). For each: **Suppress** / **Dismiss** / **TODO later**. Zero **Fix** buttons that work.
@@ -67,7 +67,7 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 - **Sanity / Sprint:** Done: `+3 SP`, `-2 SAN`. If player hits a fake Fix: `-3 SAN`, warning returns angrier.
 - **Complexity:** **S** (IDE list clicks)
 
-### 5) HELIX-5105 — Update the Status Update
+### 5) CORP-5105 -- Update the Status Update
 
 - **Premise:** Standup bot rejected your feelings as "not actionable." Rewrite until the ritual completes.
 - **Player actions:** Standup window: fill Yesterday / Today / Blockers from chip suggestions (corporate nonsense). Submit → bot rejects with a nit → tweak one field → resubmit. Need **2 successful submits** (first always fails).
@@ -76,25 +76,25 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 - **Sanity / Sprint:** Done: `+2 SP`, `-2 SAN`. Fog submit: `-5 SAN`, forced rewrite.
 - **Complexity:** **S** (reuse standup)
 
-### 6) HELIX-5106 — Merge Conflict (Feelings Edition)
+### 6) CORP-5106 -- Merge Conflict (Feelings Edition)
 
 - **Premise:** `main` and your branch both changed the same comment. Resolve with care, or with `data2`.
 - **Player actions:** IDE conflict markers on 3 hunks. Buttons: **Accept Ours** / **Accept Theirs** / **Accept Both** (Both inserts both lines forever).
 - **Done:** No conflict markers left + Save. Any resolution is valid (comedy > correctness).
 - **Jimbo sabotage:** Accepts Both on everything, then formats into a poem.
-- **Sanity / Sprint:** Done: `+4 SP`, `-3 SAN`. All-Both path: `+4 SP`, `-6 SAN` (still done — rewarding chaos).
+- **Sanity / Sprint:** Done: `+4 SP`, `-3 SAN`. All-Both path: `+4 SP`, `-6 SAN` (still done -- rewarding chaos).
 - **Complexity:** **S** (IDE hunk buttons; kin to semi)
 
-### 7) HELIX-5107 — Unsubscribe From the Follow-Ups
+### 7) CORP-5107 -- Unsubscribe From the Follow-Ups
 
 - **Premise:** All-Hands spawned 12 "quick reads." Your inbox is a second job.
 - **Player actions:** Inbox: open mail → click **Unsubscribe** → confirm dialog → "Was this helpful? (Required)" → pick any → "Preferences saved to nowhere." Repeat for **3** mails.
 - **Done:** 3 unsubs complete. Toast: `You will still receive critical updates.`
-- **Jimbo sabotage:** Clicks **Manage preferences in HelixHub** → opens empty browser titled `404 Synergy`; adds 2 new mails.
+- **Jimbo sabotage:** Clicks **Manage preferences in CorpHub** → opens empty browser titled `404 Synergy`; adds 2 new mails.
 - **Sanity / Sprint:** Done: `+3 SP`, `-4 SAN`. Fail/trap: `-2 SAN` per wrong button.
 - **Complexity:** **S** (reuse inbox + dialogs)
 
-### 8) HELIX-5108 — Add Logging Everywhere
+### 8) CORP-5108 -- Add Logging Everywhere
 
 - **Premise:** Prod is fine. Observability is not. Sprinkle `console.log` until the ticket believes you.
 - **Player actions:** IDE code lines (6). Click line → insert log chip (`console.log('here')`, `console.log(data2)`, `console.log('Kyle was here')`). Need logs on **≥5** lines.
@@ -103,17 +103,17 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 - **Sanity / Sprint:** Done: `+3 SP`, `-2 SAN`. Jimbo debugger left in: cannot finish until removed (`-3 SAN` on attempt).
 - **Complexity:** **S** (reuse comment-every-line click pattern)
 
-### 9) HELIX-5109 — Whitespace Diplomacy (Kyle Space War)
+### 9) CORP-5109 -- Whitespace Diplomacy (Kyle Space War)
 
 - **Premise:** Kyle opened an infinite thread about spaces vs tabs vs "the character formerly known as space." You will not win. You may survive.
-- **Player actions:** PR window (same choice pattern as `HS-403`). Full **whitespace / space-character** beat bank stays in copy (tabs/spaces, trailing WS, NBSP, editorconfig, Prettier vs Kyle, "space has agency," etc. — **no ableist framing**). Each open **deals 5 at random** from that pool. Each beat: 3 replies (`d: 0|1`, `s` sanity delta). Advancing (`d: 1`) moves forward; stubborn purity stalls and hurts more.
+- **Player actions:** PR window (same choice pattern as `HS-403`). Full **whitespace / space-character** beat bank stays in copy (tabs/spaces, trailing WS, NBSP, editorconfig, Prettier vs Kyle, "space has agency," etc. -- **no ableist framing**). Each open **deals 5 at random** from that pool. Each beat: 3 replies (`d: 0|1`, `s` sanity delta). Advancing (`d: 1`) moves forward; stubborn purity stalls and hurts more.
 - **Done:** After **5** advances, Kyle posts reluctant LGTM: `LGTM if we squash and never speak of spaces again.` Toast: `Peace was a formatting option.`
-- **Jimbo sabotage:** Posts "both is fine" then reformats the whole PR to tabs *and* spaces; or invents `space2`. Does **not** stretch the run past 5 — sabotage hurts sanity / resets a beat, pool stays large.
+- **Jimbo sabotage:** Posts "both is fine" then reformats the whole PR to tabs *and* spaces; or invents `space2`. Does **not** stretch the run past 5 -- sabotage hurts sanity / resets a beat, pool stays large.
 - **Sanity / Sprint:** Done: `+5 SP` (or keep pts 8 if Dev already wired), `-4 to -12 SAN` by path. Stall replies: `-4 to -10 SAN`, no advance. Early bail ("take it offline"): fails / reopen.
-- **Complexity:** **S–M** (reuse PR deal-5 engine). Type key: `spacewar`.
+- **Complexity:** **S-M** (reuse PR deal-5 engine). Type key: `spacewar`.
 - **Note:** Distinct from `HS-403` Survive Kyle (general nits). This one is *only* the whitespace eternal debate. Slot reserved for Writer's Kyle expansion.
 
-### 10) HELIX-5110 — Pick a Severity
+### 10) CORP-5110 -- Pick a Severity
 
 - **Premise:** Prod is "degraded" in a way nobody can screenshot. Taxonomy must be satisfied.
 - **Player actions:** Bug form dialog: choose Severity (`Sev0`…`Sev4` / `Unknown` / `It's Fine`). Choose Component (`Platform` / `Fog` / `Other` / `Kyle`). Choose Impact (`Users` / `Metrics` / `Feelings`). Submit.
@@ -128,18 +128,18 @@ IDs: `HELIX-51xx` (avoids existing fillers `HELIX-1188/2201/3044/4096` and `HS-4
 
 | id | type key | pts | window |
 |----|----------|-----|--------|
-| HELIX-5101 | `align` | 3 | slack |
-| HELIX-5102 | `rename` | 3 | ide |
-| HELIX-5103 | `presence` | 2 | dialog |
-| HELIX-5104 | `lint` | 3 | ide |
-| HELIX-5105 | `standup2` | 2 | standup |
-| HELIX-5106 | `merge` | 4 | ide |
-| HELIX-5107 | `unsub` | 3 | inbox |
-| HELIX-5108 | `logspam` | 3 | ide |
-| HELIX-5109 | `spacewar` | 5 | pr |
-| HELIX-5110 | `severity` | 3 | dialog |
+| CORP-5101 | `align` | 3 | slack |
+| CORP-5102 | `rename` | 3 | ide |
+| CORP-5103 | `presence` | 2 | dialog |
+| CORP-5104 | `lint` | 3 | ide |
+| CORP-5105 | `standup2` | 2 | standup |
+| CORP-5106 | `merge` | 4 | ide |
+| CORP-5107 | `unsub` | 3 | inbox |
+| CORP-5108 | `logspam` | 3 | ide |
+| CORP-5109 | `spacewar` | 5 | pr |
+| CORP-5110 | `severity` | 3 | dialog |
 
-Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then IDE twins **lint / logspam / rename / merge**, then **standup2 / unsub**, then **`spacewar`** (full bank in copy, deal 5/run — same as HS-403).
+Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then IDE twins **lint / logspam / rename / merge**, then **standup2 / unsub**, then **`spacewar`** (full bank in copy, deal 5/run -- same as HS-403).
 
 ---
 
@@ -151,7 +151,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
 {
   "ticketPool": [
     {
-      "id": "HELIX-5101",
+      "id": "CORP-5101",
       "title": "Align the Stakeholders",
       "pts": 3,
       "type": "align",
@@ -160,7 +160,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Stakeholders aligned. Meeting still happening."
     },
     {
-      "id": "HELIX-5102",
+      "id": "CORP-5102",
       "title": "Rename Everything to data2",
       "pts": 3,
       "type": "rename",
@@ -169,7 +169,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Clarity achieved."
     },
     {
-      "id": "HELIX-5103",
+      "id": "CORP-5103",
       "title": "Appear Active",
       "pts": 2,
       "type": "presence",
@@ -178,7 +178,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Status: Active (allegedly)."
     },
     {
-      "id": "HELIX-5104",
+      "id": "CORP-5104",
       "title": "Suppress Until Green",
       "pts": 3,
       "type": "lint",
@@ -187,7 +187,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Build healthy. Morale: N/A."
     },
     {
-      "id": "HELIX-5105",
+      "id": "CORP-5105",
       "title": "Update the Status Update",
       "pts": 2,
       "type": "standup2",
@@ -196,7 +196,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Standup complete. Nobody read it."
     },
     {
-      "id": "HELIX-5106",
+      "id": "CORP-5106",
       "title": "Merge Conflict (Feelings Edition)",
       "pts": 4,
       "type": "merge",
@@ -205,7 +205,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Conflicts resolved. Feelings: deferred."
     },
     {
-      "id": "HELIX-5107",
+      "id": "CORP-5107",
       "title": "Unsubscribe From the Follow-Ups",
       "pts": 3,
       "type": "unsub",
@@ -214,7 +214,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "You will still receive critical updates."
     },
     {
-      "id": "HELIX-5108",
+      "id": "CORP-5108",
       "title": "Add Logging Everywhere",
       "pts": 3,
       "type": "logspam",
@@ -223,7 +223,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Telemetry vibes: rich."
     },
     {
-      "id": "HELIX-5109",
+      "id": "CORP-5109",
       "title": "Estimate This Ticket (Fibonacci of Regret)",
       "pts": 2,
       "type": "estimate",
@@ -232,7 +232,7 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
       "toast": "Committed to the vibe of 5."
     },
     {
-      "id": "HELIX-5110",
+      "id": "CORP-5110",
       "title": "Pick a Severity",
       "pts": 3,
       "type": "severity",
@@ -248,9 +248,9 @@ Ship order suggestion: **presence, severity, align** first (dialogs/Slack), then
 
 Need joke strings per type: window titles, button labels, reject nits, success toasts, Jimbo `sabotage.<type>[]` (3 lines each). Keep cheerful-wrong Jimbo voice. Do not invent ableist punchlines; punch up at process, Kyle, InsightBot, and the fog.
 
-**Priority — `spacewar`:** Large Kyle beat bank (`{ kyle, choices: [{ t, d, s }] }`) on whitespace / space-character edgelord debate only; runtime **deals 5**. No ableist framing. End on reluctant LGTM / eternal ceasefire. Same deal-5 rule as general Kyle PR.
+**Priority -- `spacewar`:** Large Kyle beat bank (`{ kyle, choices: [{ t, d, s }] }`) on whitespace / space-character edgelord debate only; runtime **deals 5**. No ableist framing. End on reluctant LGTM / eternal ceasefire. Same deal-5 rule as general Kyle PR.
 
-**Deferred (cut for slot):** Fibonacci Estimate (`estimate`) — park as filler or V3 if needed.
+**Deferred (cut for slot):** Fibonacci Estimate (`estimate`) -- park as filler or V3 if needed.
 
 ## QA notes
 
@@ -259,14 +259,14 @@ Need joke strings per type: window titles, button labels, reject nits, success t
 - EOD review copy should stop saying `Tickets: x/3`.
 
 
-### HELIX-5201 — P0: Something is On Fire
+### CORP-5201 -- P0: Something is On Fire
 - **type:** `incident`
 - **pts:** 4
 - **dod:** Disable the monitor AND assign to somebody else. Do not fix prod.
 
 ```json
 {
-  "id": "HELIX-5201",
+  "id": "CORP-5201",
   "title": "P0: Something is On Fire",
   "pts": 4,
   "type": "incident",

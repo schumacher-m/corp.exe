@@ -1,4 +1,4 @@
-# sticky-notes — desk props / CRT sticky overlay
+# sticky-notes -- desk props / CRT sticky overlay
 
 ```json
 [

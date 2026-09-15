@@ -1,6 +1,6 @@
 # corp.exe
 
-HelixStack cubicle simulator — PS1 office, Win95 desktop on a CRT, Jimbo, doom-mail, Appear Active.
+Cubicle simulator -- PS1 office, Win95 desktop on a CRT, Jimbo, doom-mail, Appear Active, cubicle farm, incident pager.
 
 ## Do not open `index.html` via file://
 
@@ -19,7 +19,7 @@ Mac: double-click `serve.command` instead.
 
 ## Play
 
-CLOCK IN → WASD to Cubicle 4-B → E/sit → Win95 desktop on the CRT.
+CLOCK IN -> WASD through the cubicle farm (neighbors) -> E/sit at Cubicle 4-B -> Win95 desktop on the CRT.
 
 Mute: `M`
 
@@ -27,12 +27,11 @@ Mute: `M`
 
 Vanilla HTML/CSS/JS + Three.js (CDN). No build step. Assets under `assets/`, copy under `copy/`, audio under `audio/`.
 
-
 ## GitHub Pages
 
 On every push to `master`, [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) builds `dist/` and deploys to GitHub Pages.
 
-1. Repo **Settings → Pages → Build and deployment → Source: GitHub Actions** (one-time).
+1. Repo **Settings -> Pages -> Build and deployment -> Source: GitHub Actions** (one-time).
 2. Site URL (after first green run): `https://schumacher-m.github.io/corp.html/`
 
 Local preview of the Pages artifact:

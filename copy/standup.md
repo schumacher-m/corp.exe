@@ -8,7 +8,7 @@
     "Fixed a bug that wasn't broken.",
     "Attended three syncs about a fourth sync.",
     "Renamed a variable. Kyle renamed it back.",
-    "Closed HELIX-2201 emotionally, not in Jira."
+    "Closed CORP-2201 emotionally, not in Jira."
   ],
   "today": [
     "Will fix the bug I just made.",

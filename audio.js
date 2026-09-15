@@ -2,7 +2,8 @@
  * corp.exe audio — no-op stubs when files missing; gated on muted flag.
  * Expected under audio/: bgm-*.ogg, amb-cubicle-exhausted.ogg,
  * sfx-*.wav one-shots (incl. tired farm: grunt/sigh/creak/ugh/key-dead/murmur/keys-far),
- * sfx-win95-*, sfx-key-01..03, sfx-mouse-click, sfx-slack-ping, etc.
+ * sfx-win95-*, sfx-key-01..03, sfx-mouse-click, sfx-slack-ping,
+ * sfx-jiggler-tick, sfx-timesheet-save, exhausted farm pack, etc.
  */
 const BASE = "audio/";
 
@@ -32,6 +33,8 @@ const FILES = {
   jimboFail: "sfx-jimbo-fail.wav",
   newMail: "sfx-new-mail.wav",
   awayTick: "sfx-away-tick.wav",
+  jigglerTick: "sfx-jiggler-tick.wav",
+  timesheetSave: "sfx-timesheet-save.wav",
   grunt: "sfx-grunt.wav",
   sigh: "sfx-sigh.wav",
   creakTired: "sfx-chair-creak-tired.wav",

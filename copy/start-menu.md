@@ -1,4 +1,4 @@
-# start-menu — Win95 Start menu jokes
+# start-menu -- Win95 Start menu jokes
 
 ```json
 {
@@ -8,7 +8,7 @@
     {"label": "Documents", "submenu": ["sprint-notes-final-FINAL.doc", "todo-ignore.txt", "resignation-draft-3.doc"]},
     {"label": "Settings", "submenu": ["Control Panel", "Fog Density", "Sanity Options"]},
     {"label": "Find", "submenu": ["Find Files...", "Find Meaning...", "Find the Exit (0 results)"]},
-    {"label": "Help", "submenu": ["HelixStack Help", "Ask Kyle", "Don't"]},
+    {"label": "Help", "submenu": ["IT Help", "Ask Kyle", "Don't"]},
     {"label": "Run...", "hint": "Type a command you will regret"},
     {"label": "Shut Down...", "hint": "Ends the day. Not the job."}
   ],

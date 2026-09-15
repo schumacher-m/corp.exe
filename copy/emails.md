@@ -1,9 +1,9 @@
-# emails — Outlook Express / Inbox copy (bleak funny)
+# emails -- Outlook Express / Inbox copy (bleak funny)
 # Writer: doom mails popup on timer; presence/force mails force-open on Away.
 
 ```json
 {
-  "inboxTitle": "Inbox — Outlook Express",
+  "inboxTitle": "Inbox -- Outlook Express",
   "desktopLabel": "Inbox",
   "unreadFloor": 1,
   "messages": [
@@ -19,7 +19,7 @@
       "id": "e2",
       "from": "HR",
       "subject": "Mandatory joy survey (5 min → 45)",
-      "body": "Rate your burnout 1–5 where 5 means 'engaged'. Leaving blank counts as 5.",
+      "body": "Rate your burnout 1-5 where 5 means 'engaged'. Leaving blank counts as 5.",
       "sanity": 8,
       "doom": true
     },
@@ -66,7 +66,7 @@
     {
       "id": "e8",
       "from": "Jira",
-      "subject": "HELIX-2201 still emotionally open",
+      "subject": "CORP-2201 still emotionally open",
       "body": "This ticket cannot be closed. Neither can you. Have a metrics-driven day.",
       "sanity": 6,
       "doom": true
@@ -124,7 +124,7 @@
     {
       "id": "e15",
       "from": "PresenceBot",
-      "subject": "YOU APPEAR AWAY — acknowledge immediately",
+      "subject": "YOU APPEAR AWAY -- acknowledge immediately",
       "body": "Policy 4-B-ACTIVE: Idle >11s requires mandatory acknowledgment. Moving the mouse is not optional. Dismiss this to resume being Active (and miserable).",
       "sanity": 12,
       "presence": true,

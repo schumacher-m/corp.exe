@@ -1,4 +1,4 @@
-# slack-dms — paste into `SLACK_POOL`
+# slack-dms -- paste into `SLACK_POOL`
 
 ```json
 [

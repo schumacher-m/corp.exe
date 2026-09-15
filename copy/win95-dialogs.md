@@ -1,4 +1,4 @@
-# win95-dialogs — error / confirm chrome on the CRT desktop
+# win95-dialogs -- error / confirm chrome on the CRT desktop
 
 ```json
 {
@@ -15,7 +15,7 @@
     },
     {
       "title": "Jira Connector",
-      "body": "HELIX-2201 cannot be closed. Status: emotionally unfinished.",
+      "body": "CORP-2201 cannot be closed. Status: emotionally unfinished.",
       "buttons": ["Retry", "Accept Fate"]
     },
     {

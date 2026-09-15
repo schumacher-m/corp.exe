@@ -1,11 +1,11 @@
-# kyle-space-war — Whitespace diplomacy minigame
+# kyle-space-war -- Whitespace diplomacy minigame
 
 Ticket vibe: PR is literally about spaces (`){` vs `) {`, `x: T` vs `x:T`, tabs, NBSP, ternaries).
 
 Player reply kinds: `appease` | `cite` | `sarcastic` | `giveup`  
 Suggested: appease/cite often advance; sarcastic often stalls; giveup advances with bigger sanity hit.  
 End: reluctant LGTM with nits **or** manager take-it-offline.  
-HARD: no ableist language — comedy is pedantry only.
+HARD: no ableist language -- comedy is pedantry only.
 
 ```json
 [
@@ -28,7 +28,7 @@ HARD: no ableist language — comedy is pedantry only.
     ]
   },
   {
-    "kyle": "Wait — you fixed `{` but left `else{`. Consistency or death.",
+    "kyle": "Wait -- you fixed `{` but left `else{`. Consistency or death.",
     "choices": [
       {"t": "else { fixed. Consistency achieved.", "kind": "appease", "d": 1, "s": -4},
       {"t": "eslint brace-style is configurable.", "kind": "cite", "d": 0, "s": -6},
@@ -75,7 +75,7 @@ HARD: no ableist language — comedy is pedantry only.
   {
     "kyle": "Space before `;`? Never. You have `return x ;`. I will debate this until sprint end.",
     "choices": [
-      {"t": "return x; — no space. Surrender.", "kind": "appease", "d": 1, "s": -3},
+      {"t": "return x; -- no space. Surrender.", "kind": "appease", "d": 1, "s": -3},
       {"t": "No major style guide wants that.", "kind": "cite", "d": 1, "s": -2},
       {"t": "Ten hours? Calendar is free.", "kind": "sarcastic", "d": 0, "s": -11},
       {"t": "I concede the semicolon universe.", "kind": "giveup", "d": 1, "s": -7}
@@ -104,7 +104,7 @@ HARD: no ableist language — comedy is pedantry only.
     "choices": [
       {"t": "Accept LGTM. Never open spreadsheet.", "kind": "appease", "d": 1, "s": -5},
       {"t": "I'll read Platform Style v4.7 first.", "kind": "cite", "d": 1, "s": -4},
-      {"t": "An hour about spaces. Peak HelixStack.", "kind": "sarcastic", "d": 1, "s": -8},
+      {"t": "An hour about spaces. Peak Corp.", "kind": "sarcastic", "d": 1, "s": -8},
       {"t": "Take it offline. Bring poison.", "kind": "giveup", "d": 1, "s": -6}
     ]
   }
@@ -126,4 +126,4 @@ HARD: no ableist language — comedy is pedantry only.
 
 ## Runtime (Dev)
 
-- Deal **5** beats per PR run, sampled at random from this pool. Keep the full bank in copy — do not truncate the file.
+- Deal **5** beats per PR run, sampled at random from this pool. Keep the full bank in copy -- do not truncate the file.

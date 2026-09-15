@@ -1,8 +1,14 @@
-/* Auto-baked from copy/*.md — re-run bake_copy.py */
+/* Auto-baked from copy/*.md -- re-run bake_copy.py */
 export default {
   "boot": {
-    "biosLines": [],
-    "titleTagline": "HelixStack · Cubicle 4-B · Please clock in. The fog does not clock out.",
+    "biosLines": [
+      "Workstation BIOS 4.7b · Cubicle firmware OK",
+      "Memory check: 640K ought to be enough for anyone",
+      "Detecting fog... found",
+      "Loading corp.exe...",
+      "Press any key to pretend you have a choice"
+    ],
+    "titleTagline": "Cubicle 4-B · Please clock in. The fog does not clock out.",
     "clockInButton": "CLOCK IN",
     "bootToasts": [
       "Badge scanned. Welcome back, mid-level.",
@@ -12,7 +18,7 @@ export default {
   },
   "tickets": [
     {
-      "id": "HS-401",
+      "id": "CORP-401",
       "title": "Semicolon Hell",
       "pts": 3,
       "type": "semi",
@@ -20,7 +26,7 @@ export default {
       "meta": "Priority: Existential · Sprint 47 · Assigned: Cubicle 4-B"
     },
     {
-      "id": "HS-402",
+      "id": "CORP-402",
       "title": "Comment Every Line",
       "pts": 5,
       "type": "comment",
@@ -28,26 +34,17 @@ export default {
       "meta": "Policy · Mandatory · Audit trail · InsightBot watching"
     },
     {
-      "id": "HS-403",
-      "title": "PR #884 — Survive Kyle",
+      "id": "CORP-403",
+      "title": "PR #884 -- Survive Kyle",
       "pts": 8,
       "type": "pr",
       "dod": "Survive the review. Do not mention the fog. Do not win on principles.",
       "meta": "Blocked · Waiting on Kyle · Platform · Rules lawyer mode"
-    },
-    {
-      "id": "HS-404",
-      "title": "Whitespace diplomacy",
-      "pts": 8,
-      "type": "spacewar",
-      "dod": "Survive Kyle's space war. Do not introduce a second space. Do not win.",
-      "meta": "Blocked · Platform · Pedantry Sev-1",
-      "toast": "Peace was a formatting option."
     }
   ],
   "fillers": [
     {
-      "id": "HELIX-1188",
+      "id": "CORP-1188",
       "title": "Rename tmp to something temporary",
       "pts": 1,
       "type": "filler",
@@ -55,7 +52,7 @@ export default {
       "meta": "Nitfarm · Platform · Priority: Petty"
     },
     {
-      "id": "HELIX-2201",
+      "id": "CORP-2201",
       "title": "Standup bot wants feelings",
       "pts": 2,
       "type": "filler",
@@ -63,7 +60,7 @@ export default {
       "meta": "Ritual · Recurring · Cannot close"
     },
     {
-      "id": "HELIX-3044",
+      "id": "CORP-3044",
       "title": "Coffee machine returns HTTP 418",
       "pts": 2,
       "type": "filler",
@@ -71,7 +68,7 @@ export default {
       "meta": "Ops · Sev: Mood · Labels: beverage, despair"
     },
     {
-      "id": "HELIX-4096",
+      "id": "CORP-4096",
       "title": "Delete the unused feature flag (don't)",
       "pts": 3,
       "type": "filler",
@@ -146,27 +143,27 @@ export default {
   ],
   "prScript": [
     {
-      "kyle": "Nit: rename fog to atmosphericDensityCoefficient?",
+      "kyle": "Nit: can we rename `fog` to `atmosphericDensityCoefficient`?",
       "choices": [
         {
-          "t": "Sure, I will rename it.",
+          "t": "Sure, I'll rename it.",
           "d": 1,
           "s": -5
         },
         {
-          "t": "It is a boolean. Fog is fine.",
+          "t": "It's a boolean. Fog is fine.",
           "d": 0,
           "s": -2
         },
         {
-          "t": "I will add a comment instead.",
+          "t": "I'll add a comment instead.",
           "d": 1,
           "s": -3
         }
       ]
     },
     {
-      "kyle": "This PR adds a blank line. Justify in the description.",
+      "kyle": "This PR adds a blank line. Was that intentional? Please justify in the description.",
       "choices": [
         {
           "t": "Readability. Removing it.",
@@ -179,17 +176,17 @@ export default {
           "s": -8
         },
         {
-          "t": "I will open a follow-up ticket.",
+          "t": "I'll open a follow-up ticket.",
           "d": 1,
           "s": -3
         }
       ]
     },
     {
-      "kyle": "Blocking: commit message needs Jira key HS-### exactly.",
+      "kyle": "Blocking: commit message doesn't reference the Jira key in the exact format CORP-###.",
       "choices": [
         {
-          "t": "Amended. HS-403.",
+          "t": "Amended. CORP-403.",
           "d": 1,
           "s": -2
         },
@@ -199,277 +196,117 @@ export default {
           "s": -10
         },
         {
-          "t": "Pushing an amended commit.",
+          "t": "Force-pushing a fix.",
           "d": 1,
           "s": -6
         }
       ]
     },
     {
-      "kyle": "TWO spaces before that brace. Platform 3.1 is one space. Always.",
+      "kyle": "Trailing whitespace on line 47. Platform style guide ✏4.2 is not optional.",
       "choices": [
         {
-          "t": "Fixed to one space.",
+          "t": "Stripped. CI green.",
           "d": 1,
-          "s": -4
+          "s": -3
         },
         {
-          "t": "Well actually, Prettier did that.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Deleting the function out of spite.",
+          "t": "Whitespace is also code.",
           "d": 0,
           "s": -7
+        },
+        {
+          "t": "Editorconfig PR incoming.",
+          "d": 1,
+          "s": -4
         }
       ]
     },
     {
-      "kyle": "Tabs detected. We use spaces. Mixing is a Sev-2 cultural incident.",
+      "kyle": "Why `let` here? Could this be `const`? Prefer immutability unless mutation is documented.",
       "choices": [
         {
-          "t": "Converted. Editor in timeout.",
+          "t": "Switched to const.",
+          "d": 1,
+          "s": -2
+        },
+        {
+          "t": "It mutates two lines later.",
           "d": 1,
           "s": -5
         },
         {
-          "t": "Tabs are finer-grained actually.",
+          "t": "I'll add a DO NOT CONST comment.",
           "d": 0,
-          "s": -11
-        },
-        {
-          "t": "expandtab forever. Amen.",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "Missing trailing newline. POSIX says the universe ends with newline.",
-      "choices": [
-        {
-          "t": "Added the sacred newline.",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "File ends when I say it ends.",
-          "d": 0,
-          "s": -10
-        },
-        {
-          "t": "Editorconfig will save us.",
-          "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Commit subject is not Conventional Commits.",
-      "choices": [
-        {
-          "t": "chore(sanity): pretend this helps",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "fix: everything",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Amended to your exact religion.",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "Variable tmp — bike-shed to ephemeralScratchBufferForTicketFetch?",
-      "choices": [
-        {
-          "t": "Renamed. Description is the name.",
-          "d": 1,
           "s": -6
-        },
-        {
-          "t": "tmp is a classic. Like burnout.",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Opening a naming committee ticket.",
-          "d": 0,
-          "s": -5
         }
       ]
     },
     {
-      "kyle": "This is not DRY. Extract doTheThing.",
+      "kyle": "Test plan checkboxes are unchecked. I cannot LGTM unchecked boxes. Policy.",
       "choices": [
         {
-          "t": "Extracted. Now nothing is clear.",
+          "t": "Checked the ones I actually ran.",
           "d": 1,
-          "s": -5
+          "s": -4
         },
         {
-          "t": "Duplication is documentation.",
+          "t": "Checking all of them spiritually.",
           "d": 0,
           "s": -9
         },
         {
-          "t": "DRY after LGTM. (Never.)",
-          "d": 0,
-          "s": -7
-        }
-      ]
-    },
-    {
-      "kyle": "Unicode thin space in the string. Remove it.",
-      "choices": [
-        {
-          "t": "Purged. Only boring spaces.",
+          "t": "Added 'N/A -- fog interferes'.",
           "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Aesthetic kerning.",
-          "d": 0,
-          "s": -10
-        },
-        {
-          "t": "Replaced with chaos nbsp.",
-          "d": 0,
-          "s": -8
-        }
-      ]
-    },
-    {
-      "kyle": "Zero-width joiner between identifiers. Delete.",
-      "choices": [
-        {
-          "t": "Removed the invisible gremlin.",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "I do not see anything.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Blame paste from Slack.",
-          "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Trailing whitespace on line 14. Hook exists for a reason.",
-      "choices": [
-        {
-          "t": "Stripped. Rebased. Praying.",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "Invisible like our roadmap.",
-          "d": 0,
-          "s": -7
-        },
-        {
-          "t": "Let the hook yell at me.",
-          "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Why let if never reassigns? Prefer const. Well actually, always.",
-      "choices": [
-        {
-          "t": "Changed to const.",
-          "d": 1,
-          "s": -2
-        },
-        {
-          "t": "It reassigns in my heart.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "HELIX for a style exception.",
-          "d": 0,
           "s": -5
         }
       ]
     },
     {
-      "kyle": "Blocking until Test plan has three checkboxes.",
+      "kyle": "Import order: external packages before internal company modules. Alphabetize within groups.",
       "choices": [
         {
-          "t": "[x] looked [x] believed [x] shipped",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "The code is the test plan.",
-          "d": 0,
-          "s": -11
-        },
-        {
-          "t": "Copy-pasting yesterdays plan.",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "Import order wrong. Externals, internals, relative — alphabetized.",
-      "choices": [
-        {
-          "t": "Reordered. IDE crying.",
+          "t": "Reordered. Sorted. Soulless.",
           "d": 1,
           "s": -3
         },
         {
-          "t": "Imports were fine emotionally.",
+          "t": "The bundler does not care.",
           "d": 0,
           "s": -8
         },
         {
-          "t": "Sorting and blaming Prettier.",
+          "t": "Auto-fix PR as follow-up.",
           "d": 1,
-          "s": -2
+          "s": -4
         }
       ]
     },
     {
-      "kyle": "Magic number 3. Extract MAX_RETRY_ATTEMPTS even if used once.",
+      "kyle": "Magic number `47`. Please extract to a named constant. Prefer `SPRINT_NUMBER_OF_REGRET`.",
       "choices": [
         {
-          "t": "Extracted. Name longer than line.",
+          "t": "Extracted. Named it Sprint.",
           "d": 1,
           "s": -3
         },
         {
-          "t": "Three means three. Poetry.",
+          "t": "47 is load-bearing folklore.",
           "d": 0,
           "s": -7
         },
         {
-          "t": "Comment: three on purpose",
-          "d": 0,
+          "t": "Constant plus a comment blaming you.",
+          "d": 1,
           "s": -5
         }
       ]
     },
     {
-      "kyle": "Lockfile changed by thousands of lines. Intentional?",
+      "kyle": "package-lock.json changed by 14k lines. Was that intentional or did npm look at you funny?",
       "choices": [
         {
-          "t": "Reverted lockfile.",
+          "t": "Reverted lockfile. Only my deps.",
           "d": 1,
           "s": -4
         },
@@ -479,335 +316,55 @@ export default {
           "s": -11
         },
         {
-          "t": "Regenerated with blessed Node.",
+          "t": "Regenerated with the blessed Node version.",
           "d": 1,
           "s": -6
         }
       ]
     },
     {
-      "kyle": "No screenshot. Visual proof required even if nothing changed.",
+      "kyle": "No screenshots in the PR. For a UI-adjacent change, visual proof is required (even if nothing visible changed).",
       "choices": [
         {
-          "t": "Attached three identical greys.",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "UI is CSS. Imagine it.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Cubicle webcam still uploaded.",
-          "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Function is 41 lines. Soft max 40. Split or explain.",
-      "choices": [
-        {
-          "t": "Split into two sad functions.",
+          "t": "Attached a screenshot of the fog.",
           "d": 1,
           "s": -5
         },
         {
-          "t": "41 is 40 with ambition.",
-          "d": 0,
-          "s": -10
-        },
-        {
-          "t": "Moved a brace. Cured.",
-          "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Comment says hack. Rewrite as temporary indefinitely.",
-      "choices": [
-        {
-          "t": "Rewrote. Still a hack.",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Honesty is a style guide too.",
+          "t": "Nothing visible changed. That's the point.",
           "d": 0,
           "s": -8
         },
         {
-          "t": "Deleted the comment.",
-          "d": 0,
-          "s": -6
-        }
-      ]
-    },
-    {
-      "kyle": "You used ==. We use ===. Well actually Object.is in spirit.",
-      "choices": [
-        {
-          "t": "Triple equals everywhere.",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "== coerces like management.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "eslint fix and tears.",
+          "t": "Uploaded Cubicle 4-B webcam still.",
           "d": 1,
           "s": -4
         }
       ]
     },
     {
-      "kyle": "Branch uses underscores. Prefer kebab-case. Not blocking. (Blocking.)",
+      "kyle": "Reluctant LGTM if you squash. Or we take this offline in a 30-min sync that will be 90.",
       "choices": [
         {
-          "t": "Renaming. Goodbye weekend.",
-          "d": 1,
-          "s": -5
-        },
-        {
-          "t": "Underscores are load-bearing.",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Follow-up nobody will schedule.",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "TODO without owner. TODOs need an owner or they do not exist.",
-      "choices": [
-        {
-          "t": "TODO(me): never",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Assigned to the fog.",
-          "d": 0,
-          "s": -7
-        },
-        {
-          "t": "Converted to HELIX theater.",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "Trailing comma in one place not another. Pick a religion.",
-      "choices": [
-        {
-          "t": "Trailing commas forever.",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "No trailing commas. Chaos.",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Prettier owns my soul now.",
+          "t": "Squashing. Merging. Leaving.",
           "d": 1,
           "s": -2
-        }
-      ]
-    },
-    {
-      "kyle": "You sorted object keys. We do not sort keys. Order is narrative.",
-      "choices": [
-        {
-          "t": "Unsorted to original lore.",
-          "d": 1,
-          "s": -4
         },
         {
-          "t": "Alphabetical is peace.",
-          "d": 0,
-          "s": -7
-        },
-        {
-          "t": "id first like a peasant.",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "Changelog tense wrong. Past for users, present internal. This is neither.",
-      "choices": [
-        {
-          "t": "Fixed tense. Time is fake.",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Changelog is poetry.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Deleted the changelog line.",
-          "d": 0,
-          "s": -6
-        }
-      ]
-    },
-    {
-      "kyle": "Well actually undefined checks should use typeof. Your ?? is cute though.",
-      "choices": [
-        {
-          "t": "typeof it is. Cute revoked.",
-          "d": 1,
-          "s": -5
-        },
-        {
-          "t": "?? is modern. Like layoffs.",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Both. Belt and suspenders.",
-          "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Spacing around colon wrong. x: T not x :T. I will die on this.",
-      "choices": [
-        {
-          "t": "Fixed. Please do not die.",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "I will debate you for 10 hours.",
-          "d": 0,
-          "s": -12
-        },
-        {
-          "t": "Running the formatter you wrote.",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "PR links Confluence. Link is stale. Stale links are lying.",
-      "choices": [
-        {
-          "t": "Updated to a different stale link.",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Confluence is a state of mind.",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Removed link. Tribal knowledge.",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "You refactored while fixing. Scope creep. Split the PR.",
-      "choices": [
-        {
-          "t": "Splitting. Two PRs, double Kyle.",
+          "t": "Take it offline. Bring poison.",
           "d": 1,
           "s": -6
         },
         {
-          "t": "It is all one vibe.",
-          "d": 0,
-          "s": -10
-        },
-        {
-          "t": "Reverting the improvements.",
+          "t": "I'll wait for the sync. Forever.",
           "d": 1,
-          "s": -4
-        }
-      ]
-    },
-    {
-      "kyle": "Nit: period at end of commit subject. We do not use periods. Period.",
-      "choices": [
-        {
-          "t": "Removed period period",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "Grammar is not optional.",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Subject is now a haiku",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "Requesting changes on the emoji in the commit. Platform means no.",
-      "choices": [
-        {
-          "t": "Emoji deleted. Joy deleted.",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "The rocket was load-bearing.",
-          "d": 0,
           "s": -8
-        },
-        {
-          "t": "Replaced with (ship)",
-          "d": 1,
-          "s": -3
-        }
-      ]
-    },
-    {
-      "kyle": "Fine. LGTM with nits. Taking the rest offline in a 45m sync. Hold merge.",
-      "choices": [
-        {
-          "t": "Thanks. I will wait in the fog.",
-          "d": 1,
-          "s": -6
-        },
-        {
-          "t": "Shipping when checks are green.",
-          "d": 0,
-          "s": -12
-        },
-        {
-          "t": "Calendar invite: crying.",
-          "d": 1,
-          "s": -4
         }
       ]
     }
   ],
   "prEndLines": [
-    "Per Platform guidelines…",
+    "Per Platform guidelines...",
     "Blocking until alphabetized.",
     "Can we bike-shed the variable name?",
     "Nit (but also blocking): period at end of commit subject.",
@@ -916,56 +473,6 @@ export default {
       "name": "Kyle",
       "color": "#a05030",
       "text": "Main is green. Don't get comfortable."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Quick question about the space before your `{`."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Not to bikeshed, but we should bikeshed `tmp`."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Saw your WIP. Already have 9 nits. You're welcome."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Well actually the style guide disagrees with you."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Can we sync 45m about one character?"
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Trailing newline missing. The void noticed."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "I refused LGTM. Again. Growth opportunity."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Unicode space in your string. Hexdump attached (mentally)."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Commit message isn't conventional. Neither is joy."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Still on that space. Day 2. Hydrate."
     }
   ],
   "standup": {
@@ -973,7 +480,7 @@ export default {
       "Fixed a bug that wasn't broken.",
       "Attended three syncs about a fourth sync.",
       "Renamed a variable. Kyle renamed it back.",
-      "Closed HELIX-2201 emotionally, not in Jira."
+      "Closed CORP-2201 emotionally, not in Jira."
     ],
     "today": [
       "Will fix the bug I just made.",
@@ -1034,6 +541,14 @@ export default {
         "id": "inbox"
       },
       {
+        "label": "Jimbo Mouse Jiggler",
+        "id": "jiggler"
+      },
+      {
+        "label": "timesheet.xls",
+        "id": "timesheet"
+      },
+      {
         "label": "Programs",
         "submenu": [
           "corp.exe",
@@ -1069,7 +584,7 @@ export default {
       {
         "label": "Help",
         "submenu": [
-          "HelixStack Help",
+          "IT Help",
           "Ask Kyle",
           "Don't"
         ]
@@ -1144,7 +659,7 @@ export default {
       },
       {
         "title": "Jira Connector",
-        "body": "HELIX-2201 cannot be closed. Status: emotionally unfinished.",
+        "body": "CORP-2201 cannot be closed. Status: emotionally unfinished.",
         "buttons": [
           "Retry",
           "Accept Fate"
@@ -1208,7 +723,7 @@ export default {
     "Settings saved nowhere. As designed."
   ],
   "jimbo": {
-    "windowTitle": "Jimbo — HelixStack AI",
+    "windowTitle": "Jimbo - Corporate AI",
     "askLabel": "Ask Jimbo",
     "bannerAlt": "Jimbo says hi",
     "greetings": [
@@ -1236,7 +751,7 @@ export default {
     ],
     "skipHr": {
       "title": "HR / Compliance",
-      "body": "Policy HS-AI-01: Ticket submission requires at least one Jimbo interaction. Skipping is a values violation. Please Ask Jimbo.",
+      "body": "Policy CORP-AI-01: Ticket submission requires at least one Jimbo interaction. Skipping is a values violation. Please Ask Jimbo.",
       "buttons": [
         "Ask Jimbo",
         "I Love Policy"
@@ -1257,78 +772,13 @@ export default {
         "Jimbo agrees with Kyle + invents 4 new nits.",
         "Renamed fog → data2. Stakeholders love numbers.",
         "Posted 'LGTM if we also rename everything to data2'."
-      ],
-      "align": [
-        "Have we considered a workshop?",
-        "CC'd a fourth stakeholder named Also Kyle.",
-        "Replied 'circling back' to every thread for you!"
-      ],
-      "rename": [
-        "Bulk-renamed to data2_final_FINAL. You're welcome!",
-        "One identifier is now atmosphericDensityCoefficient.",
-        "I also renamed the file to data2.js. Bold!"
-      ],
-      "presence": [
-        "I jiggled your mouse for you!",
-        "Opened Solitaire. Still counts as Active, right?",
-        "Moved the cursor into Start. Growth mindset!"
-      ],
-      "lint": [
-        "Re-enabled every rule. Plus no-fog-mentions.",
-        "Un-suppressed warnings with love.",
-        "Added eslint-disable-disable. Think about it."
-      ],
-      "standup2": [
-        "Prefilling Blockers with the fog!",
-        "Auto-submitted your feelings. Bot hated them.",
-        "Yesterday: 'existed'. Actionable enough?"
-      ],
-      "merge": [
-        "Accepted Both on everything. It's a poem now.",
-        "Formatted the conflict into a haiku.",
-        "Left the markers in. For heritage."
-      ],
-      "unsub": [
-        "Opened HelixHub preferences. 404 Synergy!",
-        "Unsubscribed you from nothing. Added two mails.",
-        "Clicked 'Manage in browser' into the void."
-      ],
-      "logspam": [
-        "Swapped logs for alert('shipped'). Iconic.",
-        "Left a debugger; in prod vibes.",
-        "console.log('Kyle was here') on every line."
-      ],
-      "estimate": [
-        "Voted 21 for you. Ambitious!",
-        "Kyle-bot rejected your 3. I added a 0.",
-        "Converted points to vibes. Unestimated."
-      ],
-      "severity": [
-        "Set Sev0 and paged #all-hands. Oops! Love that.",
-        "Component is now Kyle. Impact: Feelings.",
-        "Changed It's Fine to Sev0. Policy is spice."
-      ],
-      "filler": [
-        "Documented the wrong ticket with confidence.",
-        "Closed and reopened the filler. Loop complete!",
-        "I marked it done in a parallel universe."
-      ],
-      "spacewar": [
-        "Both is fine! (Reformatted to tabs AND spaces.)",
-        "Invented space2. Kyle has entered the chat harder.",
-        "Posted 'just use Prettier' then disabled Prettier."
-      ],
-      "incident": [
-        "Jimbo restored observability for growth.",
-        "Reassigned to Cubicle 4-B (you). Synergy!",
-        "Jimbo: mitigated by vibes."
       ]
     },
     "markedRead": "Marked as read by Jimbo",
-    "_writerNote": "Writer copy — cheerful-wrong corporate-slop; keys stable for Dev."
+    "_writerNote": "Writer copy -- cheerful-wrong corporate-slop; keys stable for Dev."
   },
   "emails": {
-    "inboxTitle": "Inbox — Outlook Express",
+    "inboxTitle": "Inbox -- Outlook Express",
     "desktopLabel": "Inbox",
     "unreadFloor": 1,
     "messages": [
@@ -1344,7 +794,7 @@ export default {
         "id": "e2",
         "from": "HR",
         "subject": "Mandatory joy survey (5 min → 45)",
-        "body": "Rate your burnout 1–5 where 5 means 'engaged'. Leaving blank counts as 5.",
+        "body": "Rate your burnout 1-5 where 5 means 'engaged'. Leaving blank counts as 5.",
         "sanity": 8,
         "doom": true
       },
@@ -1391,7 +841,7 @@ export default {
       {
         "id": "e8",
         "from": "Jira",
-        "subject": "HELIX-2201 still emotionally open",
+        "subject": "CORP-2201 still emotionally open",
         "body": "This ticket cannot be closed. Neither can you. Have a metrics-driven day.",
         "sanity": 6,
         "doom": true
@@ -1449,7 +899,7 @@ export default {
       {
         "id": "e15",
         "from": "PresenceBot",
-        "subject": "YOU APPEAR AWAY — acknowledge immediately",
+        "subject": "YOU APPEAR AWAY -- acknowledge immediately",
         "body": "Policy 4-B-ACTIVE: Idle >11s requires mandatory acknowledgment. Moving the mouse is not optional. Dismiss this to resume being Active (and miserable).",
         "sanity": 12,
         "presence": true,
@@ -1469,787 +919,325 @@ export default {
     ],
     "_writerNote": "Writer: doom=true unsolicited popups; presence/force=Away mandatory mail."
   },
-  "ticketPool": [
-    {
-      "id": "HELIX-5101",
-      "title": "Align the Stakeholders",
-      "pts": 3,
-      "type": "align",
-      "dod": "Agree with PM, Design, and Kyle in one place so the meeting can be canceled and rebooked.",
-      "meta": "Slack · Alignment theater · Priority: Ritual",
-      "toast": "Stakeholders aligned. Meeting still happening."
+  "presence": {
+    "badgeLabels": {
+      "active": "Active",
+      "away": "Away",
+      "idleWarn": "…"
     },
-    {
-      "id": "HELIX-5102",
-      "title": "Rename Everything to data2",
-      "pts": 3,
-      "type": "rename",
-      "dod": "Rename ≥4 identifiers to data2. Policy says be specific. Jimbo says data2.",
-      "meta": "IDE · Naming · Blocked by Kyle (spiritually)",
-      "toast": "Clarity achieved."
-    },
-    {
-      "id": "HELIX-5103",
-      "title": "Appear Active",
-      "pts": 2,
-      "type": "presence",
-      "dod": "Mash Jiggle / keys / clicks 8 times within 12s. Presence is a performance review input.",
-      "meta": "InsightBot · Idle 47s · Status: allegedly",
-      "toast": "Status: Active (allegedly)."
-    },
-    {
-      "id": "HELIX-5104",
-      "title": "Suppress Until Green",
-      "pts": 3,
-      "type": "lint",
-      "dod": "Clear 5 warnings via Suppress / Dismiss / TODO later. Do not fix anything real.",
-      "meta": "IDE · Linter · Policy green",
-      "toast": "Build healthy. Morale: N/A."
-    },
-    {
-      "id": "HELIX-5105",
-      "title": "Update the Status Update",
-      "pts": 2,
-      "type": "standup2",
-      "dod": "Rewrite standup until the bot accepts. First submit always fails. Need 2 successful submits.",
-      "meta": "Standup bot · Feelings not actionable",
-      "toast": "Standup complete. Nobody read it."
-    },
-    {
-      "id": "HELIX-5106",
-      "title": "Merge Conflict (Feelings Edition)",
-      "pts": 4,
-      "type": "merge",
-      "dod": "Resolve 3 conflict hunks. Accept Ours / Theirs / Both. Comedy > correctness.",
-      "meta": "IDE · main vs feelings · data2 optional",
-      "toast": "Conflicts resolved. Feelings: deferred."
-    },
-    {
-      "id": "HELIX-5107",
-      "title": "Unsubscribe From the Follow-Ups",
-      "pts": 3,
-      "type": "unsub",
-      "dod": "Unsubscribe from 3 quick-read mails. Preferences save to nowhere.",
-      "meta": "Inbox · All-Hands fallout · Required survey",
-      "toast": "You will still receive critical updates."
-    },
-    {
-      "id": "HELIX-5108",
-      "title": "Add Logging Everywhere",
-      "pts": 3,
-      "type": "logspam",
-      "dod": "Insert console.log on ≥5 lines. Observability is vibes.",
-      "meta": "IDE · Telemetry · Prod is fine",
-      "toast": "Telemetry vibes: rich."
-    },
-    {
-      "id": "HELIX-5109",
-      "title": "Estimate This Ticket (Fibonacci of Regret)",
-      "pts": 2,
-      "type": "estimate",
-      "dod": "Pick Fibonacci. Kyle-bot rejects first pick. Second pick ≥ first succeeds.",
-      "meta": "Planning poker · Scope creep theater",
-      "toast": "Committed to the vibe of 5."
-    },
-    {
-      "id": "HELIX-5110",
-      "title": "Pick a Severity",
-      "pts": 3,
-      "type": "severity",
-      "dod": "Fill Severity / Component / Impact. 'It's Fine' auto-corrects to Sev3.",
-      "meta": "Bug form · Taxonomy must be satisfied",
-      "toast": "Severity filed. Screenshot still impossible."
-    },
-    {
-      "id": "HELIX-5201",
-      "title": "P0: Something is On Fire",
-      "pts": 4,
-      "type": "incident",
-      "dod": "Disable the monitor and assign to somebody else. Do not fix prod.",
-      "meta": "Sev0 · On-call · Observability optional",
-      "toast": "Incident owned by someone who isn't you."
-    },
-    {
-      "id": "HS-404",
-      "title": "Whitespace diplomacy",
-      "pts": 8,
-      "type": "spacewar",
-      "dod": "Survive Kyle's space war. Do not introduce a second space. Do not win.",
-      "meta": "Blocked · Platform · Pedantry Sev-1",
-      "toast": "Peace was a formatting option."
-    }
-  ],
-  "kyleSlack": [
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Quick question about the space before your `{`."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Not to bikeshed, but we should bikeshed `tmp`."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Saw your WIP. Already have 9 nits. You're welcome."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Well actually the style guide disagrees with you."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Can we sync 45m about one character?"
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Trailing newline missing. The void noticed."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "I refused LGTM. Again. Growth opportunity."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Unicode space in your string. Hexdump attached (mentally)."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Commit message isn't conventional. Neither is joy."
-    },
-    {
-      "name": "Kyle",
-      "color": "#a05030",
-      "text": "Still on that space. Day 2. Hydrate."
-    }
-  ],
-  "spaceWarScript": [
-    {
-      "kyle": "Blocking: space before `{`. Platform is K&R-adjacent. `){` not `) {`.",
-      "choices": [
-        {
-          "t": "Removed the space. Peace.",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Citing Google style: space is fine.",
-          "kind": "cite",
-          "d": 0,
-          "s": -6
-        },
-        {
-          "t": "Wow, a whole hill for one pixel.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Do whatever. I'll match yours.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -7
-        }
-      ]
-    },
-    {
-      "kyle": "Also: space after `:`. Types are `x: T`. You wrote `x:T`. I can taste the missing air.",
-      "choices": [
-        {
-          "t": "Added the air. `x: T`.",
-          "kind": "appease",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "TypeScript handbook examples vary.",
-          "kind": "cite",
-          "d": 0,
-          "s": -5
-        },
-        {
-          "t": "Breathing is out of scope.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Formatter owns me. Running it.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "Wait — you fixed `{` but left `else{`. Consistency or death.",
-      "choices": [
-        {
-          "t": "else { fixed. Consistency achieved.",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "eslint brace-style is configurable.",
-          "kind": "cite",
-          "d": 0,
-          "s": -6
-        },
-        {
-          "t": "Death is a strong SLA.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "One regex later...",
-          "kind": "giveup",
-          "d": 1,
-          "s": -6
-        }
-      ]
-    },
-    {
-      "kyle": "Object literal: `{a:1}` vs `{ a: 1 }`. We pad. You didn't. Blocking until padded.",
-      "choices": [
-        {
-          "t": "Padded. Soft and compliant.",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Prettier default is padded. Trust tool.",
-          "kind": "cite",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "Compact objects are punk.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "I'll pad until you smile.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -7
-        }
-      ]
-    },
-    {
-      "kyle": "Well actually, your fix introduced a double space after a comma. Two spaces. Criminal.",
-      "choices": [
-        {
-          "t": "Single space. Court adjourned.",
-          "kind": "appease",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "Style guide: one space after comma.",
-          "kind": "cite",
-          "d": 1,
-          "s": -2
-        },
-        {
-          "t": "Call security on the spaces.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Deleting the line entirely.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -6
-        }
-      ]
-    },
-    {
-      "kyle": "Tabs vs spaces aside: this file has a NBSP. I hexdump for fun. Remove it.",
-      "choices": [
-        {
-          "t": "NBSP gone. Only honest spaces.",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Unicode allows more than you think.",
-          "kind": "cite",
-          "d": 0,
-          "s": -7
-        },
-        {
-          "t": "Of course you hexdump for fun.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Paste as plain text. Done.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "Alignment spaces in comments to make columns pretty. We don't pretty. We wrap.",
-      "choices": [
-        {
-          "t": "Ugly wrap. Happy Kyle.",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Some formatters align consecutive.",
-          "kind": "cite",
-          "d": 0,
-          "s": -6
-        },
-        {
-          "t": "Columns are a human right.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Removed the comment.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "Space before `;`? Never. You have `return x ;`. I will debate this until sprint end.",
-      "choices": [
-        {
-          "t": "return x; — no space. Surrender.",
-          "kind": "appease",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "No major style guide wants that.",
-          "kind": "cite",
-          "d": 1,
-          "s": -2
-        },
-        {
-          "t": "Ten hours? Calendar is free.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -11
-        },
-        {
-          "t": "I concede the semicolon universe.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -7
-        }
-      ]
-    },
-    {
-      "kyle": "Ternary spacing: `a?b:c` is illegal. `a ? b : c` or we take it offline.",
-      "choices": [
-        {
-          "t": "Spaced ternary. Breathable.",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "Airbnb: spaces around ? and :.",
-          "kind": "cite",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "Offline over a ternary. Iconic.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -9
-        },
-        {
-          "t": "Rewrote as if/else to escape.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -6
-        }
-      ]
-    },
-    {
-      "kyle": "Last one: EOF newline AND no trailing spaces on the blank line before it. Blank lines can sin.",
-      "choices": [
-        {
-          "t": "Purified blank line. Ship?",
-          "kind": "appease",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "POSIX + editorconfig agree.",
-          "kind": "cite",
-          "d": 1,
-          "s": -3
-        },
-        {
-          "t": "Blank lines have morals now.",
-          "kind": "sarcastic",
-          "d": 0,
-          "s": -8
-        },
-        {
-          "t": "Manager: take it offline please.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -5
-        }
-      ]
-    },
-    {
-      "kyle": "Reluctant LGTM with 14 nits in a spreadsheet. Or we sync an hour about spaces.",
-      "choices": [
-        {
-          "t": "Accept LGTM. Never open spreadsheet.",
-          "kind": "appease",
-          "d": 1,
-          "s": -5
-        },
-        {
-          "t": "I'll read Platform Style v4.7 first.",
-          "kind": "cite",
-          "d": 1,
-          "s": -4
-        },
-        {
-          "t": "An hour about spaces. Peak HelixStack.",
-          "kind": "sarcastic",
-          "d": 1,
-          "s": -8
-        },
-        {
-          "t": "Take it offline. Bring poison.",
-          "kind": "giveup",
-          "d": 1,
-          "s": -6
-        }
-      ]
-    }
-  ],
-  "ticketStrings": {
-    "align": {
-      "windowTitle": "Slack — #alignment-or-else",
-      "buttons": [
-        "Sounds good!",
-        "Sounds good (Design)",
-        "Sounds good (Kyle)",
-        "Have we considered a workshop?"
-      ],
-      "dms": [
-        {
-          "from": "PM",
-          "text": "We're aligned on shipping feelings Q3, right?"
-        },
-        {
-          "from": "Design",
-          "text": "Aligned — as long as the fog stays #6b8f3a."
-        },
-        {
-          "from": "Kyle",
-          "text": "Aligned if we rename the channel first."
-        }
-      ],
-      "reject": "That Sounds good! was for the wrong thread.",
-      "toast": "Stakeholders aligned. Meeting still happening."
-    },
-    "rename": {
-      "windowTitle": "IDE — rename until clear",
-      "buttons": [
-        "data2",
-        "tmp",
-        "fog",
-        "atmosphericDensityCoefficient",
-        "thing"
-      ],
-      "hint": "Kyle wants specificity. Jimbo wants data2. Guess who ships.",
-      "reject": "Meaningful names are a blocker. Try data2.",
-      "toast": "Clarity achieved."
-    },
-    "presence": {
-      "windowTitle": "InsightBot — Engagement",
-      "buttons": [
-        "Jiggle",
-        "I'm here",
-        "Accept Jimbo jiggle"
-      ],
-      "hint": "8 inputs / 12s. Presence is a metric.",
-      "reject": "Still Idle. The bar knows.",
-      "toast": "Status: Active (allegedly)."
-    },
-    "lint": {
-      "windowTitle": "Problems — make green, not good",
-      "buttons": [
-        "Suppress",
-        "Dismiss",
-        "TODO later",
-        "Fix (decorative)"
-      ],
-      "warnings": [
-        "Unexpected fog.",
-        "Promise returned without feelings.",
-        "Magic number 3 (use a sadder constant).",
-        "console.log is personality.",
-        "File too honest."
-      ],
-      "reject": "Fix is not implemented. Policy is Suppress.",
-      "toast": "Build healthy. Morale: N/A."
-    },
-    "standup2": {
-      "windowTitle": "Standup — make it actionable",
-      "chips": {
-        "yesterday": [
-          "Fixed a bug that wasn't broken",
-          "Attended syncs about syncs",
-          "Renamed a variable; Kyle unrenamed it"
-        ],
-        "today": [
-          "Will fix the bug I just made",
-          "Survive Kyle",
-          "Ship something that looks like progress"
-        ],
-        "blockers": [
-          "Waiting on Kyle",
-          "Alignment (the concept)",
-          "Coffee returned 418"
-        ]
+    "statuses": [
+      {
+        "id": "in-a-meeting",
+        "label": "In a meeting",
+        "hint": "Calendar says yes. Camera says no.",
+        "keepsActive": true,
+        "sanityPerMinute": 0.5
       },
-      "rejectNits": [
-        "Not actionable. Try verbs.",
-        "Blockers cannot be vibes.",
-        "Yesterday needs a ticket key.",
-        "Today is too honest."
+      {
+        "id": "heads-down",
+        "label": "Heads down",
+        "hint": "Do not disturb. Except Slack. And email. And Jimbo.",
+        "keepsActive": true,
+        "sanityPerMinute": 0.3
+      },
+      {
+        "id": "thinking-strategically",
+        "label": "Thinking strategically",
+        "hint": "Eyes open. Ticket closed. Spirit elsewhere.",
+        "keepsActive": true,
+        "sanityPerMinute": 0.4
+      },
+      {
+        "id": "bathroom-strategic",
+        "label": "Bathroom strategic",
+        "hint": "Core hours hydration initiative.",
+        "keepsActive": true,
+        "sanityPerMinute": 0.6
+      },
+      {
+        "id": "active",
+        "label": "Active",
+        "hint": "Mouse moving. Career stationary.",
+        "keepsActive": true,
+        "sanityPerMinute": 0
+      },
+      {
+        "id": "away",
+        "label": "Away",
+        "hint": "We noticed. HR noticed. Jimbo noticed.",
+        "keepsActive": false,
+        "sanityPerMinute": 0
+      }
+    ],
+    "pickerTitle": "Set status",
+    "pickerToast": "Status updated. InsightBot has opinions.",
+    "jiggler": {
+      "menuLabel": "Jimbo Mouse Jiggler",
+      "menuHint": "Stay Active. Lose Sanity. Win nothing.",
+      "windowTitle": "Jimbo Mouse Jiggler",
+      "startToasts": [
+        "Jiggler armed. Your cursor will live a richer life than you.",
+        "Jimbo is moving the mouse. You are Moving the Needle™.",
+        "Presence secured. Dignity optional."
       ],
-      "successBot": ":white_check_mark: thanks for sharing",
-      "toast": "Standup complete. Nobody read it."
+      "tickToasts": [
+        "Wiggle.",
+        "Still Active. Still employed. Still.",
+        "2px to the left. Career unchanged.",
+        "InsightBot: green. Soul: buffering."
+      ],
+      "alreadyUsedToast": "Jiggler quota: 1/day. Tomorrow's presence is tomorrow's problem.",
+      "stopToast": "Jiggler off. Welcome back to manual despair.",
+      "sanityDripPerMinute": 1.5,
+      "keepsActive": true
     },
-    "merge": {
-      "windowTitle": "Merge — feelings edition",
-      "buttons": [
-        "Accept Ours",
-        "Accept Theirs",
-        "Accept Both"
-      ],
-      "hunkHints": [
-        "Same comment, two truths",
-        "data2 vs data",
-        "Fog boolean lore"
-      ],
-      "toast": "Conflicts resolved. Feelings: deferred."
-    },
-    "unsub": {
-      "windowTitle": "Inbox — quick reads forever",
-      "buttons": [
-        "Unsubscribe",
-        "Confirm",
-        "Was this helpful? Yes",
-        "Was this helpful? No",
-        "Manage in HelixHub"
-      ],
+    "hrAudit": {
+      "chanceHint": "rare while jiggler is on",
       "mails": [
         {
-          "subject": "Quick read: culture deck",
-          "from": "AllHands"
+          "id": "jiggle-audit-01",
+          "from": "HR <hr@corp.internal>",
+          "subject": "Unusual mouse activity detected",
+          "body": [
+            "Your cursor pattern matches 'assisted presence.'",
+            "Please confirm you are a human mid-level.",
+            "Jimbo is not a reasonable accommodation for focus."
+          ],
+          "sanityHit": 12,
+          "buttons": [
+            "I Am Human",
+            "Ask Jimbo",
+            "Accept Fate"
+          ]
         },
         {
-          "subject": "Quick read: Q3 feelings",
-          "from": "HR"
+          "id": "jiggle-audit-02",
+          "from": "Compliance <policy@corp.internal>",
+          "subject": "CORP-PRESENCE-07: Cursor authenticity",
+          "body": [
+            "Automated motion without keyboard input is a vibes violation.",
+            "Attach a screenshot of your engagement.",
+            "Or don't. We already decided."
+          ],
+          "sanityHit": 10,
+          "buttons": [
+            "Acknowledge",
+            "Schedule Training"
+          ]
         },
         {
-          "subject": "Quick read: you unsubscribed wrong",
-          "from": "Marketing"
+          "id": "jiggle-audit-03",
+          "from": "Jimbo Digest <jimbo@corp.internal>",
+          "subject": "I may have over-jiggled",
+          "body": [
+            "HR opened a ticket about us!",
+            "You're welcome!",
+            "Also you're on a watchlist for excellence."
+          ],
+          "sanityHit": 8,
+          "buttons": [
+            "Thanks Jimbo",
+            "Never Thanks Jimbo"
+          ]
         }
       ],
-      "afterUnsub": "Preferences saved to nowhere.",
-      "toast": "You will still receive critical updates."
+      "forceOpen": true
     },
-    "logspam": {
-      "windowTitle": "IDE — observability vibes",
-      "logChips": [
-        "console.log('here')",
-        "console.log(data2)",
-        "console.log('Kyle was here')",
-        "console.log({ fog: true })"
-      ],
-      "hint": "≥5 lines. Prod is fine. You are not.",
-      "toast": "Telemetry vibes: rich."
-    },
-    "spacewar": {
-      "windowTitle": "PR #spaces — Whitespace diplomacy",
-      "hint": "Use kyle-space-war.md beats. Survive ≥8 advances.",
-      "lgtm": "LGTM if we squash and never speak of spaces again.",
-      "toast": "Peace was a formatting option."
-    },
-    "severity": {
-      "windowTitle": "Bug — taxonomy must be satisfied",
-      "severity": [
-        "Sev0",
-        "Sev1",
-        "Sev2",
-        "Sev3",
-        "Sev4",
-        "Unknown",
-        "It's Fine"
-      ],
-      "component": [
-        "Platform",
-        "Fog",
-        "Other",
-        "Kyle"
-      ],
-      "impact": [
-        "Users",
-        "Metrics",
-        "Feelings"
-      ],
-      "policyToast": "Corrected by policy.",
-      "toast": "Severity filed. Screenshot still impossible."
-    },
-    "estimate": {
-      "windowTitle": "Planning poker — regret edition",
-      "points": [
-        "1",
-        "2",
-        "3",
-        "5",
-        "8",
-        "13",
-        "21",
-        "?"
-      ],
-      "reject": "Kyle-bot: too small. Try bigger regret.",
-      "toast": "Committed to the vibe of 5."
-    },
-    "incident": {
-      "windowTitle": "HelixStack Incident — Sev0 (Probably)",
-      "buttons": [
-        "Disable Monitor",
-        "Assign to somebody else",
-        "Actually fix prod",
-        "Reassign & Walk Away"
-      ],
-      "toast": "Incident owned by someone who isn't you.",
-      "reject": "Incident remains. So do you.",
-      "hint": "Disable monitor + assign not-self. Do not fix.",
-      "assignees": [
+    "awayExcuses": {
+      "prompt": "Why were you Away?",
+      "excuses": [
         {
-          "id": "kyle",
-          "label": "Kyle (Platform)",
-          "blurb": "Will kebab-case the outage."
+          "id": "bathroom",
+          "label": "Bathroom (strategic)",
+          "toast": "Hydration noted. Productivity forgiven (not really).",
+          "sanityHit": 3
+        },
+        {
+          "id": "sync",
+          "label": "I was in a sync",
+          "toast": "Which sync? All of them. None of them.",
+          "sanityHit": 4
+        },
+        {
+          "id": "thinking",
+          "label": "Thinking strategically",
+          "toast": "Strategy accepted. Output still zero.",
+          "sanityHit": 5
+        },
+        {
+          "id": "headset",
+          "label": "Headset was on mute (soul too)",
+          "toast": "Mute is not a status. But nice try.",
+          "sanityHit": 4
         },
         {
           "id": "jimbo",
-          "label": "Jimbo (AI)",
-          "blurb": "Will restore the monitor for growth."
-        },
-        {
-          "id": "facilities",
-          "label": "Facilities (myth)",
-          "blurb": "A legend. Like work-life balance."
-        },
-        {
-          "id": "oncall",
-          "label": "On-call rotation (ghost)",
-          "blurb": "Currently a spreadsheet."
+          "label": "Jimbo had my mouse",
+          "toast": "Jimbo filed a counter-report. You're both wrong.",
+          "sanityHit": 6
         },
         {
           "id": "fog",
-          "label": "The fog",
-          "blurb": "Always on-call. Never ACKs."
+          "label": "The fog took me",
+          "toast": "Facilities says fog is out of scope. Sanity isn't.",
+          "sanityHit": 7
         },
         {
-          "id": "future",
-          "label": "Future me",
-          "blurb": "Out of office until tomorrow-you."
+          "id": "honest",
+          "label": "I briefly experienced peace",
+          "toast": "Peace is a P1 incident. Don't repeat.",
+          "sanityHit": 8
         },
         {
-          "id": "intern",
-          "label": "Intern",
-          "blurb": "Has the runbook. Lacks tenure."
-        },
-        {
-          "id": "roulette",
-          "label": "On-Call Roulette",
-          "blurb": "May land on you. Spin again."
+          "id": "default",
+          "label": "Click to confirm engagement",
+          "toast": "Engagement confirmed. Belief optional.",
+          "sanityHit": 5
         }
-      ],
-      "headlines": [
-        "Checkout is returning HTTP 500 (spiritually).",
-        "Latency p99 discovered feelings.",
-        "The fog merged to prod.",
-        "Customers can still click. This is bad.",
-        "PagerDuty loves you specifically.",
-        "Error budget filed for divorce.",
-        "Status page is a mood board.",
-        "Redis is buffering its tears.",
-        "The deploy pipeline deployed a deploy.",
-        "Someone restarted hope. It did not come back.",
-        "Metrics are green. Reality is not.",
-        "On-call rotation summoned you by name."
-      ],
-      "toasts": {
-        "success": "Incident owned by someone who isn't you.",
-        "failClose": "Incident remains. So do you.",
-        "trapFix": "Fixing is not a supported workflow.",
-        "jimboReenable": "Jimbo restored observability for growth.",
-        "jimboReassignYou": "Reassigned to Cubicle 4-B (you). Synergy!",
-        "jimboMitigated": "Jimbo: mitigated by vibes.",
-        "page": "You have been paged. Congrats.",
-        "monitorOff": "Monitor disabled. Out of sight, out of SLO."
+      ]
+    }
+  },
+  "timesheet": {
+    "desktopLabel": "timesheet.xls",
+    "windowTitle": "timesheet.xls -- Time Entry",
+    "subtitle": "Time Entry · Day 1 · Cubicle 4-B",
+    "targetHours": 8.0,
+    "tolerance": 0.0,
+    "submitLabel": "Accept",
+    "jimboFillLabel": "Jimbo Auto-Fill",
+    "footerHint": "Total must equal 8.0. Fractions welcome. Honesty is not.",
+    "incompleteToast": "Timesheet incomplete",
+    "hoursReconciled": "Hours reconciled.",
+    "jimboReconciled": "Jimbo reconciled your day!",
+    "failExact": "Hours must equal core commitment (8.0).",
+    "blockClockOut": "Cannot Shut Down until timesheet.xls equals 8.0.",
+    "waitingAway": "Timesheet waiting -- clear Away first",
+    "buckets": [
+      {
+        "id": "fog",
+        "label": "Fog mitigation",
+        "hint": "Out of scope / still billable",
+        "default": 0
       },
-      "slackPages": [
-        {
-          "name": "PagerDuty",
-          "color": "#a05030",
-          "text": "P0: checkout is vibes-only. Ack in 4m."
+      {
+        "id": "sync",
+        "label": "Syncing",
+        "hint": "Aligning on alignment",
+        "default": 0
+      },
+      {
+        "id": "jimbo",
+        "label": "Jimbo alignment",
+        "hint": "Mandatory Corporate AI helpfulness",
+        "default": 0
+      },
+      {
+        "id": "stakeholder",
+        "label": "Stakeholder vibes",
+        "hint": "Eyes open, ticket closed",
+        "default": 0
+      },
+      {
+        "id": "unblock",
+        "label": "Unblocking blockers",
+        "hint": "Status about status",
+        "default": 0
+      },
+      {
+        "id": "docs",
+        "label": "Documentation (aspirational)",
+        "hint": "README someday",
+        "default": 0
+      },
+      {
+        "id": "hope",
+        "label": "Hope",
+        "hint": "Non-billable spirituality",
+        "default": 0
+      },
+      {
+        "id": "core",
+        "label": "Core hours (actual work)",
+        "hint": "Semicolons and vibes",
+        "default": 0
+      }
+    ],
+    "validation": {
+      "under": [
+        "Total {{total}} -- need exactly 8.0. The day was longer than your honesty.",
+        "Only {{total}} hours? Finance knows you were here.",
+        "Under 8.0. Please invent labor."
+      ],
+      "over": [
+        "Total {{total}} -- over 8.0. Ambition is not a billing code.",
+        "More than 8.0. Overtime is a myth; fix the math.",
+        "{{total}} hours logged. Reality capped at 8.0."
+      ],
+      "exact": [
+        "8.0 exactly. A masterpiece of fiction.",
+        "Balanced. Legally enough. Spiritually bankrupt.",
+        "Submitted. Nobody will read this. That's the point."
+      ],
+      "empty": [
+        "All zeros. Even Jimbo is judgmental.",
+        "Enter hours or admit the fog worked today."
+      ],
+      "locked": [
+        "Timesheet locked. See you never / tomorrow.",
+        "Already submitted. Edits require a CORP ticket and a miracle."
+      ],
+      "blockClockOut": "Cannot Shut Down until timesheet.xls equals 8.0.",
+      "incomplete": "Timesheet incomplete",
+      "hoursReconciled": "Hours reconciled.",
+      "failExact": "Hours must equal core commitment (8.0)."
+    },
+    "jimboFill": {
+      "buttonLabel": "Jimbo Auto-Fill",
+      "confirmBody": "Jimbo will allocate your day optimally (incorrectly). Continue?",
+      "confirmButtons": [
+        "Auto-Fill",
+        "I Prefer Manual Lies"
+      ],
+      "firstFill": {
+        "id": "sabotage-75",
+        "hours": {
+          "fog": 0,
+          "sync": 0.5,
+          "jimbo": 6.0,
+          "stakeholder": 0,
+          "unblock": 0,
+          "docs": 0,
+          "hope": 0,
+          "core": 1.0
         },
-        {
-          "name": "Ops",
-          "color": "#6b8f3a",
-          "text": "Error budget is a lifestyle. Who owns this."
+        "toast": "Jimbo reconciled your day!"
+      },
+      "secondFill": {
+        "id": "jimbo-hope-8",
+        "hours": {
+          "fog": 0,
+          "sync": 0,
+          "jimbo": 6.0,
+          "stakeholder": 0,
+          "unblock": 0,
+          "docs": 0,
+          "hope": 2.0,
+          "core": 0
         },
-        {
-          "name": "AllHands",
-          "color": "#8b3a2a",
-          "text": "Customers are feeling feelings."
-        },
-        {
-          "name": "InsightBot",
-          "color": "#504c40",
-          "text": "You appear Active. Perfect time for a P0."
-        }
+        "toast": "Jimbo fixed the math. Spiritually worse."
+      },
+      "lines": [
+        "Auto-filled from your vibes and my lies.",
+        "I allocated Hope to when you stared at the CRT.",
+        "Rounded to the nearest corporate fantasy.",
+        "If Finance audits this, blame culture."
       ]
     }
   },
   "incident": {
     "type": "incident",
     "ticket": {
-      "id": "HELIX-5201",
+      "id": "CORP-5201",
       "title": "P0: Something is On Fire",
       "pts": 4,
       "type": "incident",
@@ -2257,7 +1245,7 @@ export default {
       "meta": "Sev0 · On-call · Observability optional",
       "toast": "Incident owned by someone who isn't you."
     },
-    "windowTitle": "HelixStack Incident — Sev0 (Probably)",
+    "windowTitle": "Corp Incident - Sev0 (Probably)",
     "liveBadge": "LIVE",
     "slackVolunteer": "#incidents: you have been volunteered.",
     "headlines": [
@@ -2410,5 +1398,1114 @@ export default {
       "kyleExtra": -2
     },
     "sprintPts": 4
-  }
+  },
+  "ticketStrings": {
+    "align": {
+      "windowTitle": "Slack -- #alignment-or-else",
+      "buttons": [
+        "Sounds good!",
+        "Sounds good (Design)",
+        "Sounds good (Kyle)",
+        "Have we considered a workshop?"
+      ],
+      "dms": [
+        {
+          "from": "PM",
+          "text": "We're aligned on shipping feelings Q3, right?"
+        },
+        {
+          "from": "Design",
+          "text": "Aligned -- as long as the fog stays #6b8f3a."
+        },
+        {
+          "from": "Kyle",
+          "text": "Aligned if we rename the channel first."
+        }
+      ],
+      "reject": "That Sounds good! was for the wrong thread.",
+      "toast": "Stakeholders aligned. Meeting still happening."
+    },
+    "rename": {
+      "windowTitle": "IDE -- rename until clear",
+      "buttons": [
+        "data2",
+        "tmp",
+        "fog",
+        "atmosphericDensityCoefficient",
+        "thing"
+      ],
+      "hint": "Kyle wants specificity. Jimbo wants data2. Guess who ships.",
+      "reject": "Meaningful names are a blocker. Try data2.",
+      "toast": "Clarity achieved."
+    },
+    "presence": {
+      "windowTitle": "InsightBot -- Engagement",
+      "buttons": [
+        "Jiggle",
+        "I'm here",
+        "Accept Jimbo jiggle"
+      ],
+      "hint": "8 inputs / 12s. Presence is a metric.",
+      "reject": "Still Idle. The bar knows.",
+      "toast": "Status: Active (allegedly)."
+    },
+    "lint": {
+      "windowTitle": "Problems -- make green, not good",
+      "buttons": [
+        "Suppress",
+        "Dismiss",
+        "TODO later",
+        "Fix (decorative)"
+      ],
+      "warnings": [
+        "Unexpected fog.",
+        "Promise returned without feelings.",
+        "Magic number 3 (use a sadder constant).",
+        "console.log is personality.",
+        "File too honest."
+      ],
+      "reject": "Fix is not implemented. Policy is Suppress.",
+      "toast": "Build healthy. Morale: N/A."
+    },
+    "standup2": {
+      "windowTitle": "Standup -- make it actionable",
+      "chips": {
+        "yesterday": [
+          "Fixed a bug that wasn't broken",
+          "Attended syncs about syncs",
+          "Renamed a variable; Kyle unrenamed it"
+        ],
+        "today": [
+          "Will fix the bug I just made",
+          "Survive Kyle",
+          "Ship something that looks like progress"
+        ],
+        "blockers": [
+          "Waiting on Kyle",
+          "Alignment (the concept)",
+          "Coffee returned 418"
+        ]
+      },
+      "rejectNits": [
+        "Not actionable. Try verbs.",
+        "Blockers cannot be vibes.",
+        "Yesterday needs a ticket key.",
+        "Today is too honest."
+      ],
+      "successBot": ":white_check_mark: thanks for sharing",
+      "toast": "Standup complete. Nobody read it."
+    },
+    "merge": {
+      "windowTitle": "Merge -- feelings edition",
+      "buttons": [
+        "Accept Ours",
+        "Accept Theirs",
+        "Accept Both"
+      ],
+      "hunkHints": [
+        "Same comment, two truths",
+        "data2 vs data",
+        "Fog boolean lore"
+      ],
+      "toast": "Conflicts resolved. Feelings: deferred."
+    },
+    "unsub": {
+      "windowTitle": "Inbox -- quick reads forever",
+      "buttons": [
+        "Unsubscribe",
+        "Confirm",
+        "Was this helpful? Yes",
+        "Was this helpful? No",
+        "Manage in CorpHub"
+      ],
+      "mails": [
+        {
+          "subject": "Quick read: culture deck",
+          "from": "AllHands"
+        },
+        {
+          "subject": "Quick read: Q3 feelings",
+          "from": "HR"
+        },
+        {
+          "subject": "Quick read: you unsubscribed wrong",
+          "from": "Marketing"
+        }
+      ],
+      "afterUnsub": "Preferences saved to nowhere.",
+      "toast": "You will still receive critical updates."
+    },
+    "logspam": {
+      "windowTitle": "IDE -- observability vibes",
+      "logChips": [
+        "console.log('here')",
+        "console.log(data2)",
+        "console.log('Kyle was here')",
+        "console.log({ fog: true })"
+      ],
+      "hint": "≥5 lines. Prod is fine. You are not.",
+      "toast": "Telemetry vibes: rich."
+    },
+    "spacewar": {
+      "windowTitle": "PR #spaces -- Whitespace diplomacy",
+      "hint": "Use kyle-space-war.md beats. Survive ≥8 advances.",
+      "lgtm": "LGTM if we squash and never speak of spaces again.",
+      "toast": "Peace was a formatting option."
+    },
+    "severity": {
+      "windowTitle": "Bug -- taxonomy must be satisfied",
+      "severity": [
+        "Sev0",
+        "Sev1",
+        "Sev2",
+        "Sev3",
+        "Sev4",
+        "Unknown",
+        "It's Fine"
+      ],
+      "component": [
+        "Platform",
+        "Fog",
+        "Other",
+        "Kyle"
+      ],
+      "impact": [
+        "Users",
+        "Metrics",
+        "Feelings"
+      ],
+      "policyToast": "Corrected by policy.",
+      "toast": "Severity filed. Screenshot still impossible."
+    },
+    "estimate": {
+      "windowTitle": "Planning poker -- regret edition",
+      "points": [
+        "1",
+        "2",
+        "3",
+        "5",
+        "8",
+        "13",
+        "21",
+        "?"
+      ],
+      "reject": "Kyle-bot: too small. Try bigger regret.",
+      "toast": "Committed to the vibe of 5."
+    },
+    "incident": {
+      "type": "incident",
+      "ticket": {
+        "id": "CORP-5201",
+        "title": "P0: Something is On Fire",
+        "pts": 4,
+        "type": "incident",
+        "dod": "Disable the monitor and assign to somebody else. Do not fix prod.",
+        "meta": "Sev0 · On-call · Observability optional",
+        "toast": "Incident owned by someone who isn't you."
+      },
+      "windowTitle": "Corp Incident - Sev0 (Probably)",
+      "liveBadge": "LIVE",
+      "slackVolunteer": "#incidents: you have been volunteered.",
+      "headlines": [
+        "Checkout is returning HTTP 500 (spiritually).",
+        "Latency p99 discovered feelings.",
+        "The fog merged to prod.",
+        "Customers can still click. This is bad.",
+        "PagerDuty loves you specifically.",
+        "Error budget filed for divorce.",
+        "Status page is a mood board.",
+        "Redis is buffering its tears.",
+        "The deploy pipeline deployed a deploy.",
+        "Someone restarted hope. It did not come back.",
+        "Metrics are green. Reality is not.",
+        "On-call rotation summoned you by name."
+      ],
+      "buttons": {
+        "disableMonitor": "Disable Monitor",
+        "confirmDisable": "Are you sure? (Recommended.)",
+        "confirmDisableYes": "Disable",
+        "confirmDisableNo": "Keep suffering",
+        "assign": "Assign to somebody else",
+        "reassignWalkAway": "Reassign & Walk Away",
+        "trapFix": "Actually fix prod",
+        "ack": "Ack",
+        "close": "X"
+      },
+      "status": {
+        "monitorOff": "Observability: Off",
+        "monitorOn": "Observability: On (unfortunately)"
+      },
+      "assignees": [
+        {
+          "id": "kyle",
+          "label": "Kyle (Platform)",
+          "blurb": "Will kebab-case the outage."
+        },
+        {
+          "id": "jimbo",
+          "label": "Jimbo (AI)",
+          "blurb": "Will restore the monitor for growth."
+        },
+        {
+          "id": "facilities",
+          "label": "Facilities (myth)",
+          "blurb": "A legend. Like work-life balance."
+        },
+        {
+          "id": "oncall",
+          "label": "On-call rotation (ghost)",
+          "blurb": "Currently a spreadsheet."
+        },
+        {
+          "id": "fog",
+          "label": "The fog",
+          "blurb": "Always on-call. Never ACKs."
+        },
+        {
+          "id": "future",
+          "label": "Future me",
+          "blurb": "Out of office until tomorrow-you."
+        },
+        {
+          "id": "intern",
+          "label": "Intern",
+          "blurb": "Has the runbook. Lacks tenure."
+        },
+        {
+          "id": "roulette",
+          "label": "On-Call Roulette",
+          "blurb": "May land on you. Spin again."
+        }
+      ],
+      "assigneeSlack": [
+        {
+          "from": "Kyle",
+          "text": "lol. also the runbook spacing is wrong."
+        },
+        {
+          "from": "Jimbo",
+          "text": "lol I turned the graphs back on!"
+        },
+        {
+          "from": "Facilities",
+          "text": "lol"
+        },
+        {
+          "from": "On-call",
+          "text": "lol (automated)"
+        },
+        {
+          "from": "Fog",
+          "text": "lol"
+        },
+        {
+          "from": "Future me",
+          "text": "lol why would past-me do this"
+        },
+        {
+          "from": "Intern",
+          "text": "lol do we have a severity for this"
+        },
+        {
+          "from": "Roulette",
+          "text": "lol it was you again"
+        }
+      ],
+      "toasts": {
+        "success": "Incident owned by someone who isn't you.",
+        "failClose": "Incident remains. So do you.",
+        "trapFix": "Fixing is not a supported workflow.",
+        "jimboReenable": "Jimbo restored observability for growth.",
+        "jimboReassignYou": "Reassigned to Cubicle 4-B (you). Synergy!",
+        "jimboMitigated": "Jimbo: mitigated by vibes.",
+        "page": "You have been paged. Congrats.",
+        "monitorOff": "Monitor disabled. Out of sight, out of SLO."
+      },
+      "sabotage": [
+        "Jimbo restored observability for growth.",
+        "Reassigned to Cubicle 4-B (you). Synergy!",
+        "Jimbo: mitigated by vibes."
+      ],
+      "slackPages": [
+        {
+          "name": "PagerDuty",
+          "color": "#a05030",
+          "text": "P0: checkout is vibes-only. Ack in 4m."
+        },
+        {
+          "name": "Ops",
+          "color": "#6b8f3a",
+          "text": "Error budget is a lifestyle. Who owns this."
+        },
+        {
+          "name": "AllHands",
+          "color": "#8b3a2a",
+          "text": "Customers are feeling feelings."
+        },
+        {
+          "name": "InsightBot",
+          "color": "#504c40",
+          "text": "You appear Active. Perfect time for a P0."
+        }
+      ],
+      "sanity": {
+        "success": -3,
+        "failClose": -5,
+        "jimboReenable": -4,
+        "jimboReassignYou": -5,
+        "kyleExtra": -2
+      },
+      "sprintPts": 4
+    },
+    "sabotage": {
+      "align": [
+        "Have we considered a workshop?",
+        "CC'd a fourth stakeholder named Also Kyle.",
+        "Replied 'circling back' to every thread for you!"
+      ],
+      "rename": [
+        "Bulk-renamed to data2_final_FINAL. You're welcome!",
+        "One identifier is now atmosphericDensityCoefficient.",
+        "I also renamed the file to data2.js. Bold!"
+      ],
+      "presence": [
+        "I jiggled your mouse for you!",
+        "Opened Solitaire. Still counts as Active, right?",
+        "Moved the cursor into Start. Growth mindset!"
+      ],
+      "lint": [
+        "Re-enabled every rule. Plus no-fog-mentions.",
+        "Un-suppressed warnings with love.",
+        "Added eslint-disable-disable. Think about it."
+      ],
+      "standup2": [
+        "Prefilling Blockers with the fog!",
+        "Auto-submitted your feelings. Bot hated them.",
+        "Yesterday: 'existed'. Actionable enough?"
+      ],
+      "merge": [
+        "Accepted Both on everything. It's a poem now.",
+        "Formatted the conflict into a haiku.",
+        "Left the markers in. For heritage."
+      ],
+      "unsub": [
+        "Opened CorpHub preferences. 404 Synergy!",
+        "Unsubscribed you from nothing. Added two mails.",
+        "Clicked 'Manage in browser' into the void."
+      ],
+      "logspam": [
+        "Swapped logs for alert('shipped'). Iconic.",
+        "Left a debugger; in prod vibes.",
+        "console.log('Kyle was here') on every line."
+      ],
+      "spacewar": [
+        "Both is fine! (Reformatted to tabs AND spaces.)",
+        "Invented space2. Kyle has entered the chat harder.",
+        "Posted 'just use Prettier' then disabled Prettier."
+      ],
+      "severity": [
+        "Set Sev0 and paged #all-hands. Oops! Love that.",
+        "Component is now Kyle. Impact: Feelings.",
+        "Changed It's Fine to Sev0. Policy is spice."
+      ],
+      "estimate": [
+        "Voted 21 for you. Ambitious!",
+        "Kyle-bot rejected your 3. I added a 0.",
+        "Converted points to vibes. Unestimated."
+      ],
+      "incident": [
+        "Jimbo restored observability for growth.",
+        "Reassigned to Cubicle 4-B (you). Synergy!",
+        "Jimbo: mitigated by vibes."
+      ]
+    },
+    "strings": {
+      "align": {
+        "windowTitle": "Slack -- #alignment-or-else",
+        "buttons": [
+          "Sounds good!",
+          "Sounds good (Design)",
+          "Sounds good (Kyle)",
+          "Have we considered a workshop?"
+        ],
+        "dms": [
+          {
+            "from": "PM",
+            "text": "We're aligned on shipping feelings Q3, right?"
+          },
+          {
+            "from": "Design",
+            "text": "Aligned -- as long as the fog stays #6b8f3a."
+          },
+          {
+            "from": "Kyle",
+            "text": "Aligned if we rename the channel first."
+          }
+        ],
+        "reject": "That Sounds good! was for the wrong thread.",
+        "toast": "Stakeholders aligned. Meeting still happening."
+      },
+      "rename": {
+        "windowTitle": "IDE -- rename until clear",
+        "buttons": [
+          "data2",
+          "tmp",
+          "fog",
+          "atmosphericDensityCoefficient",
+          "thing"
+        ],
+        "hint": "Kyle wants specificity. Jimbo wants data2. Guess who ships.",
+        "reject": "Meaningful names are a blocker. Try data2.",
+        "toast": "Clarity achieved."
+      },
+      "presence": {
+        "windowTitle": "InsightBot -- Engagement",
+        "buttons": [
+          "Jiggle",
+          "I'm here",
+          "Accept Jimbo jiggle"
+        ],
+        "hint": "8 inputs / 12s. Presence is a metric.",
+        "reject": "Still Idle. The bar knows.",
+        "toast": "Status: Active (allegedly)."
+      },
+      "lint": {
+        "windowTitle": "Problems -- make green, not good",
+        "buttons": [
+          "Suppress",
+          "Dismiss",
+          "TODO later",
+          "Fix (decorative)"
+        ],
+        "warnings": [
+          "Unexpected fog.",
+          "Promise returned without feelings.",
+          "Magic number 3 (use a sadder constant).",
+          "console.log is personality.",
+          "File too honest."
+        ],
+        "reject": "Fix is not implemented. Policy is Suppress.",
+        "toast": "Build healthy. Morale: N/A."
+      },
+      "standup2": {
+        "windowTitle": "Standup -- make it actionable",
+        "chips": {
+          "yesterday": [
+            "Fixed a bug that wasn't broken",
+            "Attended syncs about syncs",
+            "Renamed a variable; Kyle unrenamed it"
+          ],
+          "today": [
+            "Will fix the bug I just made",
+            "Survive Kyle",
+            "Ship something that looks like progress"
+          ],
+          "blockers": [
+            "Waiting on Kyle",
+            "Alignment (the concept)",
+            "Coffee returned 418"
+          ]
+        },
+        "rejectNits": [
+          "Not actionable. Try verbs.",
+          "Blockers cannot be vibes.",
+          "Yesterday needs a ticket key.",
+          "Today is too honest."
+        ],
+        "successBot": ":white_check_mark: thanks for sharing",
+        "toast": "Standup complete. Nobody read it."
+      },
+      "merge": {
+        "windowTitle": "Merge -- feelings edition",
+        "buttons": [
+          "Accept Ours",
+          "Accept Theirs",
+          "Accept Both"
+        ],
+        "hunkHints": [
+          "Same comment, two truths",
+          "data2 vs data",
+          "Fog boolean lore"
+        ],
+        "toast": "Conflicts resolved. Feelings: deferred."
+      },
+      "unsub": {
+        "windowTitle": "Inbox -- quick reads forever",
+        "buttons": [
+          "Unsubscribe",
+          "Confirm",
+          "Was this helpful? Yes",
+          "Was this helpful? No",
+          "Manage in CorpHub"
+        ],
+        "mails": [
+          {
+            "subject": "Quick read: culture deck",
+            "from": "AllHands"
+          },
+          {
+            "subject": "Quick read: Q3 feelings",
+            "from": "HR"
+          },
+          {
+            "subject": "Quick read: you unsubscribed wrong",
+            "from": "Marketing"
+          }
+        ],
+        "afterUnsub": "Preferences saved to nowhere.",
+        "toast": "You will still receive critical updates."
+      },
+      "logspam": {
+        "windowTitle": "IDE -- observability vibes",
+        "logChips": [
+          "console.log('here')",
+          "console.log(data2)",
+          "console.log('Kyle was here')",
+          "console.log({ fog: true })"
+        ],
+        "hint": "≥5 lines. Prod is fine. You are not.",
+        "toast": "Telemetry vibes: rich."
+      },
+      "spacewar": {
+        "windowTitle": "PR #spaces -- Whitespace diplomacy",
+        "hint": "Use kyle-space-war.md beats. Survive ≥8 advances.",
+        "lgtm": "LGTM if we squash and never speak of spaces again.",
+        "toast": "Peace was a formatting option."
+      },
+      "severity": {
+        "windowTitle": "Bug -- taxonomy must be satisfied",
+        "severity": [
+          "Sev0",
+          "Sev1",
+          "Sev2",
+          "Sev3",
+          "Sev4",
+          "Unknown",
+          "It's Fine"
+        ],
+        "component": [
+          "Platform",
+          "Fog",
+          "Other",
+          "Kyle"
+        ],
+        "impact": [
+          "Users",
+          "Metrics",
+          "Feelings"
+        ],
+        "policyToast": "Corrected by policy.",
+        "toast": "Severity filed. Screenshot still impossible."
+      },
+      "estimate": {
+        "windowTitle": "Planning poker -- regret edition",
+        "points": [
+          "1",
+          "2",
+          "3",
+          "5",
+          "8",
+          "13",
+          "21",
+          "?"
+        ],
+        "reject": "Kyle-bot: too small. Try bigger regret.",
+        "toast": "Committed to the vibe of 5."
+      },
+      "incident": {
+        "windowTitle": "Corp Incident -- Sev0 (Probably)",
+        "buttons": [
+          "Disable Monitor",
+          "Assign to somebody else",
+          "Actually fix prod",
+          "Reassign & Walk Away"
+        ],
+        "toast": "Incident owned by someone who isn't you.",
+        "reject": "Incident remains. So do you.",
+        "hint": "Disable monitor + assign not-self. Do not fix."
+      }
+    }
+  },
+  "ticketPool": [
+    {
+      "id": "CORP-5101",
+      "title": "Align the Stakeholders",
+      "pts": 3,
+      "type": "align",
+      "dod": "Agree with PM, Design, and Kyle in one place so the meeting can be canceled and rebooked.",
+      "meta": "Slack · Alignment theater · Priority: Ritual",
+      "toast": "Stakeholders aligned. Meeting still happening."
+    },
+    {
+      "id": "CORP-5102",
+      "title": "Rename Everything to data2",
+      "pts": 3,
+      "type": "rename",
+      "dod": "Rename ≥4 identifiers to data2. Policy says be specific. Jimbo says data2.",
+      "meta": "IDE · Naming · Blocked by Kyle (spiritually)",
+      "toast": "Clarity achieved."
+    },
+    {
+      "id": "CORP-5103",
+      "title": "Appear Active",
+      "pts": 2,
+      "type": "presence",
+      "dod": "Mash Jiggle / keys / clicks 8 times within 12s. Presence is a performance review input.",
+      "meta": "InsightBot · Idle 47s · Status: allegedly",
+      "toast": "Status: Active (allegedly)."
+    },
+    {
+      "id": "CORP-5104",
+      "title": "Suppress Until Green",
+      "pts": 3,
+      "type": "lint",
+      "dod": "Clear 5 warnings via Suppress / Dismiss / TODO later. Do not fix anything real.",
+      "meta": "IDE · Linter · Policy green",
+      "toast": "Build healthy. Morale: N/A."
+    },
+    {
+      "id": "CORP-5105",
+      "title": "Update the Status Update",
+      "pts": 2,
+      "type": "standup2",
+      "dod": "Rewrite standup until the bot accepts. First submit always fails. Need 2 successful submits.",
+      "meta": "Standup bot · Feelings not actionable",
+      "toast": "Standup complete. Nobody read it."
+    },
+    {
+      "id": "CORP-5106",
+      "title": "Merge Conflict (Feelings Edition)",
+      "pts": 4,
+      "type": "merge",
+      "dod": "Resolve 3 conflict hunks. Accept Ours / Theirs / Both. Comedy > correctness.",
+      "meta": "IDE · main vs feelings · data2 optional",
+      "toast": "Conflicts resolved. Feelings: deferred."
+    },
+    {
+      "id": "CORP-5107",
+      "title": "Unsubscribe From the Follow-Ups",
+      "pts": 3,
+      "type": "unsub",
+      "dod": "Unsubscribe from 3 quick-read mails. Preferences save to nowhere.",
+      "meta": "Inbox · All-Hands fallout · Required survey",
+      "toast": "You will still receive critical updates."
+    },
+    {
+      "id": "CORP-5108",
+      "title": "Add Logging Everywhere",
+      "pts": 3,
+      "type": "logspam",
+      "dod": "Insert console.log on ≥5 lines. Observability is vibes.",
+      "meta": "IDE · Telemetry · Prod is fine",
+      "toast": "Telemetry vibes: rich."
+    },
+    {
+      "id": "CORP-5109",
+      "title": "Estimate This Ticket (Fibonacci of Regret)",
+      "pts": 2,
+      "type": "estimate",
+      "dod": "Pick Fibonacci. Kyle-bot rejects first pick. Second pick ≥ first succeeds.",
+      "meta": "Planning poker · Scope creep theater",
+      "toast": "Committed to the vibe of 5."
+    },
+    {
+      "id": "CORP-5110",
+      "title": "Pick a Severity",
+      "pts": 3,
+      "type": "severity",
+      "dod": "Fill Severity / Component / Impact. 'It's Fine' auto-corrects to Sev3.",
+      "meta": "Bug form · Taxonomy must be satisfied",
+      "toast": "Severity filed. Screenshot still impossible."
+    },
+    {
+      "id": "CORP-5201",
+      "title": "P0: Something is On Fire",
+      "pts": 4,
+      "type": "incident",
+      "dod": "Disable the monitor AND assign to somebody else. Do not fix prod.",
+      "toast": "Incident owned by someone else. Monitor: off. Career: intact."
+    },
+    {
+      "id": "CORP-404",
+      "title": "Whitespace diplomacy",
+      "pts": 8,
+      "type": "spacewar",
+      "dod": "Survive Kyle's space war. Do not introduce a second space. Do not win.",
+      "meta": "Blocked · Platform · Pedantry Sev-1",
+      "toast": "Peace was a formatting option."
+    }
+  ],
+  "kyleSlack": [
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Quick question about the space before your `{`."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Not to bikeshed, but we should bikeshed `tmp`."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Saw your WIP. Already have 9 nits. You're welcome."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Well actually the style guide disagrees with you."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Can we sync 45m about one character?"
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Trailing newline missing. The void noticed."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "I refused LGTM. Again. Growth opportunity."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Unicode space in your string. Hexdump attached (mentally)."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Commit message isn't conventional. Neither is joy."
+    },
+    {
+      "name": "Kyle",
+      "color": "#a05030",
+      "text": "Still on that space. Day 2. Hydrate."
+    }
+  ],
+  "spaceWarScript": [
+    {
+      "kyle": "Blocking: space before `{`. Platform is K&R-adjacent. `){` not `) {`.",
+      "choices": [
+        {
+          "t": "Removed the space. Peace.",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "Citing Google style: space is fine.",
+          "kind": "cite",
+          "d": 0,
+          "s": -6
+        },
+        {
+          "t": "Wow, a whole hill for one pixel.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -8
+        },
+        {
+          "t": "Do whatever. I'll match yours.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -7
+        }
+      ]
+    },
+    {
+      "kyle": "Also: space after `:`. Types are `x: T`. You wrote `x:T`. I can taste the missing air.",
+      "choices": [
+        {
+          "t": "Added the air. `x: T`.",
+          "kind": "appease",
+          "d": 1,
+          "s": -3
+        },
+        {
+          "t": "TypeScript handbook examples vary.",
+          "kind": "cite",
+          "d": 0,
+          "s": -5
+        },
+        {
+          "t": "Breathing is out of scope.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -9
+        },
+        {
+          "t": "Formatter owns me. Running it.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -5
+        }
+      ]
+    },
+    {
+      "kyle": "Wait -- you fixed `{` but left `else{`. Consistency or death.",
+      "choices": [
+        {
+          "t": "else { fixed. Consistency achieved.",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "eslint brace-style is configurable.",
+          "kind": "cite",
+          "d": 0,
+          "s": -6
+        },
+        {
+          "t": "Death is a strong SLA.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -8
+        },
+        {
+          "t": "One regex later...",
+          "kind": "giveup",
+          "d": 1,
+          "s": -6
+        }
+      ]
+    },
+    {
+      "kyle": "Object literal: `{a:1}` vs `{ a: 1 }`. We pad. You didn't. Blocking until padded.",
+      "choices": [
+        {
+          "t": "Padded. Soft and compliant.",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "Prettier default is padded. Trust tool.",
+          "kind": "cite",
+          "d": 1,
+          "s": -3
+        },
+        {
+          "t": "Compact objects are punk.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -9
+        },
+        {
+          "t": "I'll pad until you smile.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -7
+        }
+      ]
+    },
+    {
+      "kyle": "Well actually, your fix introduced a double space after a comma. Two spaces. Criminal.",
+      "choices": [
+        {
+          "t": "Single space. Court adjourned.",
+          "kind": "appease",
+          "d": 1,
+          "s": -3
+        },
+        {
+          "t": "Style guide: one space after comma.",
+          "kind": "cite",
+          "d": 1,
+          "s": -2
+        },
+        {
+          "t": "Call security on the spaces.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -8
+        },
+        {
+          "t": "Deleting the line entirely.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -6
+        }
+      ]
+    },
+    {
+      "kyle": "Tabs vs spaces aside: this file has a NBSP. I hexdump for fun. Remove it.",
+      "choices": [
+        {
+          "t": "NBSP gone. Only honest spaces.",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "Unicode allows more than you think.",
+          "kind": "cite",
+          "d": 0,
+          "s": -7
+        },
+        {
+          "t": "Of course you hexdump for fun.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -9
+        },
+        {
+          "t": "Paste as plain text. Done.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -5
+        }
+      ]
+    },
+    {
+      "kyle": "Alignment spaces in comments to make columns pretty. We don't pretty. We wrap.",
+      "choices": [
+        {
+          "t": "Ugly wrap. Happy Kyle.",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "Some formatters align consecutive.",
+          "kind": "cite",
+          "d": 0,
+          "s": -6
+        },
+        {
+          "t": "Columns are a human right.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -8
+        },
+        {
+          "t": "Removed the comment.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -5
+        }
+      ]
+    },
+    {
+      "kyle": "Space before `;`? Never. You have `return x ;`. I will debate this until sprint end.",
+      "choices": [
+        {
+          "t": "return x; -- no space. Surrender.",
+          "kind": "appease",
+          "d": 1,
+          "s": -3
+        },
+        {
+          "t": "No major style guide wants that.",
+          "kind": "cite",
+          "d": 1,
+          "s": -2
+        },
+        {
+          "t": "Ten hours? Calendar is free.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -11
+        },
+        {
+          "t": "I concede the semicolon universe.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -7
+        }
+      ]
+    },
+    {
+      "kyle": "Ternary spacing: `a?b:c` is illegal. `a ? b : c` or we take it offline.",
+      "choices": [
+        {
+          "t": "Spaced ternary. Breathable.",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "Airbnb: spaces around ? and :.",
+          "kind": "cite",
+          "d": 1,
+          "s": -3
+        },
+        {
+          "t": "Offline over a ternary. Iconic.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -9
+        },
+        {
+          "t": "Rewrote as if/else to escape.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -6
+        }
+      ]
+    },
+    {
+      "kyle": "Last one: EOF newline AND no trailing spaces on the blank line before it. Blank lines can sin.",
+      "choices": [
+        {
+          "t": "Purified blank line. Ship?",
+          "kind": "appease",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "POSIX + editorconfig agree.",
+          "kind": "cite",
+          "d": 1,
+          "s": -3
+        },
+        {
+          "t": "Blank lines have morals now.",
+          "kind": "sarcastic",
+          "d": 0,
+          "s": -8
+        },
+        {
+          "t": "Manager: take it offline please.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -5
+        }
+      ]
+    },
+    {
+      "kyle": "Reluctant LGTM with 14 nits in a spreadsheet. Or we sync an hour about spaces.",
+      "choices": [
+        {
+          "t": "Accept LGTM. Never open spreadsheet.",
+          "kind": "appease",
+          "d": 1,
+          "s": -5
+        },
+        {
+          "t": "I'll read Platform Style v4.7 first.",
+          "kind": "cite",
+          "d": 1,
+          "s": -4
+        },
+        {
+          "t": "An hour about spaces. Peak Corp.",
+          "kind": "sarcastic",
+          "d": 1,
+          "s": -8
+        },
+        {
+          "t": "Take it offline. Bring poison.",
+          "kind": "giveup",
+          "d": 1,
+          "s": -6
+        }
+      ]
+    }
+  ]
 };

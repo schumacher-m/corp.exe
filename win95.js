@@ -31,8 +31,21 @@ export const H = 240;
 /** Internal supersample so seated fullscreen text isn't a blown-up postage stamp */
 export const PIXEL_SCALE = 3;
 const TASK_H = 22;
-const IDLE_YELLOW = 6; // seconds -> yellow
+const IDLE_YELLOW = 6; // seconds -> Idle (Presence.IDLE_YELLOW)
 const IDLE_AWAY = 11; // seconds -> Away
+
+/** Presence Theater status enum (keyed off IDLE_YELLOW threshold). */
+const Presence = {
+  ACTIVE: "active",
+  IDLE_YELLOW: "idle_yellow",
+  AWAY: "away",
+};
+
+const JIGGLER_PULSE = 2.5; // seconds between soft bumps
+const JIGGLER_SANITY_EVERY = 8; // -1 Sanity while masking
+const JIGGLER_MAX_MASK = 14; // AFK grace -- delay Away, do not delete it
+const JIGGLER_AUDIT_MIN = 45;
+const JIGGLER_AUDIT_SPAN = 45; // 45..90s
 const EMAIL_MIN = 14;
 const EMAIL_MAX = 28;
 
@@ -58,6 +71,27 @@ export function createWin95(copy, hooks) {
 
   const jimboCopy = copy.jimbo || {};
   const ticketStrings = copy.ticketStrings || {};
+  const presenceCopy = copy.presence || {};
+  const jigglerCopy = presenceCopy.jiggler || {};
+  const awayExcuseCopy = presenceCopy.awayExcuses || {};
+  const hrAuditCopy = presenceCopy.hrAudit || {};
+  const timesheetCopy = copy.timesheet || {};
+  const timesheetBuckets = (timesheetCopy.buckets && timesheetCopy.buckets.length)
+    ? timesheetCopy.buckets
+    : [
+        { id: "fog", label: "Fog mitigation", default: 0 },
+        { id: "sync", label: "Syncing", default: 0 },
+        { id: "jimbo", label: "Jimbo alignment", default: 0 },
+        { id: "stakeholder", label: "Stakeholder vibes", default: 0 },
+        { id: "unblock", label: "Unblocking blockers", default: 0 },
+        { id: "docs", label: "Documentation (aspirational)", default: 0 },
+        { id: "hope", label: "Hope", default: 0 },
+        { id: "core", label: "Core hours (actual work)", default: 0 },
+      ];
+  const timesheetTarget = Number(timesheetCopy.targetHours != null ? timesheetCopy.targetHours : 8.0);
+  const timesheetValidation = timesheetCopy.validation || {};
+  const timesheetJimboFill = timesheetCopy.jimboFill || {};
+
   function tStr(type, key, fallback) {
     const block = ticketStrings[type] || {};
     const v = block[key];
@@ -71,6 +105,11 @@ export function createWin95(copy, hooks) {
     j32: loadImg("assets/jimbo/jimbo_32.png"),
     jtb: loadImg("assets/jimbo/jimbo_toolbar.png"),
     jban: loadImg("assets/jimbo/jimbo_banner.png"),
+    jig16: loadImg("assets/presence/jiggler_16.png"),
+    jig32: loadImg("assets/presence/jiggler_32.png"),
+    ts16: loadImg("assets/timesheet/timesheet_xls_16.png"),
+    ts32: loadImg("assets/timesheet/timesheet_xls_32.png"),
+    ts48: loadImg("assets/timesheet/timesheet_xls_48.png"),
   };
 
   const inboxMails = (emailCopy.messages || []).map((m) => ({
@@ -106,7 +145,7 @@ export function createWin95(copy, hooks) {
   const fillerTemplates = (copy.fillers || []).filter((t) => t && t.type === "filler");
   if (!playableTemplates.some((t) => t.type === "incident")) {
     playableTemplates.push({
-      id: "HELIX-5201",
+      id: "CORP-5201",
       title: "PROD CRITICAL - Something is on fire",
       pts: 4,
       type: "incident",
@@ -188,10 +227,32 @@ export function createWin95(copy, hooks) {
     incidentPagerCd: 45 + Math.random() * 45, // first soft window 45-90s
     incidentPagerCooldown: 0,
     incidentFromPager: false,
-    // Appear Active
-    presence: "active", // active | yellow | away
+    // Appear Active / Presence Theater
+    presence: Presence.ACTIVE,
     idleAcc: 0,
     presenceForced: false,
+    presenceStatus: null,
+    statusPopover: false,
+    // GD collision: presenceForced wins over board + timesheet
+    boardRefillPaused: false,
+    timesheetQueued: false,
+    timesheetGateOpen: false,
+    ticketsCompletedSinceLock: 0,
+    timesheetLockedOk: false,
+    timesheetGateThreshold: 3,
+    timesheetHours: {},
+    timesheetJimboFills: 0,
+    timesheetPendingClockOut: false,
+    timesheetAcceptedOpen: false,
+    // Jimbo Mouse Jiggler -- DELAYS Away, does not delete it
+    jimboJiggler: false,
+    jigglerInstalled: false,
+    jigglerPulseAcc: 0,
+    jigglerSanityAcc: 0,
+    jigglerMaskAcc: 0,
+    jigglerAuditArmed: false,
+    jigglerAuditDone: false,
+    jigglerAuditAt: 0,
   };
 
   // Remove already-dealt types from the first shuffle
@@ -226,7 +287,7 @@ export function createWin95(copy, hooks) {
   }
 
   const wins = {
-    tickets: { id: "tickets", title: "Tickets - HelixStack", x: 8, y: 18, w: 150, h: 140, open: true },
+    tickets: { id: "tickets", title: "Tickets - Corp", x: 8, y: 18, w: 150, h: 140, open: true },
     slack: { id: "slack", title: "Slack - #general", x: 165, y: 14, w: 145, h: 120, open: true },
     ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
     pr: { id: "pr", title: "PR #884 - Kyle", x: 30, y: 20, w: 260, h: 175, open: false },
@@ -234,7 +295,7 @@ export function createWin95(copy, hooks) {
     meters: { id: "meters", title: "Resource Monitor", x: 200, y: 150, w: 110, h: 55, open: true },
     jimbo: {
       id: "jimbo",
-      title: jimboCopy.windowTitle || "Jimbo - HelixStack AI",
+      title: jimboCopy.windowTitle || "Jimbo - Corporate AI",
       x: 70,
       y: 22,
       w: 190,
@@ -251,13 +312,36 @@ export function createWin95(copy, hooks) {
       h: 170,
       open: false,
     },
+    timesheet: {
+      id: "timesheet",
+      title: timesheetCopy.windowTitle || "timesheet.xls -- Time Entry",
+      x: 36,
+      y: 12,
+      w: 248,
+      h: 200,
+      open: false,
+    },
   };
 
-  const order = ["meters", "tickets", "slack", "standup", "ide", "pr", "jimbo", "inbox"];
+  const order = ["meters", "tickets", "slack", "standup", "ide", "pr", "jimbo", "inbox", "timesheet"];
 
   const deskIcons = [
     { id: "jimbo", label: "Jimbo", x: 8, y: 8, img: "j32" },
     { id: "inbox", label: emailCopy.desktopLabel || "Inbox", x: 8, y: 56, img: null },
+    {
+      id: "timesheet",
+      label: timesheetCopy.desktopLabel || "timesheet.xls",
+      x: 8,
+      y: 104,
+      img: "ts32",
+    },
+    {
+      id: "jiggler",
+      label: jigglerCopy.desktopLabel || "Jiggler",
+      x: 8,
+      y: 152,
+      img: "jig32",
+    },
   ];
 
   function raise(id) {
@@ -282,10 +366,201 @@ export function createWin95(copy, hooks) {
 
   function bumpActivity() {
     state.idleAcc = 0;
-    if (state.presence !== "active" && !state.presenceForced) {
-      state.presence = "active";
+    state.jigglerMaskAcc = 0;
+    state.jigglerPulseAcc = 0;
+    if (state.presence !== Presence.ACTIVE && !state.presenceForced) {
+      state.presence = Presence.ACTIVE;
     }
   }
+
+  function presenceBlocksBoard() {
+    return !!state.presenceForced || (state.modal && state.modal.kind === "presence");
+  }
+
+  function canClaimTicket() {
+    if (presenceBlocksBoard()) return false;
+    if (state.timesheetGateOpen) return false;
+    return true;
+  }
+
+  function canSubmitTicket() {
+    return canClaimTicket();
+  }
+
+  function requestBoardRefill() {
+    if (presenceBlocksBoard()) {
+      state.boardRefillPaused = true;
+      return false;
+    }
+    if (state.timesheetGateOpen || state.timesheetQueued) {
+      state.boardRefillPaused = true;
+      return false;
+    }
+    state.boardRefillPaused = false;
+    spawnTicket();
+    while (state.board.length < 2) spawnTicket();
+    hooks.onBoardRefill?.();
+    return true;
+  }
+
+  function flushBoardRefill() {
+    if (!state.boardRefillPaused) return;
+    if (presenceBlocksBoard() || state.timesheetGateOpen) return;
+    state.boardRefillPaused = false;
+    spawnTicket();
+    if (state.board.length === 0) spawnTicket({ forceFiller: true });
+    while (state.board.length < 2) spawnTicket();
+    hooks.onBoardRefill?.();
+  }
+
+  function resetTimesheetHours() {
+    const hours = {};
+    for (const b of timesheetBuckets) {
+      hours[b.id] = Number(b.default != null ? b.default : 0);
+    }
+    state.timesheetHours = hours;
+  }
+
+  function timesheetSum() {
+    let s = 0;
+    for (const b of timesheetBuckets) {
+      s += Number(state.timesheetHours[b.id] || 0);
+    }
+    return Math.round(s * 10) / 10;
+  }
+
+  function timesheetSumExact() {
+    return Math.abs(timesheetSum() - timesheetTarget) < 0.05;
+  }
+
+  function needsTimesheetForClockOut() {
+    return (
+      state.timesheetGateOpen ||
+      state.timesheetQueued ||
+      state.ticketsCompletedSinceLock > 0 ||
+      !state.timesheetLockedOk
+    );
+  }
+
+  function openTimesheet({ forced }
+
+  function requestTimesheetGate(reason) {
+    if (presenceBlocksBoard()) {
+      state.timesheetQueued = true;
+      toast(timesheetCopy.waitingAway || "Timesheet waiting -- clear Away first");
+      return false;
+    }
+    state.timesheetQueued = false;
+    state.timesheetGateOpen = true;
+    state.timesheetLockedOk = false;
+    openTimesheet({ forced: true });
+    hooks.onTimesheetGate?.(reason || "gate");
+    return true;
+  }
+
+  function flushTimesheetQueue() {
+    if (!state.timesheetQueued) return;
+    if (presenceBlocksBoard()) return;
+    state.timesheetQueued = false;
+    requestTimesheetGate("queued-after-away");
+  }
+
+  function clearTimesheetGate() {
+    state.timesheetGateOpen = false;
+    state.timesheetQueued = false;
+    flushBoardRefill();
+  }
+
+  function nudgeTimesheetHour(id, delta) {
+    const cur = Number(state.timesheetHours[id] || 0);
+    let next = Math.round((cur + delta) * 10) / 10;
+    if (next < 0) next = 0;
+    if (next > 16) next = 16;
+    state.timesheetHours[id] = next;
+  }
+
+  function jimboAutoFillTimesheet() {
+    const fills = state.timesheetJimboFills || 0;
+    let preset = null;
+    if (fills <= 0) {
+      preset = timesheetJimboFill.firstFill || {
+        hours: { jimbo: 6, core: 1, sync: 0.5 },
+        toast: "Jimbo reconciled your day!",
+      };
+    } else {
+      preset = timesheetJimboFill.secondFill || {
+        hours: { jimbo: 6, hope: 2 },
+        toast: "Jimbo fixed the math. Spiritually worse.",
+      };
+    }
+    resetTimesheetHours();
+    const src = preset.hours || {};
+    for (const b of timesheetBuckets) {
+      if (src[b.id] != null) state.timesheetHours[b.id] = Number(src[b.id]);
+    }
+    state.timesheetJimboFills = fills + 1;
+    const msg =
+      preset.toast ||
+      timesheetCopy.jimboReconciled ||
+      "Jimbo reconciled your day!";
+    toast(msg, { jimbo: true });
+    // Sabotage help: Fail chime on Auto-Fill (Save beep only on Accept)
+    audio.playSfx("jimboFail", { volume: 0.6 });
+  }
+
+  function acceptTimesheet() {
+    const sum = timesheetSum();
+    if (!timesheetSumExact()) {
+      const v = timesheetValidation;
+      let msg = timesheetCopy.failExact || v.failExact || "Hours must equal core commitment (8.0).";
+      if (sum < timesheetTarget && v.under?.length) {
+        msg = pick(v.under).replace(/\{\{total\}\}/g, String(sum));
+      } else if (sum > timesheetTarget && v.over?.length) {
+        msg = pick(v.over).replace(/\{\{total\}\}/g, String(sum));
+      } else if (sum === 0 && v.empty?.length) {
+        msg = pick(v.empty);
+      }
+      // Prefer Spec fail line for Accept miss
+      msg = timesheetCopy.failExact || v.failExact || msg;
+      toast(msg);
+      hitSanity(4);
+      audio.playSfx("error");
+      return false;
+    }
+    state.sprint += 2;
+    hitSanity(2);
+    state.ticketsCompletedSinceLock = 0;
+    state.timesheetLockedOk = true;
+    state.timesheetAcceptedOpen = true;
+    clearTimesheetGate();
+    toast(
+      timesheetCopy.hoursReconciled ||
+        timesheetValidation.hoursReconciled ||
+        "Hours reconciled."
+    );
+    audio.playSfx("timesheetSave", { volume: 0.45 });
+    wins.timesheet.open = false;
+    const pendingOut = state.timesheetPendingClockOut;
+    state.timesheetPendingClockOut = false;
+    hooks.onTimesheetAccept?.();
+    if (pendingOut) {
+      setTimeout(() => hooks.onClockOut?.(), 400);
+    }
+    return true;
+  }
+
+  function closeTimesheetWindow() {
+    wins.timesheet.open = false;
+    if (state.timesheetGateOpen && !state.timesheetAcceptedOpen) {
+      toast(
+        timesheetCopy.incompleteToast ||
+          timesheetValidation.incomplete ||
+          "Timesheet incomplete"
+      );
+      audio.playSfx("error");
+    }
+  }
+
 
   function bevelRaised(x, y, w, h, fill = C.face) {
     ctx.fillStyle = fill;
@@ -361,7 +636,70 @@ export function createWin95(copy, hooks) {
     else if (win.id === "standup") drawStandup(cx, cy, cw, ch);
     else if (win.id === "meters") drawMeters(cx, cy, cw, ch);
     else if (win.id === "jimbo") drawJimbo(cx, cy, cw, ch);
+    else if (win.id === "timesheet") drawTimesheet(cx, cy, cw, ch);
     else if (win.id === "inbox") drawInbox(cx, cy, cw, ch);
+  }
+
+  function drawTimesheet(x, y, w, h) {
+    bevelSunken(x, y, w, h, C.white);
+    ctx.font = "7px Tahoma, sans-serif";
+    ctx.fillStyle = C.shadow;
+    const sub = timesheetCopy.subtitle || "Time Entry";
+    ctx.fillText(String(sub).slice(0, 42), x + 3, y + 8);
+    const doneN = state.ticketsCompletedSinceLock;
+    ctx.fillText("CORP tickets since lock: " + doneN, x + 3, y + 17);
+
+    state._tsHits = [];
+    let yy = y + 22;
+    const rowH = 14;
+    for (const b of timesheetBuckets) {
+      const hours = Number(state.timesheetHours[b.id] || 0);
+      ctx.fillStyle = C.text;
+      ctx.font = "7px Tahoma, sans-serif";
+      ctx.fillText(String(b.label).slice(0, 22), x + 3, yy + 9);
+      // value box
+      bevelSunken(x + w - 70, yy + 1, 28, 11, C.white);
+      ctx.fillStyle = C.text;
+      ctx.fillText(hours.toFixed(1), x + w - 66, yy + 9);
+      // minus
+      bevelRaised(x + w - 40, yy + 1, 14, 11, C.face);
+      ctx.fillStyle = C.text;
+      ctx.font = "bold 8px Tahoma, sans-serif";
+      ctx.fillText("-", x + w - 36, yy + 9);
+      state._tsHits.push({ kind: "minus", id: b.id, hit: { x: x + w - 40, y: yy + 1, w: 14, h: 11 } });
+      // plus
+      bevelRaised(x + w - 24, yy + 1, 14, 11, C.face);
+      ctx.fillText("+", x + w - 20, yy + 9);
+      state._tsHits.push({ kind: "plus", id: b.id, hit: { x: x + w - 24, y: yy + 1, w: 14, h: 11 } });
+      yy += rowH;
+      if (yy > y + h - 36) break;
+    }
+
+    const sum = timesheetSum();
+    const ok = timesheetSumExact();
+    ctx.fillStyle = ok ? C.sick : C.blood;
+    ctx.font = "bold 8px Tahoma, sans-serif";
+    ctx.fillText("Total " + sum.toFixed(1) + " / " + timesheetTarget.toFixed(1), x + 3, y + h - 28);
+    ctx.fillStyle = C.shadow;
+    ctx.font = "6px Tahoma, sans-serif";
+    ctx.fillText(String(timesheetCopy.footerHint || "Total must equal 8.0").slice(0, 48), x + 3, y + h - 18);
+
+    // Jimbo Auto-Fill
+    const jl = timesheetCopy.jimboFillLabel || timesheetJimboFill.buttonLabel || "Jimbo Auto-Fill";
+    bevelRaised(x + 3, y + h - 14, 88, 12, C.jimbo);
+    ctx.fillStyle = C.inv;
+    ctx.font = "bold 7px Tahoma, sans-serif";
+    ctx.fillText(String(jl).slice(0, 16), x + 6, y + h - 5);
+    state._tsJimboBtn = { x: x + 3, y: y + h - 14, w: 88, h: 12 };
+
+    // Accept
+    const al = timesheetCopy.submitLabel || "Accept";
+    if (ok) bevelRaised(x + w - 64, y + h - 14, 60, 12, C.face);
+    else bevelSunken(x + w - 64, y + h - 14, 60, 12, C.face);
+    ctx.fillStyle = ok ? C.text : C.shadow;
+    ctx.font = "bold 7px Tahoma, sans-serif";
+    ctx.fillText(String(al).slice(0, 10), x + w - 52, y + h - 5);
+    state._tsAcceptBtn = { x: x + w - 64, y: y + h - 14, w: 60, h: 12 };
   }
 
   function drawTickets(x, y, w, h) {
@@ -920,7 +1258,7 @@ export function createWin95(copy, hooks) {
       ctx.fillText("Unsubscribe", x + 8, by + 10);
       state._stubHits.push({ kind: "unsub", action: "confirm", hit: { x: x + 4, y: by, w: bw1, h: 14 } });
       bevelRaised(x + 4 + bw1 + 6, by, bw2, 14, C.face);
-      ctx.fillText("HelixHub 404", x + 8 + bw1 + 6, by + 10);
+      ctx.fillText("CorpHub 404", x + 8 + bw1 + 6, by + 10);
       state._stubHits.push({ kind: "unsub", action: "trap", hit: { x: x + 4 + bw1 + 6, y: by, w: bw2, h: 14 } });
     } else if (st.step === "helpful") {
       ctx.fillText("Was this helpful? (Required)", x + 4, yy);
@@ -968,6 +1306,15 @@ export function createWin95(copy, hooks) {
         ctx.fillStyle = C.inv;
         ctx.font = "bold 7px Tahoma, sans-serif";
         ctx.fillText(String(Math.min(99, u)), bx + 32, by + 10);
+      } else if (ic.id === "timesheet") {
+        const im = imgs.ts32;
+        if (im.complete && im.naturalWidth) {
+          ctx.drawImage(im, bx + 8, by, 32, 32);
+        } else {
+          bevelRaised(bx + 8, by + 2, 28, 30, "#e8e0c8");
+          ctx.fillStyle = "#2a7a3a";
+          ctx.fillRect(bx + 10, by + 4, 24, 6);
+        }
       }
       ctx.fillStyle = C.inv;
       ctx.font = "7px Tahoma, sans-serif";
@@ -977,14 +1324,56 @@ export function createWin95(copy, hooks) {
   }
 
   function presenceColor() {
-    if (state.presence === "away") return C.red;
-    if (state.presence === "yellow") return C.yellow;
+    if (state.presence === Presence.AWAY) return C.red;
+    if (state.presence === Presence.IDLE_YELLOW) return C.yellow;
     return C.green;
   }
   function presenceLabel() {
-    if (state.presence === "away") return "Away";
-    if (state.presence === "yellow") return "Idle";
-    return "Active";
+    const badges = presenceCopy.badgeLabels || {};
+    if (state.presence === Presence.AWAY) return badges.away || "Away";
+    if (state.presence === Presence.IDLE_YELLOW) {
+      const base = badges.idleWarn || badges.idle || "Idle";
+      if (state.presenceStatus) {
+        const st = (presenceCopy.statuses || []).find((s) => s.id === state.presenceStatus);
+        const short = (st && st.label) || state.presenceStatus;
+        return (base + " * " + String(short).split(" ")[0]).slice(0, 14);
+      }
+      return base === "..." ? "Idle" : base;
+    }
+    return badges.active || "Active";
+  }
+
+  function idleStatusChoices() {
+    const all = presenceCopy.statuses || [];
+    const picks = all.filter((s) => s.id && s.id !== "active" && s.id !== "away" && s.keepsActive);
+    return picks.slice(0, 4);
+  }
+
+  function drawStatusPopover() {
+    if (!state.statusPopover || state.presence !== Presence.IDLE_YELLOW) {
+      state._statusHits = null;
+      return;
+    }
+    const choices = idleStatusChoices();
+    const pw = 120;
+    const ph = 16 + choices.length * 14;
+    const px = W - 130;
+    const py = H - TASK_H - ph - 2;
+    bevelRaised(px, py, pw, ph, C.face);
+    ctx.fillStyle = C.title;
+    ctx.fillRect(px + 2, py + 2, pw - 4, 12);
+    ctx.fillStyle = C.inv;
+    ctx.font = "bold 7px Tahoma, sans-serif";
+    ctx.fillText(presenceCopy.pickerTitle || "Set status", px + 6, py + 11);
+    state._statusHits = [];
+    let yy = py + 16;
+    ctx.font = "7px Tahoma, sans-serif";
+    for (const s of choices) {
+      ctx.fillStyle = C.text;
+      ctx.fillText(String(s.label || s.id).slice(0, 22), px + 6, yy + 9);
+      state._statusHits.push({ id: s.id, hit: { x: px + 2, y: yy, w: pw - 4, h: 13 } });
+      yy += 14;
+    }
   }
 
   function drawTaskbar() {
@@ -1009,7 +1398,7 @@ export function createWin95(copy, hooks) {
     state._askToolbar = { x: 48, y: y + 3, w: 72, h: 16 };
 
     let tx = 124;
-    for (const id of ["tickets", "slack", "ide", "pr", "jimbo", "inbox"]) {
+    for (const id of ["tickets", "slack", "ide", "pr", "jimbo", "inbox", "timesheet"]) {
       const win = wins[id];
       if (!win.open) continue;
       bevelRaised(tx, y + 3, 36, 16, C.face);
@@ -1021,14 +1410,18 @@ export function createWin95(copy, hooks) {
       if (tx > W - 100) break;
     }
 
-    // presence badge
+    // presence badge (Idle chip clickable for status theater)
     const px = W - 100;
     bevelSunken(px, y + 3, 44, 16, C.face);
     ctx.fillStyle = presenceColor();
     ctx.fillRect(px + 3, y + 7, 6, 6);
+    if (state.jimboJiggler && imgs.jig16.complete && imgs.jig16.naturalWidth) {
+      ctx.drawImage(imgs.jig16, px + 2, y + 4, 12, 12);
+    }
     ctx.fillStyle = C.text;
     ctx.font = "7px Tahoma, sans-serif";
     ctx.fillText(presenceLabel(), px + 12, y + 13);
+    state._presenceBadge = { x: px, y: y + 3, w: 44, h: 16 };
 
     const trayX = W - 54;
     bevelSunken(trayX, y + 3, 50, 16, C.face);
@@ -1037,15 +1430,18 @@ export function createWin95(copy, hooks) {
     const hh = String(Math.floor(state.clockMinutes / 60)).padStart(2, "0");
     const mm = String(state.clockMinutes % 60).padStart(2, "0");
     ctx.fillText(`${hh}:${mm}`, trayX + 4, y + 13);
+
+    drawStatusPopover();
   }
 
   function drawStartMenu() {
     if (!state.startOpen) return;
     const items = copy.startMenu?.items || [];
     const menuH = 16 + items.length * 16;
+    const menuW = 148;
     const x = 2;
     const y = H - TASK_H - menuH;
-    bevelRaised(x, y, 120, menuH, C.face);
+    bevelRaised(x, y, menuW, menuH, C.face);
     ctx.fillStyle = C.title;
     ctx.fillRect(x + 2, y + 2, 16, menuH - 4);
     state._startItems = [];
@@ -1054,15 +1450,19 @@ export function createWin95(copy, hooks) {
       ctx.fillStyle = C.text;
       ctx.font = "8px Tahoma, sans-serif";
       const lab = it.label || it.id || String(it);
-      if (it.id === "jimbo" || lab === "Jimbo") {
-        if (imgs.j16.complete && imgs.j16.naturalWidth) {
-          ctx.drawImage(imgs.j16, x + 22, iy + 1, 12, 12);
-          ctx.fillText(lab, x + 36, iy + 10);
-        } else ctx.fillText(lab, x + 22, iy + 10);
+      const isJimbo = it.id === "jimbo" || lab === "Jimbo";
+      const isJiggler = it.id === "jiggler" || /mouse jiggler/i.test(lab);
+      if (isJimbo && imgs.j16.complete && imgs.j16.naturalWidth) {
+        ctx.drawImage(imgs.j16, x + 22, iy + 1, 12, 12);
+        ctx.fillText(lab.slice(0, 18), x + 36, iy + 10);
+      } else if (isJiggler && imgs.jig16.complete && imgs.jig16.naturalWidth) {
+        ctx.drawImage(imgs.jig16, x + 22, iy + 1, 12, 12);
+        const mark = state.jimboJiggler ? "[on] " : "";
+        ctx.fillText((mark + lab).slice(0, 18), x + 36, iy + 10);
       } else {
-        ctx.fillText(lab, x + 22, iy + 10);
+        ctx.fillText(lab.slice(0, 20), x + 22, iy + 10);
       }
-      state._startItems.push({ hit: { x, y: iy, w: 118, h: 16 }, item: it });
+      state._startItems.push({ hit: { x, y: iy, w: menuW - 2, h: 16 }, item: it });
     });
   }
 
@@ -1457,6 +1857,11 @@ export function createWin95(copy, hooks) {
   }
 
   function openTicket(tk) {
+    if (!canClaimTicket()) {
+      if (presenceBlocksBoard()) toast("Clear Away before claiming tickets");
+      else if (state.timesheetGateOpen) toast("Timesheet incomplete -- hours first");
+      return;
+    }
     state.activeTicket = tk;
     state.jimboUsedThisTicket = false;
     state.pendingFinish = null;
@@ -1563,7 +1968,7 @@ export function createWin95(copy, hooks) {
   function drawFromDeck(forceFiller) {
     if (forceFiller || (!state.drawBag.length && !playableTemplates.length)) {
       const ft = pick(fillerTemplates) || {
-        id: "HELIX-FILL",
+        id: "CORP-FILL",
         title: "Document something temporary",
         pts: 1,
         type: "filler",
@@ -1628,14 +2033,27 @@ export function createWin95(copy, hooks) {
     state._submitBtn = null;
     state._stubHits = null;
     raise("tickets");
-    // Immediately draw 1 unused type; never leave board empty
-    spawnTicket();
-    if (state.board.length === 0) spawnTicket({ forceFiller: true });
-    // Top up toward 2-3
-    while (state.board.length < 2) spawnTicket();
+    state.ticketsCompletedSinceLock = (state.ticketsCompletedSinceLock || 0) + 1;
+    // Immediately draw 1 unused type; never leave board empty -- wait if Away
+    if (presenceBlocksBoard()) {
+      state.boardRefillPaused = true;
+    } else {
+      spawnTicket();
+      if (state.board.length === 0) spawnTicket({ forceFiller: true });
+      while (state.board.length < 2) spawnTicket();
+    }
     hooks.onTicketDone?.(type, pts);
     audio.playBgm("bgmDesk");
     flushEmailQueue();
+    // Timesheet Lock trigger A -- every N completions (default 3)
+    if (
+      state.ticketsCompletedSinceLock >= (state.timesheetGateThreshold || 3) &&
+      !state.timesheetGateOpen &&
+      !state.timesheetQueued
+    ) {
+      state.ticketsCompletedSinceLock = 0;
+      requestTimesheetGate("mid-day");
+    }
   }
 
   function requestFinish(extra = {}) {
@@ -1719,7 +2137,7 @@ export function createWin95(copy, hooks) {
     } else if (type === "unsub" && state.stub?.kind === "unsub") {
       // Comedy spam - do NOT wipe completed unsubs (that softlocked the ticket)
       const extra = [
-        { id: "u" + (state.stub.mails.length + 1), from: "HelixHub", subject: "404 Synergy", done: false },
+        { id: "u" + (state.stub.mails.length + 1), from: "CorpHub", subject: "404 Synergy", done: false },
         { id: "u" + (state.stub.mails.length + 2), from: "Marketing", subject: "You unsubscribed wrong", done: false },
       ];
       state.stub.mails.push(...extra);
@@ -1796,83 +2214,188 @@ export function createWin95(copy, hooks) {
     deliverDoomMail(mail);
   }
 
+  function buildAwayExcuseButtons() {
+    const pool = (awayExcuseCopy.excuses || []).filter((e) => e && e.id !== "default");
+    // Prefer 3 Writer excuses + 1 honest/ACK (distinct Sanity costs)
+    const preferred = ["sync", "thinking", "fog", "honest"];
+    const chosen = [];
+    for (const id of preferred) {
+      const e = pool.find((x) => x.id === id);
+      if (e) chosen.push(e);
+    }
+    while (chosen.length < 4 && pool.length) {
+      const e = pick(pool.filter((x) => !chosen.includes(x)));
+      if (!e) break;
+      chosen.push(e);
+    }
+    if (!chosen.length) {
+      return [
+        { label: "In a meeting", action: "excuse", excuseId: "meeting", sanityHit: 4, toast: "Meeting noted." },
+        { label: "Compiling", action: "excuse", excuseId: "compile", sanityHit: 5, toast: "Build still red." },
+        { label: "Reading RFC", action: "excuse", excuseId: "rfc", sanityHit: 6, toast: "RFC unread forever." },
+        { label: "I was thinking", action: "excuse", excuseId: "thinking", sanityHit: 8, toast: "Thoughts are not tickets." },
+        { label: "Acknowledge", action: "excuse", excuseId: "ack", sanityHit: 3, toast: "Engagement confirmed." },
+      ];
+    }
+    const btns = chosen.slice(0, 4).map((e) => ({
+      label: e.label,
+      action: "excuse",
+      excuseId: e.id,
+      sanityHit: e.sanityHit ?? 5,
+      toast: e.toast,
+    }));
+    const ack = (awayExcuseCopy.excuses || []).find((e) => e.id === "default") || {
+      label: "Acknowledge",
+      sanityHit: 3,
+      toast: "Engagement confirmed. Belief optional.",
+    };
+    btns.push({
+      label: ack.label || "Acknowledge",
+      action: "excuse",
+      excuseId: ack.id || "ack",
+      sanityHit: ack.sanityHit ?? 3,
+      toast: ack.toast,
+    });
+    return btns;
+  }
+
   function forceAwayMail() {
     const pool = state.inbox.filter((m) => m.presence || m.force);
     const mail = pick(pool) || {
       id: "away-fallback",
-      from: "Compliance",
+      from: "Compliance <policy@corp.internal>",
       subject: "Appear Active policy reminder",
-      body: "Away status triggers this email. Dismiss to resume.",
+      body: "Away status triggers this email. Explain yourself.",
       sanity: 10,
       presence: true,
       read: false,
       opened: false,
     };
     state.presenceForced = true;
-    state.presence = "away";
+    state.presence = Presence.AWAY;
+    state.statusPopover = false;
+    state.boardRefillPaused = true; // endless board waits behind Away
+    // If timesheet somehow armed, demote to queue -- never stack on Away
+    if (state.timesheetGateOpen) {
+      state.timesheetGateOpen = false;
+      state.timesheetQueued = true;
+      if (wins.timesheet) wins.timesheet.open = false;
+    }
+    const prompt = awayExcuseCopy.prompt || "Why were you Away?";
     state.modal = {
-      title: "Mandatory - Appear Active",
-      body: `${mail.from}: ${mail.subject}. ${mail.body}`,
+      title: "Mandatory -- Appear Active",
+      body: `${prompt}  ${mail.from}: ${mail.subject}. ${mail.body}`,
       kind: "presence",
       mail,
-      buttons: [{ label: "Dismiss", action: "dismiss-away" }],
+      buttons: buildAwayExcuseButtons(),
     };
-    hitSanity(mail.sanity || 10);
+    // Sanity charged on excuse click (do not double-dip mail.sanity here)
     audio.playSfx("newMail", { volume: 0.55 });
     audio.playSfx("awayTick", { volume: 0.3 });
-    // optional useless Jimbo toast
     if (Math.random() < 0.5) {
       setTimeout(() => {
-        toast(pick(jimboCopy.jiggleToasts) || "I jiggled your mouse for you!", { jimbo: true });
+        if (state.jimboJiggler) {
+          toast("Jiggler was already on. Interesting.", { jimbo: true });
+        } else {
+          toast(pick(jimboCopy.jiggleToasts) || "I jiggled your mouse for you!", { jimbo: true });
+        }
       }, 400);
     }
   }
 
+  function dismissAwayWithExcuse(btn) {
+    const mail = state.modal && state.modal.mail;
+    if (mail) {
+      mail.read = true;
+      mail.opened = true;
+    }
+    const cost = (btn && (btn.sanityHit ?? btn.meta?.sanityHit)) ?? 5;
+    hitSanity(cost);
+    state.modal = null;
+    state.presenceForced = false;
+    state.presence = Presence.ACTIVE;
+    state.idleAcc = 0;
+    state.jigglerMaskAcc = 0;
+    state.presenceStatus = null;
+    const msg =
+      (btn && (btn.toast || btn.meta?.toast)) ||
+      (Math.random() < 0.4 ? "Presence reconciled." : null) ||
+      pick(jimboCopy.jiggleToasts) ||
+      "Back to Active.";
+    toast(msg, { jimbo: Math.random() < 0.4 });
+    audio.playSfx("click");
+    // After Away: timesheet (if queued) then board refill -- never stacked on Away
+    flushTimesheetQueue();
+    flushEmailQueue();
+    flushBoardRefill();
+  }
+
+  function toggleJiggler({ fromStart }
+
+  function maybeJigglerAudit() {
+    if (!state.jimboJiggler || state.jigglerAuditDone || !state.jigglerAuditArmed) return;
+    if (state.jigglerMaskAcc < (state.jigglerAuditAt || 60)) return;
+    state.jigglerAuditDone = true;
+    if (Math.random() > 0.15) return;
+    const mails = hrAuditCopy.mails || [];
+    const src = pick(mails);
+    if (!src) return;
+    const mail = {
+      id: src.id || "jiggle-audit",
+      from: src.from || "HR <hr@corp.internal>",
+      subject: src.subject || "Unusual mouse activity detected",
+      body: Array.isArray(src.body) ? src.body.join(" ") : String(src.body || ""),
+      sanity: src.sanityHit || 8,
+      doom: true,
+      read: false,
+      opened: false,
+    };
+    state.inbox.push(mail);
+    queueOrDeliver(mail);
+  }
+
   function tick(dt) {
-    // presence ticket countdown (works even before day systems)
-    if (state.phase === "presence" && state.stub?.kind === "presence" && !state.stub.failed) {
-      state.stub.tLeft -= dt;
-      if (state.modal?.kind === "presenceTicket") {
-        const pct = Math.min(1, state.stub.jiggles / state.stub.need);
-        state.modal.body = `Engagement ${Math.floor(pct * 100)}% - ${state.stub.jiggles}/${state.stub.need} - ${Math.max(0, Math.ceil(state.stub.tLeft))}s`;
-      }
-      if (state.stub.tLeft <= 0 && state.stub.jiggles < state.stub.need) {
-        state.stub.failed = true;
-        hitSanity(6);
-        toast(state.stub?.reject || "Idle again. Ticket stays open.");
-        state.modal = null;
-        // leave ticket on board; reset for retry on reopen
-        state.phase = "desktop";
-        state.activeTicket = null;
-        state.stub = null;
-      }
-    }
     if (!state.emailEnabled) return;
-    // Kyle Slack interrupts mid-ticket / mid-PR
-    if (minigameFocused() && kyleSlackPool.length) {
-      kyleInterruptCd -= dt;
-      if (kyleInterruptCd <= 0) {
-        kyleInterruptCd = 14 + Math.random() * 16;
-        const msg = pick(kyleSlackPool);
-        if (msg) {
-          pushSlack({ ...msg });
-          wins.slack.open = true;
-          // don't steal focus from PR/IDE hard - toast is enough
-          toast(`DM: Kyle - ${String(msg.text).slice(0, 28)}`);
-        }
-      }
-    }
-    // idle / presence
-    if (!state.modal || (state.modal.kind !== "presence" && state.modal.kind !== "presenceTicket")) {
+    // idle / presence (+ Jimbo jiggler delay)
+    if (!state.modal || state.modal.kind !== "presence") {
       state.idleAcc += dt;
-      if (state.idleAcc >= IDLE_AWAY && state.presence !== "away") {
-        state.presence = "away";
+
+      if (state.jimboJiggler && !state.presenceForced) {
+        state.jigglerMaskAcc += dt;
+        state.jigglerPulseAcc += dt;
+        state.jigglerSanityAcc += dt;
+        // Soft bump: keep badge Active for a while (DELAY Away, do not delete)
+        if (state.jigglerMaskAcc < JIGGLER_MAX_MASK) {
+          if (state.jigglerPulseAcc >= JIGGLER_PULSE && state.idleAcc >= IDLE_YELLOW - 1) {
+            state.jigglerPulseAcc = 0;
+            state.idleAcc = Math.min(state.idleAcc, IDLE_YELLOW - 0.5);
+            if (state.presence !== Presence.AWAY) state.presence = Presence.ACTIVE;
+            audio.playSfx("jigglerTick", { volume: 0.2 });
+            if (Math.random() < 0.35) {
+              toast(pick(jigglerCopy.tickToasts) || pick(jimboCopy.jiggleToasts) || "Wiggle.", {
+                jimbo: true,
+              });
+            }
+          }
+        }
+        if (state.jigglerSanityAcc >= JIGGLER_SANITY_EVERY) {
+          state.jigglerSanityAcc = 0;
+          hitSanity(1);
+        }
+        maybeJigglerAudit();
+      }
+
+      if (state.idleAcc >= IDLE_AWAY && state.presence !== Presence.AWAY) {
+        state.presence = Presence.AWAY;
+        state.statusPopover = false;
         audio.playSfx("awayTick", { volume: 0.3 });
         forceAwayMail();
-      } else if (state.idleAcc >= IDLE_YELLOW && state.presence === "active") {
-        state.presence = "yellow";
+      } else if (state.idleAcc >= IDLE_YELLOW && state.presence === Presence.ACTIVE) {
+        state.presence = Presence.IDLE_YELLOW;
         audio.playSfx("awayTick", { volume: 0.2 });
       }
+    } else {
+      state.statusPopover = false;
     }
     // doom mail timer
     if (!state.presenceForced) {
@@ -1887,18 +2410,19 @@ export function createWin95(copy, hooks) {
     }
 
     // Random incident pager (GD incidents.md) - never stacks two modals
+    // Prefer one modal at a time: skip if Away/presenceForced or any modal open
     if (state.incidentPagerCooldown > 0) state.incidentPagerCooldown -= dt;
     if (
       state.emailEnabled &&
       !state.modal &&
       !state.presenceForced &&
       !minigameFocused() &&
+      !state.timesheetGateOpen &&
       state.incidentPagerCooldown <= 0
     ) {
       state.incidentPagerCd -= dt;
       if (state.incidentPagerCd <= 0) {
         state.incidentPagerCd = 40; // check cadence
-        // Soft: can fire before first close (lower chance); denser after >=1 ticket
         const chance = (state.closedCount || 0) >= 1 ? 0.15 : 0.08;
         if (Math.random() < chance) {
           openIncident({ fromTicket: false });
@@ -1915,10 +2439,32 @@ export function createWin95(copy, hooks) {
   function enableDaySystems() {
     state.emailEnabled = true;
     state.idleAcc = 0;
-    state.presence = "active";
+    state.presence = Presence.ACTIVE;
+    state.presenceStatus = null;
+    state.statusPopover = false;
+    state.jimboJiggler = false;
+    state.jigglerInstalled = false;
+    state.jigglerPulseAcc = 0;
+    state.jigglerSanityAcc = 0;
+    state.jigglerMaskAcc = 0;
+    state.jigglerAuditArmed = false;
+    state.jigglerAuditDone = false;
+    state.jigglerAuditAt = 0;
+    state.boardRefillPaused = false;
+    state.timesheetQueued = false;
+    state.timesheetGateOpen = false;
+    state.ticketsCompletedSinceLock = 0;
+    state.timesheetLockedOk = false;
+    state.timesheetGateThreshold = 3; // every 3 completions or Shut Down
+    state.timesheetJimboFills = 0;
+    state.timesheetPendingClockOut = false;
+    state.timesheetAcceptedOpen = false;
+    resetTimesheetHours();
+    if (wins.timesheet) wins.timesheet.open = false;
     state.emailCooldown = 8 + Math.random() * 6;
     state.incidentPagerCd = 45 + Math.random() * 45;
     state.incidentPagerCooldown = 0;
+    state.incidentFromPager = false;
   }
 
   function onPointerMove(nx, ny) {
@@ -1935,18 +2481,9 @@ export function createWin95(copy, hooks) {
         if (action === "ask") {
           state.modal = null;
           askJimbo();
-        } else if (action === "dismiss-away") {
-          const mail = state.modal.mail;
-          if (mail) {
-            mail.read = true;
-            mail.opened = true;
-          }
-          state.modal = null;
-          state.presenceForced = false;
-          state.presence = "active";
-          state.idleAcc = 0;
-          toast(pick(jimboCopy.jiggleToasts) || "I jiggled your mouse for you!", { jimbo: true });
-          audio.playSfx("click");
+        } else if (action === "dismiss-away" || (typeof action === "string" && action.startsWith("excuse:"))) {
+          dismissAwayWithExcuse({ action: action === "dismiss-away" ? "excuse:water" : action, label: b.label });
+          return true;
         } else if (action === "jiggle") {
           bumpPresenceJiggle(1);
           audio.playSfx("click");
@@ -2111,7 +2648,7 @@ export function createWin95(copy, hooks) {
     ];
   }
 
-  /** Shared by board ticket HELIX-5201 and random pager interrupt. */
+  /** Shared by board ticket CORP-5201 and random pager interrupt. */
   function openIncident({ headline, fromTicket } = {}) {
     const S = ticketStrings.incident || copy.incident || {};
     const assignees = S.assignees || [
@@ -2128,7 +2665,7 @@ export function createWin95(copy, hooks) {
       // keep activeTicket; phase already set by openTicket
     } else {
       state.activeTicket = {
-        id: "HELIX-5201",
+        id: "CORP-5201",
         title: S.ticket?.title || "P0: Something is On Fire",
         pts: 4,
         type: "incident",
@@ -2157,7 +2694,7 @@ export function createWin95(copy, hooks) {
       toastSelf: S.toastSelf || "Cannot assign to yourself. That would be accountability.",
     };
     state.modal = {
-      title: S.windowTitle || "HelixStack Incident - Sev0 (Probably)",
+      title: S.windowTitle || "Corp Incident - Sev0 (Probably)",
       body: incidentBody(S),
       kind: "incidentTicket",
       buttons: incidentButtons(S),
@@ -2228,7 +2765,7 @@ export function createWin95(copy, hooks) {
   function refreshIncidentModal(S) {
     S = S || ticketStrings.incident || {};
     if (!state.modal || state.modal.kind !== "incidentTicket") {
-      state.modal = { title: S.windowTitle || "HelixStack Incident - Sev0 (Probably)", kind: "incidentTicket" };
+      state.modal = { title: S.windowTitle || "Corp Incident - Sev0 (Probably)", kind: "incidentTicket" };
     }
     state.modal.body = incidentBody(S);
     state.modal.buttons = incidentButtons(S);
@@ -2344,6 +2881,11 @@ export function createWin95(copy, hooks) {
           else if (ic.id === "inbox") {
             openInbox();
             audio.playSfx("click");
+          } else if (ic.id === "timesheet") {
+            openTimesheet({ forced: false });
+            audio.playSfx("click");
+          } else if (ic.id === "jiggler") {
+            toggleJiggler({ fromStart: false });
           }
           return;
         }
@@ -2426,7 +2968,16 @@ export function createWin95(copy, hooks) {
       wins.ide.open = true;
       raise("ide");
     } else if (item.submenu) {
-      deniedToast(item);
+      
+    if (id === "timesheet" || lab === (timesheetCopy.desktopLabel || "timesheet.xls") || /timesheet/i.test(lab)) {
+      openTimesheet({ forced: false });
+      return;
+    }
+    if (id === "jiggler" || lab === (jigglerCopy.menuLabel || "Jimbo Mouse Jiggler") || /jiggler/i.test(lab)) {
+      toggleJiggler({ fromStart: true });
+      return;
+    }
+    deniedToast(item);
     } else if (/run/i.test(label)) {
       deniedToast(item);
     } else {
@@ -2689,6 +3240,27 @@ export function createWin95(copy, hooks) {
         }
       }
     }
+  
+    if (win.id === "timesheet") {
+      if (hit(state._tsJimboBtn, x, y)) {
+        jimboAutoFillTimesheet();
+        return;
+      }
+      if (hit(state._tsAcceptBtn, x, y)) {
+        acceptTimesheet();
+        return;
+      }
+      if (state._tsHits) {
+        for (const th of state._tsHits) {
+          if (hit(th.hit, x, y)) {
+            nudgeTimesheetHour(th.id, th.kind === "plus" ? 0.5 : -0.5);
+            audio.playSfx("click");
+            return;
+          }
+        }
+      }
+      return;
+    }
   }
 
   function trySemi(i) {
@@ -2839,5 +3411,20 @@ export function createWin95(copy, hooks) {
     enableDaySystems,
     askJimbo,
     openJimbo,
+    Presence,
+    toggleJiggler,
+    presenceBlocksBoard,
+    canClaimTicket,
+    canSubmitTicket,
+    requestBoardRefill,
+    requestTimesheetGate,
+    clearTimesheetGate,
+    flushTimesheetQueue,
+    openTimesheet,
+    acceptTimesheet,
+    needsTimesheetForClockOut,
+    openIncident,
   };
 }
+
+export { Presence };

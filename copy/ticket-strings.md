@@ -1,8 +1,8 @@
-# ticket-strings — jokes + Jimbo sabotage for extra ticket types
+# ticket-strings -- jokes + Jimbo sabotage for extra ticket types
 
-Keys include `incident` (HELIX-5201). See `incident.md` for full headlines/assignees.
+Keys include `incident` (CORP-5201). See `incident.md` for full headlines/assignees.
 
-Punch up at process / Kyle / InsightBot / fog — no ableist jokes.
+Punch up at process / Kyle / InsightBot / fog -- no ableist jokes.
 
 ```json
 {
@@ -38,7 +38,7 @@ Punch up at process / Kyle / InsightBot / fog — no ableist jokes.
       "Left the markers in. For heritage."
     ],
     "unsub": [
-      "Opened HelixHub preferences. 404 Synergy!",
+      "Opened CorpHub preferences. 404 Synergy!",
       "Unsubscribed you from nothing. Added two mails.",
       "Clicked 'Manage in browser' into the void."
     ],
@@ -185,7 +185,7 @@ Punch up at process / Kyle / InsightBot / fog — no ableist jokes.
         "Confirm",
         "Was this helpful? Yes",
         "Was this helpful? No",
-        "Manage in HelixHub"
+        "Manage in CorpHub"
       ],
       "mails": [
         {
@@ -262,7 +262,7 @@ Punch up at process / Kyle / InsightBot / fog — no ableist jokes.
       "toast": "Committed to the vibe of 5."
     },
     "incident": {
-      "windowTitle": "HelixStack Incident \u2014 Sev0 (Probably)",
+      "windowTitle": "Corp Incident \u2014 Sev0 (Probably)",
       "buttons": [
         "Disable Monitor",
         "Assign to somebody else",

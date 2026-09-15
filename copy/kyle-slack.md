@@ -1,4 +1,4 @@
-# kyle-slack — interrupting DMs mid-task
+# kyle-slack -- interrupting DMs mid-task
 
 Append to `SLACK_POOL` or fire on a timer during tickets/PR.
 
