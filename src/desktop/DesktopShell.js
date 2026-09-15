@@ -69,6 +69,23 @@ export function installDesktopShell(d) {
           d.ctx.fillStyle = "#2a7a3a";
           d.ctx.fillRect(bx + 10, by + 4, 24, 6);
         }
+      } else if (ic.id === "tickets") {
+        if (d.imgReady(d.imgs.tr32)) {
+          d.ctx.drawImage(d.imgs.tr32, bx + 8, by, 32, 32);
+        } else if (d.imgReady(d.imgs.tr48)) {
+          d.ctx.drawImage(d.imgs.tr48, bx + 4, by, 40, 40);
+        } else {
+          // Amber clipboard/board fallback until PNGs load
+          d.bevelRaised(bx + 8, by + 2, 28, 30, "#a89030");
+          d.ctx.fillStyle = "#f4e8b0";
+          d.ctx.fillRect(bx + 12, by + 8, 20, 18);
+          d.ctx.fillStyle = "#6a5820";
+          d.ctx.fillRect(bx + 14, by + 11, 16, 2);
+          d.ctx.fillRect(bx + 14, by + 15, 16, 2);
+          d.ctx.fillRect(bx + 14, by + 19, 12, 2);
+          d.ctx.fillStyle = "#c8b050";
+          d.ctx.fillRect(bx + 18, by + 4, 8, 5);
+        }
       } else if (ic.id === "teams") {
         if (d.imgReady(d.imgs.t32)) {
           d.ctx.drawImage(d.imgs.t32, bx + 8, by, 32, 32);
@@ -435,6 +452,10 @@ export function installDesktopShell(d) {
             d.audio.playSfx("click");
           } else if (ic.id === "jiggler") {
             d.toggleJiggler({ fromStart: false });
+          } else if (ic.id === "tickets") {
+            d.wins.tickets.open = true;
+            d.raise("tickets");
+            d.audio.playSfx("click");
           } else if (ic.id === "teams" || ic.id === "slack") {
             d.wins.slack.open = true;
             d.wins.slack.title = d.teamsCopy.windowTitle || d.wins.slack.title;
@@ -482,7 +503,7 @@ export function installDesktopShell(d) {
       d.openJimbo();
     } else if (id === "inbox" || /inbox|outlook|mail/i.test(label)) {
       d.openInbox();
-    } else if (id === "tickets" || label.includes("Ticket")) {
+    } else if (id === "tickets" || /ticket|tracker/i.test(label)) {
       d.wins.tickets.open = true;
       d.raise("tickets");
     } else if (id === "slack" || id === "teams" || /slack|teams/i.test(label)) {

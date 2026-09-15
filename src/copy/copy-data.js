@@ -639,6 +639,10 @@ export default {
         "id": "jimbo"
       },
       {
+        "label": "Tracker",
+        "id": "tickets"
+      },
+      {
         "label": "Inbox",
         "id": "inbox"
       },

@@ -74,6 +74,9 @@ export function setupAfter_tStr(d) {
     olFocused: d.loadImg("assets/outlook/focused.png"),
     olOther: d.loadImg("assets/outlook/other.png"),
     olNew: d.loadImg("assets/outlook/new_mail.png"),
+    tr16: d.loadImg("assets/icons/tracker_16.png"),
+    tr32: d.loadImg("assets/icons/tracker_32.png"),
+    tr48: d.loadImg("assets/icons/tracker_48.png"),
   };
 
 }
@@ -317,26 +320,27 @@ export function setupAfter_activePrScript(d) {
 
   d.deskIcons = [
     { id: "jimbo", label: "Jimbo", x: 8, y: 8, img: "j32" },
-    { id: "inbox", label: d.outlookCopy.desktopLabel || d.emailCopy.desktopLabel || "Mail", x: 8, y: 56, img: null },
+    { id: "tickets", label: "Tracker", x: 8, y: 56, img: "tr32" },
+    { id: "inbox", label: d.outlookCopy.desktopLabel || d.emailCopy.desktopLabel || "Mail", x: 8, y: 104, img: null },
     {
       id: "timesheet",
       label: d.timesheetCopy.desktopLabel || "timesheet.xls",
       x: 8,
-      y: 104,
+      y: 152,
       img: "ts32",
     },
     {
       id: "jiggler",
       label: d.jigglerCopy.desktopLabel || "Jiggler",
       x: 8,
-      y: 152,
+      y: 200,
       img: "jig32",
     },
     {
       id: "teams",
       label: d.teamsCopy.desktopLabel || "Sync",
       x: 8,
-      y: 200,
+      y: 248,
       img: "t32",
     },
   ];

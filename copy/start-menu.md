@@ -4,6 +4,11 @@
 {
   "startLabel": "Start",
   "items": [
+    {"label": "Jimbo", "id": "jimbo"},
+    {"label": "Tracker", "id": "tickets"},
+    {"label": "Inbox", "id": "inbox"},
+    {"label": "Jimbo Mouse Jiggler", "id": "jiggler"},
+    {"label": "timesheet.xls", "id": "timesheet"},
     {"label": "Programs", "submenu": ["corp.exe", "InsightBot", "Solitaire (blocked by policy)", "Notepad (for feelings)"]},
     {"label": "Documents", "submenu": ["sprint-notes-final-FINAL.doc", "todo-ignore.txt", "resignation-draft-3.doc"]},
     {"label": "Settings", "submenu": ["Control Panel", "Fog Density", "Sanity Options"]},

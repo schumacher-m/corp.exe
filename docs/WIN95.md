@@ -170,6 +170,26 @@ Desktop icon for locked timesheet spreadsheet (`timesheet.xls` vibe). Beige shee
 | Mirrors | `assets/timesheet/timesheet_xls_{16,32,48}.png` | same | Alias copies |
 
 
+
+## Tracker desktop icon
+
+Desktop icon for the Tickets / Tracker window (clipboard + ticket-board tile). Beige paper board, muddy amber clip & status chips `#a89030`. Classic Win95 nearest-neighbor — **not** a Jira trademark logo or lettermark. Unbranded.
+
+| Spec | Value |
+|------|-------|
+| Desktop label | **Tracker** |
+| Role | Desktop / Start / Explorer app icon |
+| Regenerator | `assets/icons/build_tracker.py` |
+
+| Asset | Path | Size | Use |
+|-------|------|------|-----|
+| 16 | `assets/icons/tracker_16.png` | 16×16 RGBA | Title / taskbar / list |
+| 32 | `assets/icons/tracker_32.png` | 32×32 RGBA | Start / Explorer |
+| 48 | `assets/icons/tracker_48.png` | 48×48 RGBA | Desktop icon |
+
+Accent: `#a89030` / `#c8b050` / `#786420` on beige paper `#F0E8D0`. Nearest-neighbor only.
+
+
 ## Call Theater / Sync
 
 Purple parody of corporate chat + call overlay. Player-facing: **Sync** (not Slack/Teams). Abstract muddy-purple chat-bubble + handset tile — **no letter "T"**, not a trademark logo. Anonymous corp (no Helix). Asset folder stays `assets/teams/`. Spec: `specs/03-call-theater.md`. Dev notes: `assets/teams/TEAMS_UI.md`. See `docs/GENERIC_NAMES.md`.
