@@ -1077,15 +1077,23 @@ async function runBoot() {
   $("screen-title").classList.remove("active");
   const boot = $("boot-overlay");
   if (boot) boot.classList.remove("show");
-  // CORP-TOWER-01 ready in Tower.js but gated until lighting PASS (Tester farm smoke).
-  // Flip true (or call tower.startPlaza) when CoS opens the Tower tip.
+  // CORP-TOWER-01 — plaza arrival on clock-in (cache-bust index ?v= when flipping).
   const TOWER_ON_CLOCK_IN = true;
-  if (TOWER_ON_CLOCK_IN && tower?.startPlaza) {
-    await tower.startPlaza();
+  if (TOWER_ON_CLOCK_IN) {
+    if (tower?.startPlaza) {
+      console.info("[corp] tower-gate: TOWER_ON_CLOCK_IN=true → plaza");
+      await tower.startPlaza();
+      return;
+    }
+    console.error("[corp] tower-gate: flag on but tower missing — refusing silent farm fallthrough");
+    toast("Tower module failed to load — retry CLOCK IN", false);
+    G._clockInArmed = false;
+    const btn = $("btn-clock-in");
+    if (btn) { btn.disabled = false; }
     return;
   }
   G.phase = "walk";
-  console.info("[corp] tower-gate: TOWER_ON_CLOCK_IN=true → plaza");
+  console.info("[corp] tower-gate: farm walk (tower off or unavailable)");
   audio.playBgm("bgmWalk");
   audio.startExhaustedBed({ volume: 0.32 });
   player.pos.set(0, 1.55, 3.2);
