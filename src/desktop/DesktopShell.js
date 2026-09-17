@@ -23,6 +23,7 @@ export function installDesktopShell(d) {
     d.state.toast = msg;
     d.state.toastT = 100;
     d.state.toastJimbo = !!jimbo;
+    d.state._uiDirty = true;
   }
 
   d.hitSanity = function hitSanity(n) {
@@ -965,10 +966,11 @@ export function installDesktopShell(d) {
         d.tryFinishTicket("semi", d.state.pendingFinish.pts);
         return;
       }
-      const semis = (d.getSemiLines && d.getSemiLines()) || d.state.semiLines || d.copy.semiLines || [];
-      for (const ln of semis) {
-        if (ln && ln._hit && d.hit(ln._hit, x, y)) {
-          d.trySemi(ln._hit.i);
+      const semis = d.state._semiHits || [];
+      for (let si = 0; si < semis.length; si++) {
+        const hit = semis[si];
+        if (hit && d.hit(hit, x, y)) {
+          d.trySemi(hit.i);
           return;
         }
       }

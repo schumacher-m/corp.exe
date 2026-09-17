@@ -381,6 +381,7 @@ export function installTicketsApp(d) {
     d.state.prJimboNit = null;
     d.state.semiLines = null; // fresh clone on ensureSemi
     d.state.semiPlaced = null;
+    d.state._semiHits = null;
     d.state.commentDone = null;
     d.state.commentIdx = 0;
     d.state.prStep = 0;

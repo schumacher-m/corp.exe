@@ -239,6 +239,8 @@ const win95 = createDesktop(copy, {
     if (nodes.KyleBust) nodes.KyleBust.visible = false;
   },
   onType: () => {
+    // Skip hand anim cue while Win95 overlay owns the screen (cuts GPU work on keyclacks)
+    if (typeof isDesktopFullscreen === "function" && isDesktopFullscreen()) return;
     G.handTypeT = 0.25;
   },
   onClick: () => {
@@ -949,7 +951,15 @@ function updateSeated(dt) {
 
   win95.tick(dt);
   win95.render();
-  if (!fs) crtTex.needsUpdate = true;
+  // Non-fullscreen CRT: throttle texture uploads (was every frame → tab discard)
+  if (!fs) {
+    G._crtUploadAcc = (G._crtUploadAcc || 0) + dt;
+    if (win95.state._uiDirty || G._crtUploadAcc >= 0.1) {
+      crtTex.needsUpdate = true;
+      win95.state._uiDirty = false;
+      G._crtUploadAcc = 0;
+    }
+  }
 }
 
 

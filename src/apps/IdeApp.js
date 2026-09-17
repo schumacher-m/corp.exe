@@ -149,10 +149,12 @@ export function installIdeApp(d) {
       let yy = y + 8;
       const lines = d.getSemiLines();
       const maxLines = Math.min(lines.length, 24);
+      if (!d.state._semiHits) d.state._semiHits = [];
+      d.state._semiHits.length = 0;
       for (let i = 0; i < maxLines; i++) {
         const ln = lines[i];
         if (!ln) continue;
-        const placed = d.state.semiPlaced[i];
+        const placed = !!d.state.semiPlaced[i];
         let semi = "";
         if (ln.need && placed) {
           if (d.state.semiStyle?.mode === "double" && i % 2 === 1) semi = ";;";
@@ -162,14 +164,18 @@ export function installIdeApp(d) {
         if (d.state.semiStyle?.mode === "strip" && placed && ln.need && i % 2 === 0) semi = "";
         if (d.state.semiStyle?.mode === "double" && placed && ln.need && i % 2 === 0) semi = ";";
         d.ctx.fillStyle = placed && ln.need ? d.C.sick : "#c8c4b0";
-        const label = String(i + 1).padStart(2, " ") + " " + String(ln.code || "") + semi;
-        d.ctx.fillText(label.slice(0, 48), x + 4, yy);
-        if (!ln._hit) ln._hit = { x: 0, y: 0, w: 0, h: 0, i: 0 };
-        ln._hit.x = x;
-        ln._hit.y = yy - 7;
-        ln._hit.w = w;
-        ln._hit.h = 9;
-        ln._hit.i = i;
+        const label = String(i + 1).padStart(2, " ") + " " + String(ln.code || "").slice(0, 40) + semi;
+        d.ctx.fillText(label, x + 4, yy);
+        // Tight row hit (not full client width) + 1px gap so adjacent lines never double-fire
+        let hit = d.state._semiHits[i];
+        if (!hit) hit = { x: 0, y: 0, w: 0, h: 0, i: 0 };
+        hit.x = x + 2;
+        hit.y = yy - 6;
+        hit.w = Math.min(w - 4, 200);
+        hit.h = 8;
+        hit.i = i;
+        d.state._semiHits[i] = hit;
+        d.state._semiHits.length = i + 1;
         yy += 9;
         if (yy > y + h - 36) break;
       }
@@ -396,31 +402,44 @@ export function installIdeApp(d) {
   }
 
   d.trySemi = function trySemi(i) {
-    d.ensureSemi();
-    const lines = d.getSemiLines();
-    const ln = lines[i];
-    if (!ln) return;
-    d.audio.keyclack();
-    d.hooks.onType?.();
-    d.bumpActivity();
-    if (!ln.need) {
-      d.hitSanity(8);
-      const err = d.copy.dialogs?.errors?.[0];
-      d.toast((err && err.body) || "No semicolon needed");
-      d.audio.playSfx("error");
-      return;
-    }
-    if (d.state.semiPlaced[i]) return;
-    d.state.semiPlaced[i] = true;
-    d.state.sprint += 1;
-    const left = lines.filter((l, j) => l.need && !d.state.semiPlaced[j]).length;
-    if (left <= 0) {
-      const pts = d.state.activeTicket?.pts || 3;
-      if (d.state.jimboUsedThisTicket) d.finishTicket("semi", pts);
-      else {
-        d.state.pendingFinish = { type: "semi", pts };
-        d.toast("Work done - Ask Jimbo to submit");
+    if (d.state._tryingSemi) return;
+    d.state._tryingSemi = true;
+    try {
+      d.ensureSemi();
+      const lines = d.getSemiLines();
+      const idx = i | 0;
+      const ln = lines[idx];
+      if (!ln) return;
+      // Already placed: silent no-op (no SFX / hand anim / GPU churn)
+      if (d.state.semiPlaced && d.state.semiPlaced[idx]) return;
+      d.bumpActivity();
+      if (!ln.need) {
+        d.audio.keyclack();
+        d.hitSanity(8);
+        const err = d.copy.dialogs?.errors?.[0];
+        d.toast((err && err.body) || "No semicolon needed");
+        d.audio.playSfx("error");
+        return;
       }
+      d.audio.keyclack();
+      d.hooks.onType?.();
+      d.state.semiPlaced[idx] = true;
+      d.state.sprint += 1;
+      d.state._uiDirty = true;
+      let left = 0;
+      for (let j = 0; j < lines.length; j++) {
+        if (lines[j].need && !d.state.semiPlaced[j]) left++;
+      }
+      if (left <= 0) {
+        const pts = d.state.activeTicket?.pts || 3;
+        if (d.state.jimboUsedThisTicket) d.finishTicket("semi", pts);
+        else {
+          d.state.pendingFinish = { type: "semi", pts };
+          d.toast("Work done - Ask Jimbo to submit");
+        }
+      }
+    } finally {
+      d.state._tryingSemi = false;
     }
   }
 
