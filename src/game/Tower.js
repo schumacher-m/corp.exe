@@ -470,7 +470,7 @@ export function createTower(opts) {
     } catch (_) {}
     stopTowerAmbs();
     audio.playLoop("plazaAmb", { volume: 0.32 });
-    setPrompt((ta().plaza || {}).enterPrompt || "WASD · Enter tower (E)");
+    setPrompt("WASD · walk to the tower entrance");
     toast((ta().plaza || {}).toast || "Welcome to the building.", true);
   }
 
@@ -566,6 +566,27 @@ export function createTower(opts) {
   /* Entrance volume: graybox door ~2.4 wide @ z=-4.4; keep forgiving for GLB/approach. */
   const ENTRANCE_ENTER_R = 4.5;
   const ENTRANCE_PROMPT_R = 6.5;
+  const ENTRANCE_MAGNET_R = 7.25;
+
+  function plazaDoorPrompt() {
+    const pl = ta().plaza || {};
+    return pl.doorPrompt || pl.enterPrompt || "E -- Enter lobby";
+  }
+
+  function softMagnetEntrance(dt, bounds) {
+    const w = worldOf("tower_entrance");
+    if (!w) return;
+    const dx = w.x - player.pos.x;
+    const dz = w.z - player.pos.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist < 0.2 || dist > ENTRANCE_MAGNET_R) return;
+    const t = 1 - dist / ENTRANCE_MAGNET_R;
+    const pull = player.speed * 0.42 * t * t;
+    player.pos.x += (dx / dist) * pull * dt;
+    player.pos.z += (dz / dist) * pull * dt;
+    player.pos.x = THREE.MathUtils.clamp(player.pos.x, bounds.xmin, bounds.xmax);
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, bounds.zmin, bounds.zmax);
+  }
 
   function tryInteract() {
     if (interactCooldown > 0) return;
@@ -662,11 +683,13 @@ export function createTower(opts) {
     if (interactCooldown > 0) interactCooldown -= dt;
 
     if (G.phase === "plaza") {
-      updateFpMove(dt, { xmin: -10, xmax: 10, zmin: -8.5, zmax: 9 });
+      const plazaBounds = { xmin: -10, xmax: 10, zmin: -8.5, zmax: 9 };
+      updateFpMove(dt, plazaBounds);
+      softMagnetEntrance(dt, plazaBounds);
       applyCamera(camera);
       setPrompt(
         nearHook("tower_entrance", ENTRANCE_PROMPT_R)
-          ? (ta().plaza || {}).enterPrompt || "E — Enter tower"
+          ? plazaDoorPrompt()
           : "WASD · walk to the tower entrance"
       );
       return;
