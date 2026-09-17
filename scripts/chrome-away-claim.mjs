@@ -16,54 +16,82 @@ await new Promise(r=>setTimeout(r,400));
 const result = await page.evaluate(() => {
   const d = window.corpWin95.__d;
   const log = [];
-  // Force Away
-  d.forceAwayMail();
-  log.push({
-    step: "forced",
-    presenceForced: !!d.state.presenceForced,
-    blocks: d.presenceBlocksBoard(),
-    canClaim: d.canClaimTicket(),
-    modalKind: d.state.modal?.kind,
-    btnActions: (d.state._modalBtns||[]).map(b=>b.action), // may be empty until render
-  });
-  d.render();
-  log.push({
-    step: "afterRender",
-    btnActions: (d.state._modalBtns||[]).map(b => ({ action: b.action, excuseId: b.excuseId, hasSanity: b.sanityHit!=null })),
-  });
 
-  // Simulate clicking first excuse button via handleModalClick at hit center
+  // 1) Excuse button via handleModalClick
+  d.forceAwayMail();
+  d.render();
   const btn = (d.state._modalBtns||[])[0];
   if (!btn) return { err: "no modal btns", log };
-  d.state.cursor = { x: btn.hit.x + btn.hit.w/2, y: btn.hit.y + btn.hit.h/2 };
-  d.handleModalClick(d.state.cursor.x, d.state.cursor.y);
+  d.handleModalClick(btn.hit.x + btn.hit.w/2, btn.hit.y + btn.hit.h/2);
   log.push({
-    step: "afterExcuseClick",
+    step: "excuseBtn",
     presenceForced: !!d.state.presenceForced,
-    blocks: d.presenceBlocksBoard(),
     canClaim: d.canClaimTicket(),
     modal: !!d.state.modal,
-    toast: d.state.toast,
   });
 
-  // Claim opener ticket
+  // 2) Backdrop click must clear Away (body pretend-OK)
+  d.forceAwayMail();
+  d.render();
+  d.onPointerDown(); // cursor may be elsewhere — set body click
+  d.state.cursor = { x: d.W / 2, y: 72 };
+  d.handleModalClick(d.state.cursor.x, d.state.cursor.y);
+  log.push({
+    step: "backdrop",
+    presenceForced: !!d.state.presenceForced,
+    canClaim: d.canClaimTicket(),
+    modal: !!d.state.modal,
+    presence: d.state.presence,
+  });
+
+  // 3) Orphan forced (modal cleared wrongly) must heal on claim check
+  d.state.presenceForced = true;
+  d.state.presence = d.Presence.AWAY;
+  d.state.modal = null;
+  const blocks = d.presenceBlocksBoard();
+  log.push({
+    step: "orphanHeal",
+    blocks,
+    presenceForced: !!d.state.presenceForced,
+    presence: d.state.presence,
+    canClaim: d.canClaimTicket(),
+  });
+
+  // 4) Stale fillerDone hits must not softlock (Away path ignores non-excuse)
+  d.forceAwayMail();
+  d.state._modalBtns = [{
+    hit: { x: 0, y: 0, w: d.W, h: d.H },
+    action: "fillerDone",
+    label: "STALE",
+  }];
+  d.handleModalClick(d.W / 2, d.H / 2);
+  log.push({
+    step: "staleFiller",
+    presenceForced: !!d.state.presenceForced,
+    modal: d.state.modal?.kind || null,
+    canClaim: d.canClaimTicket(),
+    presence: d.state.presence,
+  });
+
+  // Claim opener
   const tk = d.state.board[0];
   d.openTicket(tk);
   log.push({
     step: "afterOpen",
     phase: d.state.phase,
     active: d.state.activeTicket?.id,
-    toast: d.state.toast,
   });
 
-  return {
-    log,
-    cleared: !log[2].presenceForced && log[2].canClaim,
-    claimed: !!log[3].active && log[3].phase !== "desktop",
-  };
+  const ok =
+    log[0].canClaim && !log[0].presenceForced &&
+    log[1].canClaim && !log[1].presenceForced &&
+    !log[2].blocks && !log[2].presenceForced &&
+    log[3].canClaim && !log[3].presenceForced &&
+    !!log[4].active;
+
+  return { log, ok };
 });
 console.log(JSON.stringify(result, null, 2));
-const ok = result.cleared && result.claimed;
-console.log(ok ? "AWAY_CLAIM_PASS" : "AWAY_CLAIM_FAIL");
+console.log(result.ok ? "AWAY_CLAIM_PASS" : "AWAY_CLAIM_FAIL");
 await browser.close();
-process.exit(ok ? 0 : 1);
+process.exit(result.ok ? 0 : 1);

@@ -9,8 +9,21 @@ export function installPresence(d) {
     }
   }
 
+  d.healOrphanAway = function healOrphanAway() {
+    // Modal dismissed without clear (stale btn / wrong action) → claim softlock
+    if (!d.state.presenceForced) return false;
+    if (d.state.modal && d.state.modal.kind === "presence") return false;
+    d.state.presenceForced = false;
+    if (d.state.presence === d.Presence.AWAY) d.state.presence = d.Presence.ACTIVE;
+    d.state.idleAcc = 0;
+    d.state.jigglerMaskAcc = 0;
+    d.state.boardRefillPaused = false;
+    return true;
+  }
+
   d.presenceBlocksBoard = function presenceBlocksBoard() {
-    return !!d.state.presenceForced || (d.state.modal && d.state.modal.kind === "presence");
+    d.healOrphanAway();
+    return !!(d.state.presenceForced || (d.state.modal && d.state.modal.kind === "presence"));
   }
 
   d.presenceColor = function presenceColor() {
@@ -127,6 +140,7 @@ export function installPresence(d) {
     d.state.presenceForced = true;
     d.state.presence = d.Presence.AWAY;
     d.state.statusPopover = false;
+    d.state._modalBtns = null; // drop stale hits (fillerDone etc. softlock Away)
     d.state.boardRefillPaused = true; // endless board waits behind Away
     // If timesheet somehow armed, demote to queue -- never stack on Away
     if (d.state.timesheetGateOpen) {

@@ -130,7 +130,31 @@ export function installModal(d) {
   }
 
   d.handleModalClick = function handleModalClick(x, y) {
-    if (!d.state.modal || !d.state._modalBtns) return false;
+    if (!d.state.modal) return false;
+    const awayLocked =
+      d.state.presenceForced && d.state.modal.kind === "presence";
+    // Away softlock harden: any click on the Away modal clears presenceForced
+    // (buttons OR backdrop). Body copy says pretend-OK; miss-clicks used to
+    // eat the event and leave tray Away / claim blocked.
+    if (awayLocked) {
+      const btns = d.state._modalBtns || [];
+      let picked = null;
+      for (const b of btns) {
+        if (d.hit(b.hit, x, y)) {
+          picked = b;
+          break;
+        }
+      }
+      d.dismissAwayWithExcuse({
+        action: picked?.action === "dismiss-away" ? "excuse:water" : picked?.action || "excuse",
+        label: picked?.label || "Acknowledge",
+        excuseId: picked?.excuseId || "ack",
+        sanityHit: picked?.sanityHit,
+        toast: picked?.toast,
+      });
+      return true;
+    }
+    if (!d.state._modalBtns) return false;
     for (const b of d.state._modalBtns) {
       if (d.hit(b.hit, x, y)) {
         const action = b.action;
