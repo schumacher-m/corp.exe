@@ -94,6 +94,19 @@ def checker(w: int, h: int, a: tuple[int, int, int], b: tuple[int, int, int], ce
     return Image.fromarray(arr, "RGB")
 
 
+
+def assert_readable_floor(path: Path, min_avg: float = 100.0) -> None:
+    """Reject near-black / speckled floor mats (Tester FAIL was avg~(2,2,2))."""
+    import numpy as np
+    from PIL import Image
+    a = np.asarray(Image.open(path).convert("RGB"), dtype=np.float32)
+    avg = float(a.mean())
+    zeros = int((a.reshape(-1, 3) == 0).all(axis=1).sum())
+    if avg < min_avg or zeros > a.shape[0] * a.shape[1] * 0.05:
+        raise SystemExit(
+            f"floor.png unreadable avg={avg:.1f} zeros={zeros}/{a.shape[0]*a.shape[1]} — refuse ship"
+        )
+
 def save_tex(name: str, img: Image.Image) -> Path:
     path = TEX / f"{name}.png"
     img = img.resize(img.size, Image.NEAREST)
@@ -105,6 +118,7 @@ def write_textures() -> dict[str, Path]:
     out = {}
     out["wall"] = save_tex("wall", dither_fill(64, 64, PALETTE["wall"], PALETTE["wall_hi"]))
     out["floor"] = save_tex("floor", checker(64, 64, PALETTE["floor"], PALETTE["floor_tile"], 8))
+    assert_readable_floor(out["floor"])
     out["desk"] = save_tex("desk", dither_fill(32, 32, PALETTE["desk"], PALETTE["desk_hi"]))
     out["plastic"] = save_tex("plastic", dither_fill(32, 32, PALETTE["plastic"], PALETTE["edge"]))
     out["crt"] = save_tex("crt", dither_fill(32, 32, PALETTE["crt_glass"], PALETTE["crt_green"]))
