@@ -136,6 +136,7 @@ export function installTimesheetApp(d) {
     d.state.ticketsCompletedSinceLock = 0;
     d.state.timesheetLockedOk = true;
     d.state.timesheetAcceptedOpen = true;
+    if (d.bumpObligation) d.bumpObligation("timesheet");
     d.clearTimesheetGate();
     d.toast(
       d.timesheetCopy.hoursReconciled ||

@@ -361,6 +361,90 @@ export function installDesktopShell(d) {
     d.drawCursor();
   }
 
+
+  d.daySimCopy = function daySimCopy() {
+    return (d.copy && d.copy.daySim) || {};
+  }
+
+  d.beatWeights = function beatWeights() {
+    const id = d.state.dayBeat || "morning";
+    const table = d.DAY_BEAT_WEIGHTS || {};
+    return table[id] || table.morning || {};
+  }
+
+  d.resetObligations = function resetObligations() {
+    const cfg = d.DAY_OBLIGATIONS || {
+      tickets: { need: 3 },
+      focusedMail: { need: 1 },
+      syncChip: { need: 1 },
+      timesheet: { need: 1 },
+    };
+    const next = {};
+    for (const key of Object.keys(cfg)) {
+      next[key] = { need: cfg[key].need || 1, have: 0 };
+    }
+    d.state.obligations = next;
+  }
+
+  d.bumpObligation = function bumpObligation(key) {
+    const o = d.state.obligations && d.state.obligations[key];
+    if (!o) return false;
+    if (o.have >= o.need) return false;
+    o.have = Math.min(o.need, (o.have || 0) + 1);
+    if (o.have >= o.need) {
+      const ds = d.daySimCopy();
+      const labels = ds.obligationLabels || {};
+      const label = labels[key] || key;
+      const tpl = ds.obligationMetToast || "";
+      if (tpl) {
+        d.toast(
+          String(tpl)
+            .replace(/\{\{label\}\}/g, label)
+            .replace(/\{\{have\}\}/g, String(o.have))
+            .replace(/\{\{need\}\}/g, String(o.need))
+        );
+      }
+    }
+    return true;
+  }
+
+  d.desiredDayBeat = function desiredDayBeat() {
+    if (!d.state.standupDone || (d.wins && d.wins.standup && d.wins.standup.open)) {
+      return "standup";
+    }
+    const cm = d.state.clockMinutes || 0;
+    const e = d.DAY_BEAT_EDGES || {};
+    if (cm >= (e.quittin != null ? e.quittin : 1020)) return "quittin";
+    if (cm >= (e.winddown != null ? e.winddown : 900)) return "winddown";
+    if (cm >= (e.afternoon != null ? e.afternoon : 750)) return "afternoon";
+    if (cm >= (e.lunch != null ? e.lunch : 690)) return "lunch";
+    return "morning";
+  }
+
+  d.updateDayBeat = function updateDayBeat() {
+    const next = d.desiredDayBeat();
+    const prev = d.state.dayBeat;
+    if (next === prev) return false;
+    d.state.dayBeat = next;
+    if (!d.state.dayBeatToasted) d.state.dayBeatToasted = {};
+    if (!d.state.dayBeatToasted[next]) {
+      d.state.dayBeatToasted[next] = true;
+      const toasts = (d.daySimCopy().beatEnterToasts) || {};
+      const msg = toasts[next];
+      if (msg) d.toast(msg);
+    }
+    return true;
+  }
+
+  d.syncSuppressedByTimesheet = function syncSuppressedByTimesheet() {
+    const w = d.beatWeights();
+    if (!w.preferTimesheet) return false;
+    if (d.state.timesheetLockedOk) return false;
+    const tk = d.state.obligations && d.state.obligations.tickets;
+    const have = tk ? tk.have || 0 : d.state.ticketsCompletedSinceLock || 0;
+    return have >= 3;
+  }
+
   d.tick = function tick(dt) {
     if (!d.state.emailEnabled) return;
     // idle / presence (+ Jimbo jiggler delay)
@@ -414,21 +498,30 @@ export function installDesktopShell(d) {
       }
     }
 
-    // doom mail timer (frozen during day grace)
-    if (!d.state.presenceForced && !d.inDayGrace()) {
-      d.state.emailCooldown -= dt;
+    // CORP-DAY-01: advance named beat from clock thresholds
+    d.updateDayBeat();
+    const beatW = d.beatWeights();
+
+    // doom mail timer (frozen during day grace); beat weight 0 = skip
+    if (!d.state.presenceForced && !d.inDayGrace() && (beatW.doomMail || 0) > 0) {
+      const mailRate = beatW.mailLight ? 0.55 : 1;
+      d.state.emailCooldown -= dt * mailRate;
       if (d.state.emailCooldown <= 0) {
-        d.state.emailCooldown = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
-        const doom = d.state.inbox.filter((m) => m.doom && !m.opened);
-        const pool = doom.length ? doom : d.state.inbox.filter((m) => m.doom);
-        const mail = d.pick(pool);
-        if (mail) d.queueOrDeliver(mail);
+        let cd = d.EMAIL_MIN + Math.random() * (d.EMAIL_MAX - d.EMAIL_MIN);
+        if (beatW.mailLight) cd *= 1.35;
+        d.state.emailCooldown = cd;
+        if (Math.random() < beatW.doomMail) {
+          const doom = d.state.inbox.filter((m) => m.doom && !m.opened);
+          const pool = doom.length ? doom : d.state.inbox.filter((m) => m.doom);
+          const mail = d.pick(pool);
+          if (mail) d.queueOrDeliver(mail);
+        }
       }
     }
 
     // Random incident pager (GD incidents.md) - never stacks two modals
     // Prefer one modal at a time: skip if Away/presenceForced or any modal open
-    // Frozen during day grace (CORP-BAL-01)
+    // Frozen during day grace (CORP-BAL-01); beat weight 0 = no rolls (lunch/quittin/standup)
     if (d.state.incidentPagerCooldown > 0) d.state.incidentPagerCooldown -= dt;
     if (
       d.state.emailEnabled &&
@@ -438,12 +531,13 @@ export function installDesktopShell(d) {
       !d.interruptShielded() &&
       !d.state.timesheetGateOpen &&
       !d.callBusy() &&
-      d.state.incidentPagerCooldown <= 0
+      d.state.incidentPagerCooldown <= 0 &&
+      (beatW.incident || 0) > 0
     ) {
       d.state.incidentPagerCd -= dt;
       if (d.state.incidentPagerCd <= 0) {
         d.state.incidentPagerCd = 40; // check cadence
-        const chance = (d.state.closedCount || 0) >= 1 ? 0.15 : 0.08;
+        const chance = ((d.state.closedCount || 0) >= 1 ? 0.15 : 0.08) * beatW.incident;
         if (Math.random() < chance) {
           d.openIncident({ fromTicket: false });
           d.state.incidentPagerCooldown = 90;
@@ -466,6 +560,11 @@ export function installDesktopShell(d) {
 
   d.enableDaySystems = function enableDaySystems() {
     d.state.emailEnabled = true;
+    d.state.dayBeat = "standup";
+    d.state.dayBeatToasted = {};
+    d.state.jimboTicketsUsed = 0;
+    d.resetObligations();
+    d.updateDayBeat();
     d.state.idleAcc = 0;
     d.state.presence = d.Presence.ACTIVE;
     d.state.presenceStatus = null;

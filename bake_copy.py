@@ -45,6 +45,8 @@ for key, fname in [
     ("startMenu", "start-menu.md"),
     ("jimbo", "jimbo.md"),
     ("emails", "emails.md"),
+    ("eod", "eod-review.md"),
+    ("daySim", "day-sim.md"),
 ]:
     p = COPY / fname
     if p.exists():

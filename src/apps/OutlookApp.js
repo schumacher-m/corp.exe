@@ -394,6 +394,10 @@ export function installOutlookApp(d) {
       } else {
         mail.read = true;
       }
+      // CORP-DAY-01: Focused / doom mail close counts (read or Jimbo-marked-read)
+      if (mail.doom || d.mailBucket(mail) === "focused") {
+        if (d.bumpObligation) d.bumpObligation("focusedMail");
+      }
     }
     d.state.openMailId = null;
     d.state.mailReadFully = false;

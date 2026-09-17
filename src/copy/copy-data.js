@@ -610,19 +610,22 @@ export default {
   "eod": {
     "grades": [
       {
-        "minSprint": 12,
-        "grade": "Exceeds Expectations (somehow)",
-        "managerNote": "Cubicle 4-B shipped like it owed the building money. Sprint {{sprint}}, sanity {{sanity}}, unread dread {{unread}}. Stakeholders are thrilled; your calendar is a crime scene. The fog submitted a glowing peer review. We are concerned. Cubicle assignment renewed."
+        "id": "survived",
+        "hitsMin": 4,
+        "grade": "Survived",
+        "managerNote": "You checked every box corporate invented for today. Tracker {{tickets}}, checklist {{obligationsSummary}}. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. Cubicle 4-B remains occupied. The fog nodded once. {{jimboLie}}"
       },
       {
-        "minSprint": 5,
-        "grade": "Meets Expectations (barely)",
-        "managerNote": "You closed enough tickets to remain employed and not enough to be noticed. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. Standup: present. Impact: ambient. Kyle's review count suggests growth in agreeing faster. Exit still not a supported feature."
+        "id": "needs_alignment",
+        "hitsMin": 2,
+        "grade": "Needs Alignment",
+        "managerNote": "Partial compliance looks a lot like effort from far away. Tracker closes {{tickets}}; obligations {{obligationsSummary}}. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. Please align with aligning. Exit still unsupported. {{jimboLie}}"
       },
       {
-        "minSprint": 0,
-        "grade": "Needs Improvement (always)",
-        "managerNote": "Today was a soft launch of disappointment. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. InsightBot flagged your focus time as decorative. Hydrate, pretend tomorrow is different, stop mentioning the fog in writing. Cubicle 4-B remains yours. Congrats?"
+        "id": "pip_adjacent",
+        "hitsMin": 0,
+        "grade": "Pip Adjacent",
+        "managerNote": "Today was a soft launch of disappointment with optional tickets. Tracker {{tickets}}, obligations {{obligationsSummary}}. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. InsightBot suggests existing louder tomorrow. Cubicle assignment: pending vibes. {{jimboLie}}"
       }
     ],
     "closers": [
@@ -3245,6 +3248,31 @@ export default {
       "Your message was optimized into silence.",
       "Corporate AI rejected the vibe. Try Sync (also doomed).",
       "Draft discarded. Unread remains. Peace denied."
+    ]
+  },
+  "daySim": {
+    "beatEnterToasts": {
+      "standup": "Daily Standup. Bring nothing. Say it confidently.",
+      "morning": "Morning deep work. Tracker awaits your suffering.",
+      "lunch": "Lunch window. Sync may find you. Food is a rumor.",
+      "afternoon": "Afternoon Sync tax. Your calendar filed a claim.",
+      "winddown": "Wind-down. Timesheet is watching. Softly.",
+      "quittin": "Core hours ending..."
+    },
+    "obligationLabels": {
+      "tickets": "Tracker closes",
+      "focusedMail": "Focused Mail",
+      "syncChip": "Sync reply chip",
+      "timesheet": "Timesheet Accept"
+    },
+    "obligationMetToast": "Obligation met: {{label}} ({{have}}/{{need}})",
+    "obligationsTitle": "Today's obligations",
+    "jimboLie": [
+      "Jimbo reconciled your day: Exceeds Expectations (spiritually).",
+      "Jimbo's notes say you crushed it. Jimbo's notes are fiction.",
+      "Jimbo marked you green. The checklist did not.",
+      "Jimbo peer-reviewed your vibe. Grade: vibes only.",
+      "Jimbo filed: 'Employee thrived.' Evidence: a shrug."
     ]
   }
 };

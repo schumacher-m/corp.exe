@@ -21,6 +21,9 @@ import {
   EMAIL_MIN,
   EMAIL_MAX,
   DAY_GRACE,
+  DAY_BEAT_WEIGHTS,
+  DAY_BEAT_EDGES,
+  DAY_OBLIGATIONS,
   Presence,
 } from "../util/constants.js";
 
@@ -68,6 +71,9 @@ export function createDesktop(copy, hooks) {
     EMAIL_MIN,
     EMAIL_MAX,
     DAY_GRACE,
+    DAY_BEAT_WEIGHTS,
+    DAY_BEAT_EDGES,
+    DAY_OBLIGATIONS,
     Presence,
     pick,
     loadImg,

@@ -70,8 +70,27 @@ export function installTicketsApp(d) {
 
   d.drawTickets = function drawTickets(x, y, w, h) {
     d.bevelSunken(x, y, w, h, d.C.white);
+    const ds = (d.daySimCopy && d.daySimCopy()) || (d.copy && d.copy.daySim) || {};
+    const labels = ds.obligationLabels || {};
+    const obs = d.state.obligations || {};
+    const keys = ["tickets", "focusedMail", "syncChip", "timesheet"];
+    let yy = y + 2;
+    d.ctx.font = "6px Tahoma, sans-serif";
+    if (ds.obligationsTitle) {
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.fillText(String(ds.obligationsTitle).slice(0, 28), x + 4, yy + 7);
+      yy += 9;
+    }
+    for (const key of keys) {
+      const o = obs[key] || { need: 1, have: 0 };
+      const mark = (o.have || 0) >= (o.need || 1) ? "*" : "o";
+      const lab = labels[key] || key;
+      d.ctx.fillStyle = (o.have || 0) >= (o.need || 1) ? d.C.sick : d.C.shadow;
+      d.ctx.fillText(`${mark} ${lab} ${o.have || 0}/${o.need || 1}`, x + 4, yy + 7);
+      yy += 8;
+    }
+    yy += 2;
     d.ctx.font = "8px Tahoma, sans-serif";
-    let yy = y + 4;
     for (const tk of d.state.board) {
       d.ctx.fillStyle = d.C.text;
       d.ctx.fillText(`${tk.id}  ${tk.title.slice(0, 22)}`, x + 4, yy + 8);
@@ -478,6 +497,10 @@ export function installTicketsApp(d) {
   }
 
   d.finishTicket = function finishTicket(type, pts, { toastMsg, sanHit } = {}) {
+    if (d.state.jimboUsedThisTicket) {
+      d.state.jimboTicketsUsed = (d.state.jimboTicketsUsed || 0) + 1;
+    }
+    if (d.bumpObligation) d.bumpObligation("tickets");
     d.state.closedCount = (d.state.closedCount || 0) + 1;
     d.state.typesCompleted[type] = (d.state.typesCompleted[type] || 0) + 1;
     const uid = d.state.activeTicket?.uid;

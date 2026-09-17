@@ -1,24 +1,29 @@
-# eod-review -- paste into `clockOut` / ending screen
+# eod-review -- Shut Down / day report (CORP-DAY-01)
 
-Thresholds checked top-down. Placeholders: `{{sprint}}` `{{sanity}}` `{{unread}}`.
+Grade from obligation hits (not minSprint). Dev picks by `hitsMin` top-down: 4 Survived, 2-3 Needs Alignment, 0-1 Pip Adjacent.
+Placeholders: `{{sprint}}` `{{sanity}}` `{{unread}}` `{{tickets}}` `{{obligationsSummary}}` `{{jimboLie}}`.
+`{{jimboLie}}` is empty unless Jimbo Auto-Fill / heavy Jimbo use; real grade stays honest.
 
 ```json
 {
   "grades": [
     {
-      "minSprint": 12,
-      "grade": "Exceeds Expectations (somehow)",
-      "managerNote": "Cubicle 4-B shipped like it owed the building money. Sprint {{sprint}}, sanity {{sanity}}, unread dread {{unread}}. Stakeholders are thrilled; your calendar is a crime scene. The fog submitted a glowing peer review. We are concerned. Cubicle assignment renewed."
+      "id": "survived",
+      "hitsMin": 4,
+      "grade": "Survived",
+      "managerNote": "You checked every box corporate invented for today. Tracker {{tickets}}, checklist {{obligationsSummary}}. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. Cubicle 4-B remains occupied. The fog nodded once. {{jimboLie}}"
     },
     {
-      "minSprint": 5,
-      "grade": "Meets Expectations (barely)",
-      "managerNote": "You closed enough tickets to remain employed and not enough to be noticed. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. Standup: present. Impact: ambient. Kyle's review count suggests growth in agreeing faster. Exit still not a supported feature."
+      "id": "needs_alignment",
+      "hitsMin": 2,
+      "grade": "Needs Alignment",
+      "managerNote": "Partial compliance looks a lot like effort from far away. Tracker closes {{tickets}}; obligations {{obligationsSummary}}. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. Please align with aligning. Exit still unsupported. {{jimboLie}}"
     },
     {
-      "minSprint": 0,
-      "grade": "Needs Improvement (always)",
-      "managerNote": "Today was a soft launch of disappointment. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. InsightBot flagged your focus time as decorative. Hydrate, pretend tomorrow is different, stop mentioning the fog in writing. Cubicle 4-B remains yours. Congrats?"
+      "id": "pip_adjacent",
+      "hitsMin": 0,
+      "grade": "Pip Adjacent",
+      "managerNote": "Today was a soft launch of disappointment with optional tickets. Tracker {{tickets}}, obligations {{obligationsSummary}}. Sprint {{sprint}}, sanity {{sanity}}, unread {{unread}}. InsightBot suggests existing louder tomorrow. Cubicle assignment: pending vibes. {{jimboLie}}"
     }
   ],
   "closers": [

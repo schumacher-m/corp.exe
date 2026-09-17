@@ -16,6 +16,9 @@ export function installTeamsApp(d) {
     if (d.interruptShielded()) return false;
     if (d.state.modal && d.state.modal.kind === "presence") return false;
     if (d.state.modal && d.state.modal.kind === "hr") return false;
+    const w = d.beatWeights ? d.beatWeights() : {};
+    if ((w.syncRing || 0) <= 0) return false;
+    if (d.syncSuppressedByTimesheet && d.syncSuppressedByTimesheet()) return false;
     return true;
   }
 
@@ -44,7 +47,13 @@ export function installTeamsApp(d) {
   }
 
   d.scheduleNextCall = function scheduleNextCall() {
-    d.state.callCd = 45 + Math.random() * 45;
+    const w = d.beatWeights ? d.beatWeights() : {};
+    const min = w.syncCdMin != null ? w.syncCdMin : 45;
+    const span = w.syncCdSpan != null ? w.syncCdSpan : 45;
+    // afternoon higher sync weight -> slightly shorter rolls already via syncCd*
+    let cd = min + Math.random() * span;
+    if ((w.syncRing || 1) > 1) cd = cd / w.syncRing;
+    d.state.callCd = Math.max(8, cd);
     d.state.callQueued = false;
   }
 
@@ -264,6 +273,7 @@ export function installTeamsApp(d) {
   d.landCallChip = function landCallChip(chip) {
     if (d.state.callPhase !== "connected" || d.state.callChipDone) return;
     d.state.callChipDone = true;
+    if (d.bumpObligation) d.bumpObligation("syncChip");
     const sprint = Number(chip.sprint || 0);
     const san = Number(chip.sanity || 0);
     if (sprint) d.state.sprint += sprint;

@@ -178,6 +178,15 @@ export function setupAfter_rebuildDrawBag(d) {
     startFlyoutIndex: -1,
     startCascade: null, // null | { parentLabel, items, x, y, w, h }
     standupDone: false,
+    dayBeat: "standup",
+    dayBeatToasted: {},
+    obligations: {
+      tickets: { need: 3, have: 0 },
+      focusedMail: { need: 1, have: 0 },
+      syncChip: { need: 1, have: 0 },
+      timesheet: { need: 1, have: 0 },
+    },
+    jimboTicketsUsed: 0,
     clockMinutes: 9 * 60,
     sanity: 100,
     sprint: 0,
@@ -286,7 +295,7 @@ export function setupAfter_rebuildDrawBag(d) {
 export function setupAfter_activePrScript(d) {
 
   d.wins = {
-    tickets: { id: "tickets", title: "Tracker", x: 8, y: 18, w: 150, h: 140, open: true },
+    tickets: { id: "tickets", title: "Tracker", x: 8, y: 12, w: 150, h: 168, open: true },
     slack: { id: "slack", title: d.teamsCopy.windowTitle || "Sync -- Corporate Chat", x: 165, y: 14, w: 145, h: 120, open: true },
     ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
     pr: { id: "pr", title: "PR #884 - Kyle", x: 30, y: 20, w: 260, h: 175, open: false },

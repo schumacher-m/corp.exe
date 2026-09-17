@@ -995,18 +995,49 @@ function clockOut() {
   const sp = win95.state.sprint;
   const san = Math.round(win95.state.sanity);
   const unr = win95.state.unread;
-  const grades = copy.eod?.grades || [];
-  const sorted = [...grades].sort((a, b) => (b.minSprint ?? b.min ?? 0) - (a.minSprint ?? a.min ?? 0));
-  const gobj = sorted.find((g) => sp >= (g.minSprint ?? g.min ?? 0)) || sorted[sorted.length - 1] || {};
-  const grade = gobj.grade || gobj.label || "Needs Improvement";
+  const tickets = win95.state.closedCount || 0;
+  const obs = win95.state.obligations || {};
+  const ds = copy.daySim || {};
+  const labels = ds.obligationLabels || {};
+  const keys = ["tickets", "focusedMail", "syncChip", "timesheet"];
+  let hits = 0;
+  const summaryParts = [];
+  for (const key of keys) {
+    const o = obs[key] || { need: 1, have: 0 };
+    const ok = (o.have || 0) >= (o.need || 1);
+    if (ok) hits += 1;
+    const lab = labels[key] || key;
+    summaryParts.push(`${lab} ${ok ? "*" : "o"}`);
+  }
+  const obligationsSummary = summaryParts.join(" · ");
+  const grades = (copy.eod && copy.eod.grades) || [];
+  const sorted = [...grades].sort((a, b) => (b.hitsMin ?? 0) - (a.hitsMin ?? 0));
+  const gobj = sorted.find((gr) => hits >= (gr.hitsMin ?? 0)) || sorted[sorted.length - 1] || {};
+  const grade = gobj.grade || "";
+  const jimboHeavy =
+    (win95.state.timesheetJimboFills || 0) >= 1 ||
+    (tickets > 0 && (win95.state.jimboTicketsUsed || 0) >= tickets / 2);
+  let jimboLie = "";
+  if (jimboHeavy) {
+    const pool = ds.jimboLie || [];
+    if (pool.length) jimboLie = pool[Math.floor(Math.random() * pool.length)];
+  }
   let note = gobj.managerNote || "";
-  note = note.replace(/\{\{sprint\}\}/g, sp).replace(/\{\{sanity\}\}/g, san).replace(/\{\{unread\}\}/g, unr);
-  const closer = (copy.eod?.closers && copy.eod.closers[Math.floor(Math.random()*copy.eod.closers.length)]) || "The building does not have an exit, only a clock.";
+  note = note
+    .replace(/\{\{sprint\}\}/g, String(sp))
+    .replace(/\{\{sanity\}\}/g, String(san))
+    .replace(/\{\{unread\}\}/g, String(unr))
+    .replace(/\{\{tickets\}\}/g, String(tickets))
+    .replace(/\{\{obligationsSummary\}\}/g, obligationsSummary)
+    .replace(/\{\{jimboLie\}\}/g, jimboLie);
+  const closers = (copy.eod && copy.eod.closers) || [];
+  const closer = closers.length ? closers[Math.floor(Math.random() * closers.length)] : "";
   $("ending-stats").innerHTML = `
     Sprint Points: <span style="color:var(--amber)">${sp}</span><br/>
     Sanity: <span style="color:var(--sick)">${san}</span><br/>
     Unread: <span style="color:var(--blood)">${unr}</span><br/>
-    Tickets closed this shift: ${win95.state.closedCount || 0}
+    Tickets closed this shift: ${tickets}<br/>
+    Obligations: ${obligationsSummary}
   `;
   $("ending-review").innerHTML = `<strong style="color:var(--jira)">${grade}</strong><br/>${note}<br/><br/>${closer}`;
   setPrompt("");
