@@ -133,3 +133,9 @@ Draw bag today = **one entry per unique playable type** per shuffle. Register `d
 Opener rule **PASS**. Soft prefer after first close **FAIL-shy** in Pages smoke (no DROP after closing CORP-402).
 
 **Change:** on the transition `closedCount` 0→1, set `forceDropDbOnce`. Next `spawnTicket` / board refill flush **must** spawn `dropdb` (clone from pool), then clear the flag. Survive Away by keeping the flag until refill runs. Soft bag prefer can remain as backup only.
+
+### Follow-up (smoke `0941c9c`)
+
+Still FAIL-shy. Suspect `spawnTicket` `board.length >= 3` return before force, and/or Away-paused refill.
+
+**Fix:** inject DROP inline in `_finishTicketBody` when `prevClosed === 0` (after board remove); if Away, keep flag and honor force first in `flushBoardRefill`.

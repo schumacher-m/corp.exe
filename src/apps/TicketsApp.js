@@ -70,6 +70,8 @@ export function installTicketsApp(d) {
     if (!d.state.boardRefillPaused) return;
     if (d.presenceBlocksBoard() || d.state.timesheetGateOpen) return;
     d.state.boardRefillPaused = false;
+    // Honor DROP force before any normal draw
+    if (d.state.forceDropDbOnce) d.dealForcedDropDb();
     d.spawnTicket();
     if (d.state.board.length === 0) d.spawnTicket({ forceFiller: true });
     let guard = 0;
@@ -558,27 +560,38 @@ export function installTicketsApp(d) {
     return d.cloneTicket(template);
   }
 
+
+  d.dealForcedDropDb = function dealForcedDropDb() {
+    if (!d.state.forceDropDbOnce) return null;
+    if (d.state.board.some((tk) => (tk.mechanic || tk.type) === "dropdb")) {
+      d.state.forceDropDbOnce = false;
+      return null;
+    }
+    const tpl = d.templateByType("dropdb");
+    if (!tpl) return null;
+    d.state.forceDropDbOnce = false;
+    d.state.drawBag = (d.state.drawBag || []).filter((x) => x !== "dropdb");
+    const forced = d.cloneTicket(tpl);
+    // Prefer a free slot; if somehow full, bump a non-dropdb row
+    if (d.state.board.length >= 3) {
+      const ix = d.state.board.findIndex((tk) => (tk.mechanic || tk.type) !== "dropdb");
+      if (ix >= 0) d.state.board.splice(ix, 1);
+      else d.state.board.pop();
+    }
+    d.state.board.push(forced);
+    const title = forced.title || "DROP DATABASE";
+    d.toast("New ticket: " + title);
+    return forced;
+  }
+
   d.spawnTicket = function spawnTicket({ forceFiller = false } = {}) {
+    // Force DROP before the length gate (board-full used to skip the guarantee)
+    if (d.state.forceDropDbOnce) {
+      const dealt = d.dealForcedDropDb();
+      if (dealt) return;
+    }
     // Active slots: keep 2-3 visible
     if (d.state.board.length >= 3) return;
-    // Hard guarantee: first post-open close must deal DROP once (GD retune)
-    if (d.state.forceDropDbOnce) {
-      const onBoard = d.state.board.some((tk) => (tk.mechanic || tk.type) === "dropdb");
-      if (onBoard) {
-        d.state.forceDropDbOnce = false;
-      } else {
-        const tpl = d.templateByType("dropdb");
-        if (tpl) {
-          d.state.forceDropDbOnce = false;
-          d.state.drawBag = (d.state.drawBag || []).filter((t) => t !== "dropdb");
-          const forced = d.cloneTicket(tpl);
-          d.state.board.push(forced);
-          d.toast("New ticket assigned");
-          return;
-        }
-        // No template — leave flag so flush/retry can try again
-      }
-    }
     const inst = d.drawFromDeck(forceFiller);
     if (!inst) return;
     d.state.board.push(inst);
@@ -631,9 +644,12 @@ export function installTicketsApp(d) {
     d.state._stubHits = null;
     d.raise("tickets");
     d.state.ticketsCompletedSinceLock = (d.state.ticketsCompletedSinceLock || 0) + 1;
+    // CORP-DB-01: inject DROP inline on first close (do not rely on spawn length gate)
+    if (d.state.forceDropDbOnce) d.dealForcedDropDb();
     // Immediately draw 1 unused type; never leave board empty -- wait if Away
     if (d.presenceBlocksBoard()) {
       d.state.boardRefillPaused = true;
+      // Keep forceDropDbOnce if inject somehow failed — flushBoardRefill honors it first
     } else {
       d.spawnTicket();
       if (d.state.board.length === 0) d.spawnTicket({ forceFiller: true });

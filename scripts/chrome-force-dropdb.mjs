@@ -14,39 +14,47 @@ await page.evaluate(() => window.corpForceDesk());
 await new Promise(r=>setTimeout(r,500));
 
 const result = await page.evaluate(() => {
-  const api = window.corpWin95;
-  const d = api.__d;
-  if (!d?.finishTicket) return { err: "no __d.finishTicket" };
+  const d = window.corpWin95.__d;
   const types = () => (d.state.board || []).map(t => t.mechanic || t.type);
   const log = [];
-  log.push({ step: "opener", types: types(), force: !!d.state.forceDropDbOnce, closed: d.state.closedCount });
+  log.push({ step: "opener", types: types(), force: !!d.state.forceDropDbOnce });
 
-  const first = d.state.board.find(t => (t.mechanic||t.type) !== "dropdb") || d.state.board[0];
+  // Path A: Away blocked — must still inject inline
+  const first = d.state.board.find(t => (t.mechanic||t.type) !== "dropdb");
+  d.state.presenceForced = true;
+  d.state.presence = d.Presence?.AWAY || "away";
   d.state.activeTicket = first;
   d.state.jimboUsedThisTicket = true;
-  d.state.pendingFinish = null;
-  // Clear Away so refill isn't paused
-  if (d.state.presence) d.state.presence = d.Presence?.ACTIVE || d.state.presence;
-  d.state.presenceForced = false;
   d.finishTicket(first.mechanic || first.type, first.pts || 2, { toastMsg: "closed", sanHit: 0 });
-  if (d.state.boardRefillPaused) d.flushBoardRefill();
   log.push({
-    step: "afterFirstClose",
+    step: "afterCloseWhileAway",
     types: types(),
     force: !!d.state.forceDropDbOnce,
-    closed: d.state.closedCount,
+    paused: !!d.state.boardRefillPaused,
+    hasDrop: types().includes("dropdb"),
+    toast: d.state.toast,
+  });
+
+  // Clear Away and flush — force should already be spent
+  d.state.presenceForced = false;
+  d.state.presence = d.Presence?.ACTIVE || "active";
+  if (d.state.boardRefillPaused) d.flushBoardRefill();
+  log.push({
+    step: "afterFlush",
+    types: types(),
+    force: !!d.state.forceDropDbOnce,
     hasDrop: types().includes("dropdb"),
   });
 
-  // Second close should not leave force stuck true without drop already dealt
   return {
     log,
-    dropTitle: (d.state.board.find(t => (t.mechanic||t.type)==="dropdb")||{}).title,
     openerClean: log[0].types.every(t => t !== "dropdb"),
+    dropAfterAwayClose: log[1].hasDrop,
+    toastNamesDrop: /drop|DROP|hygiene|migration|cleanup|truncate|storage|DB/i.test(String(log[1].toast||"")),
   };
 });
 console.log(JSON.stringify(result, null, 2));
-const ok = result.openerClean && result.log?.some(l => l.hasDrop);
+const ok = result.openerClean && result.dropAfterAwayClose;
 console.log(ok ? "FORCE_PASS" : "FORCE_FAIL");
 await browser.close();
 process.exit(ok ? 0 : 1);
