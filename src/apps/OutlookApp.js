@@ -98,7 +98,7 @@ export function installOutlookApp(d) {
     const bodyY = y + ribH + 1;
     const bodyH = h - ribH - 1;
     const railW = 58;
-    const listW = Math.max(86, Math.floor((w - railW) * 0.42));
+    const listW = Math.max(96, Math.floor((w - railW) * 0.48));
     const readX = x + railW + listW;
     const readW = w - railW - listW;
 
@@ -186,7 +186,10 @@ export function installOutlookApp(d) {
         ey += 9;
       }
     } else {
-      const rowH = 22;
+      // WIN95 § Mail Focused list: measureText ellipsis; 2 lines when tight (snippet in reading pane)
+      const textMax = Math.max(20, listW - 16);
+      const showSnippet = listW >= 110;
+      const rowH = showSnippet ? 28 : 20;
       for (const m of list) {
         if (yy + rowH > bodyY + bodyH) break;
         const sel = d.state.openMailId === m.id;
@@ -201,15 +204,17 @@ export function installOutlookApp(d) {
           d.ctx.strokeStyle = d.C.shadow;
           d.ctx.strokeRect(lx + 3, yy + 4, 6, 6);
         }
+        const fromRaw = String(m.from || "?").split("<")[0].trim();
         d.ctx.fillStyle = sel ? d.C.outlookDk : m.read ? d.C.shadow : d.C.text;
         d.ctx.font = m.read ? "6px Tahoma, sans-serif" : "bold 6px Tahoma, sans-serif";
-        const from = String(m.from || "?").split("<")[0].trim().slice(0, 14);
-        d.ctx.fillText(from, lx + 12, yy + 6);
+        d.ctx.fillText(d.ellipsisText(fromRaw, textMax), lx + 12, yy + 7);
         d.ctx.font = "6px Tahoma, sans-serif";
         d.ctx.fillStyle = sel ? d.C.text : d.C.dark;
-        d.ctx.fillText(String(m.subject || "").slice(0, 18), lx + 12, yy + 13);
-        d.ctx.fillStyle = d.C.shadow;
-        d.ctx.fillText(d.mailSnippet(m).slice(0, 18), lx + 12, yy + 20);
+        d.ctx.fillText(d.ellipsisText(String(m.subject || ""), textMax), lx + 12, yy + 15);
+        if (showSnippet) {
+          d.ctx.fillStyle = d.C.shadow;
+          d.ctx.fillText(d.ellipsisText(d.mailSnippet(m), textMax), lx + 12, yy + 23);
+        }
         d.state._mailHits.push({ id: m.id, hit: { x: lx + 1, y: yy, w: listW - 2, h: rowH } });
         yy += rowH;
       }

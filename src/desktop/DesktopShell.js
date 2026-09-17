@@ -351,7 +351,6 @@ export function installDesktopShell(d) {
     d.drawStickies();
     for (const id of d.order) d.drawWindow(d.wins[id]);
     d.drawTaskbar();
-    d.drawStartMenu();
     if (d.state.toastT > 0) {
       d.state.toastT--;
       if (d.state.toastJimbo) {
@@ -366,6 +365,8 @@ export function installDesktopShell(d) {
       d.ctx.font = "8px Tahoma, sans-serif";
       d.ctx.fillText(String(d.state.toast).slice(0, 40), d.W / 2 - 84, 16);
     }
+    // WIN95 § Start z-order: root + Programs flyout above every app window (and toast)
+    d.drawStartMenu();
     d.drawCallOverlay();
     d.drawModal();
     d.drawCursor();

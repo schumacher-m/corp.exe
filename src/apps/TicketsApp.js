@@ -1,19 +1,5 @@
 /** apps/TicketsApp.js -- install onto desktop bag `d`. */
 export function installTicketsApp(d) {
-  d.ellipsisText = function ellipsisText(str, maxW) {
-    const s = String(str == null ? "" : str);
-    if (!s) return "";
-    if (d.ctx.measureText(s).width <= maxW) return s;
-    let lo = 0;
-    let hi = s.length;
-    while (lo < hi) {
-      const mid = (lo + hi + 1) >> 1;
-      if (d.ctx.measureText(s.slice(0, mid) + "…").width <= maxW) lo = mid;
-      else hi = mid - 1;
-    }
-    return lo <= 0 ? "…" : s.slice(0, lo) + "…";
-  }
-
   d.makeUid = function makeUid() {
     return `tk-${++d.uidCounter}`;
   }

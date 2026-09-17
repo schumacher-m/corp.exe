@@ -34,7 +34,21 @@ export function installWindow(d) {
     d.ctx.fillRect(x + w - 1, y, 1, h);
   }
 
-  d.wrap = function wrap(s, n) {
+    d.ellipsisText = function ellipsisText(str, maxW) {
+    const s = String(str == null ? "" : str);
+    if (!s) return "";
+    if (d.ctx.measureText(s).width <= maxW) return s;
+    let lo = 0;
+    let hi = s.length;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (d.ctx.measureText(s.slice(0, mid) + "…").width <= maxW) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo <= 0 ? "…" : s.slice(0, lo) + "…";
+  }
+
+d.wrap = function wrap(s, n) {
     const max = Math.max(1, n | 0);
     const words = String(s == null ? "" : s).split(/\s+/).filter(Boolean);
     const lines = [];
