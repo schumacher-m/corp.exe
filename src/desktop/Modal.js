@@ -21,7 +21,16 @@ export function installModal(d) {
       d.ctx.font = "bold 8px Tahoma, sans-serif";
       const tw = Math.ceil(d.ctx.measureText(label).width);
       const bw = Math.min(MAX_W - PAD * 2, Math.max(36, tw + 12));
-      return { label, action, bw };
+      // Keep Away-excuse meta (was stripped → presenceForced softlock on click)
+      if (typeof b === "string") return { label, action, bw };
+      return {
+        label,
+        action,
+        bw,
+        excuseId: b.excuseId,
+        sanityHit: b.sanityHit,
+        toast: b.toast,
+      };
     });
 
     // Prefer a readable width; grow for long body, then fit button rows inside.
@@ -106,7 +115,14 @@ export function installModal(d) {
         d.ctx.font = "bold 8px Tahoma, sans-serif";
         const tw = d.ctx.measureText(b.label).width;
         d.ctx.fillText(b.label, bx + Math.max(4, (b.bw - tw) / 2), by + 11);
-        d.state._modalBtns.push({ hit: { x: bx, y: by, w: b.bw, h: BTN_H }, action: b.action });
+        d.state._modalBtns.push({
+          hit: { x: bx, y: by, w: b.bw, h: BTN_H },
+          action: b.action,
+          label: b.label,
+          excuseId: b.excuseId,
+          sanityHit: b.sanityHit,
+          toast: b.toast,
+        });
         bx += b.bw + BTN_GAP;
       }
       by += BTN_H + ROW_GAP;
@@ -121,8 +137,19 @@ export function installModal(d) {
         if (action === "ask") {
           d.state.modal = null;
           d.askJimbo();
-        } else if (action === "dismiss-away" || (typeof action === "string" && action.startsWith("excuse:"))) {
-          d.dismissAwayWithExcuse({ action: action === "dismiss-away" ? "excuse:water" : action, label: b.label });
+        } else if (
+          action === "excuse" ||
+          action === "dismiss-away" ||
+          (typeof action === "string" && action.startsWith("excuse:"))
+        ) {
+          // Away excuse buttons use action:"excuse" + excuseId/sanityHit/toast meta
+          d.dismissAwayWithExcuse({
+            action: action === "dismiss-away" ? "excuse:water" : action,
+            label: b.label,
+            excuseId: b.excuseId,
+            sanityHit: b.sanityHit,
+            toast: b.toast,
+          });
           return true;
         } else if (action === "jiggle") {
           d.bumpPresenceJiggle(1);
@@ -213,6 +240,9 @@ export function installModal(d) {
           d.state.modal = null;
           d.requestFinish({ toastMsg: d.state.stub?.toast || "Status: Active (allegedly).", sanHit: 1 });
           d.audio.playSfx("click");
+        } else if (d.state.modal && d.state.modal.kind === "presence" && d.state.presenceForced) {
+          // Generic dismiss of Away modal must clear presenceForced (claim softlock)
+          d.dismissAwayWithExcuse({ label: "Acknowledge", sanityHit: 3, toast: "Back to Active." });
         } else {
           d.state.modal = null;
           d.audio.playSfx("click");
