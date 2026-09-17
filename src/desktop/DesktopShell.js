@@ -174,35 +174,128 @@ export function installDesktopShell(d) {
     d.drawStatusPopover();
   }
 
-  d.drawStartMenu = function drawStartMenu() {
-    if (!d.state.startOpen) return;
+  d.normalizeStartChild = function normalizeStartChild(raw) {
+    if (raw == null) return { label: "" };
+    if (typeof raw === "string") return { label: raw };
+    return raw;
+  }
+
+  d.startItemHasFlyout = function startItemHasFlyout(it) {
+    return !!(it && Array.isArray(it.submenu) && it.submenu.length);
+  }
+
+  d.openStartFlyout = function openStartFlyout(index) {
     const items = d.copy.startMenu?.items || [];
-    const menuH = 16 + items.length * 16;
+    const it = items[index];
+    if (!d.startItemHasFlyout(it)) {
+      d.state.startFlyoutIndex = -1;
+      return;
+    }
+    d.state.startFlyoutIndex = index;
+  }
+
+  d.drawStartMenuRowGlyph = function drawStartMenuRowGlyph(id, label, x, iy) {
+    const lab = label || "";
+    let glyph = null;
+    if (id === "jimbo" || lab === "Jimbo") glyph = d.imgs.j16;
+    else if (id === "jiggler" || /mouse jiggler/i.test(lab)) glyph = d.imgs.jig16;
+    else if (id === "tickets" || /tracker/i.test(lab)) glyph = d.imgs.tr16;
+    else if (id === "teams" || id === "slack" || /sync/i.test(lab)) glyph = d.imgs.t16;
+    else if (id === "inbox" || /mail|inbox/i.test(lab)) glyph = d.imgs.ol16;
+    else if (id === "timesheet" || /timesheet/i.test(lab)) glyph = d.imgs.ts16;
+    if (glyph && d.imgReady(glyph)) {
+      d.ctx.drawImage(glyph, x, iy + 1, 12, 12);
+      return 16;
+    }
+    return 0;
+  }
+
+  d.drawStartMenu = function drawStartMenu() {
+    if (!d.state.startOpen) {
+      d.state.startFlyoutIndex = -1;
+      d.state._startItems = null;
+      d.state._startFlyoutHits = null;
+      d.state._startRootHit = null;
+      return;
+    }
+    const items = d.copy.startMenu?.items || [];
+    const rowH = 16;
+    const padTop = 4;
+    let sepExtra = 0;
+    for (const it of items) {
+      if (it && it.separatorBefore) sepExtra += 5;
+    }
+    const menuH = padTop + items.length * rowH + 4 + sepExtra;
     const menuW = 148;
     const x = 2;
     const y = d.H - d.TASK_H - menuH;
+    d.state._startRootHit = { x, y, w: menuW, h: menuH };
     d.bevelRaised(x, y, menuW, menuH, d.C.face);
     d.ctx.fillStyle = d.C.title;
     d.ctx.fillRect(x + 2, y + 2, 16, menuH - 4);
     d.state._startItems = [];
+    let iy = y + padTop;
     items.forEach((it, i) => {
-      const iy = y + 4 + i * 16;
+      if (it && it.separatorBefore) {
+        d.bevelSunken(x + 22, iy + 1, menuW - 28, 2, d.C.face);
+        iy += 5;
+      }
+      const lab = it.label || it.id || String(it);
+      const open = d.state.startFlyoutIndex === i;
+      const hasFly = d.startItemHasFlyout(it);
+      if (open) {
+        d.ctx.fillStyle = d.C.title;
+        d.ctx.fillRect(x + 20, iy, menuW - 22, rowH);
+        d.ctx.fillStyle = d.C.inv;
+      } else {
+        d.ctx.fillStyle = d.C.text;
+      }
+      d.ctx.font = "8px Tahoma, sans-serif";
+      d.ctx.fillText(lab.slice(0, 18), x + 22, iy + 10);
+      if (hasFly) {
+        d.ctx.fillText(">", x + menuW - 14, iy + 10);
+      }
+      d.state._startItems.push({
+        hit: { x: x + 18, y: iy, w: menuW - 20, h: rowH },
+        item: it,
+        index: i,
+        hasFlyout: hasFly,
+      });
+      iy += rowH;
+    });
+
+    // Cascade flyout
+    d.state._startFlyoutHits = null;
+    const fi = d.state.startFlyoutIndex;
+    if (fi < 0 || fi >= items.length) return;
+    const parent = items[fi];
+    if (!d.startItemHasFlyout(parent)) return;
+    const kids = parent.submenu.map((c) => d.normalizeStartChild(c));
+    const flyW = 158;
+    const flyH = 4 + kids.length * rowH + 4;
+    const parentRow = d.state._startItems.find((r) => r.index === fi);
+    const flyX = x + menuW - 2;
+    let flyY = parentRow ? parentRow.hit.y - 2 : y;
+    if (flyY + flyH > d.H - d.TASK_H - 2) flyY = d.H - d.TASK_H - flyH - 2;
+    if (flyY < 2) flyY = 2;
+    d.state._startFlyoutHit = { x: flyX, y: flyY, w: flyW, h: flyH };
+    d.bevelRaised(flyX, flyY, flyW, flyH, d.C.face);
+    d.state._startFlyoutHits = [];
+    kids.forEach((child, ci) => {
+      const cy = flyY + 4 + ci * rowH;
+      const lab = child.label || child.id || "";
+      const id = child.id || "";
       d.ctx.fillStyle = d.C.text;
       d.ctx.font = "8px Tahoma, sans-serif";
-      const lab = it.label || it.id || String(it);
-      const isJimbo = it.id === "jimbo" || lab === "Jimbo";
-      const isJiggler = it.id === "jiggler" || /mouse jiggler/i.test(lab);
-      if (isJimbo && d.imgs.j16.complete && d.imgs.j16.naturalWidth) {
-        d.ctx.drawImage(d.imgs.j16, x + 22, iy + 1, 12, 12);
-        d.ctx.fillText(lab.slice(0, 18), x + 36, iy + 10);
-      } else if (isJiggler && d.imgs.jig16.complete && d.imgs.jig16.naturalWidth) {
-        d.ctx.drawImage(d.imgs.jig16, x + 22, iy + 1, 12, 12);
-        const mark = d.state.jimboJiggler ? "[on] " : "";
-        d.ctx.fillText((mark + lab).slice(0, 18), x + 36, iy + 10);
-      } else {
-        d.ctx.fillText(lab.slice(0, 20), x + 22, iy + 10);
-      }
-      d.state._startItems.push({ hit: { x, y: iy, w: menuW - 2, h: 16 }, item: it });
+      const gOff = d.drawStartMenuRowGlyph(id, lab, flyX + 6, cy);
+      let text = lab;
+      if (id === "jiggler" && d.state.jimboJiggler) text = "[on] " + lab;
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.fillText(String(text).slice(0, 22), flyX + 6 + (gOff ? gOff : 0), cy + 10);
+      d.state._startFlyoutHits.push({
+        hit: { x: flyX + 2, y: cy, w: flyW - 4, h: rowH },
+        item: child,
+      });
     });
   }
 
@@ -421,6 +514,40 @@ export function installDesktopShell(d) {
       // feed only from call-UI motion (whole overlay is call UI while connected)
       d.feedCallAttentiveness(0.08);
     }
+    if (d.state.startOpen && d.state._startItems) {
+      const x = d.state.cursor.x;
+      const y = d.state.cursor.y;
+      let overFly = false;
+      if (d.state._startFlyoutHit && d.hit(d.state._startFlyoutHit, x, y)) overFly = true;
+      if (d.state._startFlyoutHits) {
+        for (const fh of d.state._startFlyoutHits) {
+          if (d.hit(fh.hit, x, y)) overFly = true;
+        }
+      }
+      let hovered = -1;
+      for (const it of d.state._startItems) {
+        if (d.hit(it.hit, x, y)) {
+          hovered = it.index;
+          if (it.hasFlyout) d.openStartFlyout(it.index);
+          else d.state.startFlyoutIndex = -1;
+          break;
+        }
+      }
+      if (hovered < 0 && !overFly && d.state._startRootHit && !d.hit(d.state._startRootHit, x, y)) {
+        // leave open until click-outside; keep current flyout
+      } else if (hovered < 0 && !overFly) {
+        // over root but not a flyout row -- close flyout unless still on parent
+        const cur = d.state.startFlyoutIndex;
+        const parent = (d.state._startItems || []).find((r) => r.index === cur);
+        if (!(parent && d.hit(parent.hit, x, y))) {
+          // stay if moving within root non-flyout? close flyout when hovering Run/Shut Down
+          if (hovered < 0) {
+            const onRoot = d.state._startRootHit && d.hit(d.state._startRootHit, x, y);
+            if (onRoot) d.state.startFlyoutIndex = -1;
+          }
+        }
+      }
+    }
   }
 
   d.onPointerDown = function onPointerDown() {
@@ -449,6 +576,7 @@ export function installDesktopShell(d) {
 
     if (d.hit(d.state._startBtn, x, y)) {
       d.state.startOpen = !d.state.startOpen;
+      d.state.startFlyoutIndex = -1;
       d.audio.playSfx(d.state.startOpen ? "start" : "click");
       return;
     }
@@ -456,15 +584,35 @@ export function installDesktopShell(d) {
       d.askJimbo();
       return;
     }
-    if (d.state.startOpen && d.state._startItems) {
-      for (const it of d.state._startItems) {
-        if (d.hit(it.hit, x, y)) {
-          d.handleStartItem(it.item);
-          d.state.startOpen = false;
-          return;
+    if (d.state.startOpen) {
+      // Flyout children first
+      if (d.state._startFlyoutHits) {
+        for (const fh of d.state._startFlyoutHits) {
+          if (d.hit(fh.hit, x, y)) {
+            d.handleStartItem(fh.item);
+            d.state.startOpen = false;
+            d.state.startFlyoutIndex = -1;
+            return;
+          }
+        }
+      }
+      if (d.state._startItems) {
+        for (const it of d.state._startItems) {
+          if (d.hit(it.hit, x, y)) {
+            if (it.hasFlyout) {
+              d.openStartFlyout(it.index);
+              d.audio.playSfx("click");
+              return;
+            }
+            d.handleStartItem(it.item);
+            d.state.startOpen = false;
+            d.state.startFlyoutIndex = -1;
+            return;
+          }
         }
       }
       d.state.startOpen = false;
+      d.state.startFlyoutIndex = -1;
     }
 
     // desktop icons
@@ -519,7 +667,11 @@ export function installDesktopShell(d) {
   d.deniedToast = function deniedToast(item) {
     const line = d.pick(d.deniedPool);
     if (line) d.toast(line);
-    else d.toast((item.submenu?.[0] || item.label || "Denied") + " - denied");
+    else {
+      const sub0 = item.submenu?.[0];
+      const tip = (sub0 && typeof sub0 === "object" ? sub0.label : sub0) || item.label || "Denied";
+      d.toast(String(tip) + " - denied");
+    }
     d.audio.playSfx("error");
   }
 
@@ -557,10 +709,11 @@ export function installDesktopShell(d) {
         d.toast((conf && conf.body) || "Clocking out...");
         setTimeout(() => d.hooks.onClockOut?.(), 500);
       }
-    } else if (id === "ide" || /notepad|corp\.exe/i.test(label)) {
+    } else if (id === "ide") {
       d.wins.ide.open = true;
       d.raise("ide");
     } else if (item.submenu) {
+      // Folder roots open via flyout UI; joke string/object kids without id deny
       d.deniedToast(item);
     } else if (/run/i.test(label)) {
       d.deniedToast(item);

@@ -174,6 +174,9 @@ export function setupAfter_rebuildDrawBag(d) {
     mouseDown: false,
     activeWin: "tickets",
     startOpen: false,
+    startFlyoutIndex: -1,
+    startFlyoutIndex: -1,
+    startCascade: null, // null | { parentLabel, items, x, y, w, h }
     standupDone: false,
     clockMinutes: 9 * 60,
     sanity: 100,

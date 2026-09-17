@@ -26,6 +26,40 @@ See also: `VISUAL.md`, `assets/manifest.json` anchors.
 - Window frame: outer dark border, inner light bevel, then title bar, then client area `#C0C0C0` or white for document panes.
 - Fonts: system sans or pixel-ish (`MS Sans Serif` / `Tahoma` / fallback `sans-serif`); keep UI chunky at low res.
 
+
+## Start menu (classic Win95)
+
+Michael lock: real apps live under **Programs ►**, not the Start root.
+
+**Root Start** (top → bottom):
+1. Programs ►
+2. Documents ►
+3. Settings ►
+4. Find ►
+5. Help ►
+6. Run…
+7. *(optional 1px sunken separator)*
+8. Shut Down…
+
+Root rows with a submenu show a right-pointing **►** (or `▸`) on the trailing edge. Hover or click **Programs** (same pattern for Documents / Settings / Find / Help) opens a **second raised-bevel panel** flush to the right of the Start menu (classic cascade). Keep the parent row **highlighted** (`#000080` + invert text, or selected face) while the flyout is open. Click outside / Start again dismisses both.
+
+**Programs ► flyout** (real apps first, top → bottom; glyphs already shipped):
+
+| Label | `id` | Glyph |
+|-------|------|-------|
+| Tracker | `tickets` | `assets/icons/tracker_16.png` |
+| Sync | `teams` | `assets/teams/teams_16.png` |
+| Mail | `inbox` | `assets/outlook/outlook_16.png` |
+| Jimbo | `jimbo` | `assets/jimbo/jimbo_16.png` |
+| Jimbo Mouse Jiggler | `jiggler` | `assets/presence/jiggler_16.png` |
+| timesheet.xls | `timesheet` | `assets/timesheet/timesheet_xls_16.png` (or `assets/icons/`) |
+
+Below the real apps: optional denied joke leftovers (Solitaire blocked, Notepad for feelings, InsightBot, corp.exe) — same denied/toast path as today. Documents / Settings / Find / Help flyouts stay joke-only.
+
+Suggested hooks: `.w95-start-menu` · `.w95-start-item` · `.w95-start-item.has-flyout` · `.w95-start-item.open` · `.w95-start-flyout` · `.w95-start-sep`.
+
+Copy source of truth for Writer/Dev: `copy/start-menu.md` (restructure root → Programs; drop app ids from Start root).
+
 ## Windows (minigame hosts)
 
 Host each mode in its own Win95 window (or MDI child) on the teal desktop:
@@ -72,6 +106,9 @@ Use these class names if implementing via DOM → canvas / html2canvas / CSS3D:
 .w95-btn
 .w95-taskbar
 .w95-start
+.w95-start-menu
+.w95-start-item
+.w95-start-flyout
 ```
 
 Example sketch (non-binding):

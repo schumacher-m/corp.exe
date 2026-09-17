@@ -635,40 +635,44 @@ export default {
     "startLabel": "Start",
     "items": [
       {
-        "label": "Jimbo",
-        "id": "jimbo"
-      },
-      {
-        "label": "Inbox",
-        "id": "inbox"
-      },
-      {
-        "label": "Tracker",
-        "id": "tickets"
-      },
-      {
-        "label": "Sync",
-        "id": "teams"
-      },
-      {
-        "label": "Mail",
-        "id": "inbox"
-      },
-      {
-        "label": "Jimbo Mouse Jiggler",
-        "id": "jiggler"
-      },
-      {
-        "label": "timesheet.xls",
-        "id": "timesheet"
-      },
-      {
         "label": "Programs",
         "submenu": [
-          "corp.exe",
-          "InsightBot",
-          "Solitaire (blocked by policy)",
-          "Notepad (for feelings)"
+          {
+            "label": "Tracker",
+            "id": "tickets"
+          },
+          {
+            "label": "Sync",
+            "id": "teams"
+          },
+          {
+            "label": "Mail",
+            "id": "inbox"
+          },
+          {
+            "label": "Jimbo",
+            "id": "jimbo"
+          },
+          {
+            "label": "Jimbo Mouse Jiggler",
+            "id": "jiggler"
+          },
+          {
+            "label": "timesheet.xls",
+            "id": "timesheet"
+          },
+          {
+            "label": "Solitaire (blocked by policy)"
+          },
+          {
+            "label": "Notepad (for feelings)"
+          },
+          {
+            "label": "InsightBot"
+          },
+          {
+            "label": "corp.exe"
+          }
         ]
       },
       {
@@ -709,6 +713,7 @@ export default {
       },
       {
         "label": "Shut Down...",
+        "id": "clockout",
         "hint": "Ends the day. Not the job."
       }
     ],

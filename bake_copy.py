@@ -42,6 +42,7 @@ data = json.loads(rest)
 # Single-fence overlays
 for key, fname in [
     ("startDenied", "start-denied.md"),
+    ("startMenu", "start-menu.md"),
     ("jimbo", "jimbo.md"),
     ("emails", "emails.md"),
 ]:
@@ -191,28 +192,68 @@ if te_path.exists():
 
 
 items = data.setdefault("startMenu", {}).setdefault("items", [])
-labels = [i.get("label") for i in items]
-if "Jimbo" not in labels:
-    items.insert(0, {"label": "Jimbo", "id": "jimbo"})
-if "Inbox" not in labels:
-    items.insert(1, {"label": "Inbox", "id": "inbox"})
-# Jimbo Mouse Jiggler Start item (Presence Theater)
-jiggler_label = (data.get("presence") or {}).get("jiggler", {}).get("menuLabel") or "Jimbo Mouse Jiggler"
-if jiggler_label not in labels and "jiggler" not in [i.get("id") for i in items]:
-    # insert after Jimbo/Inbox if present
-    insert_at = 0
-    for idx, it in enumerate(items):
-        if it.get("id") in ("jimbo", "inbox") or it.get("label") in ("Jimbo", "Inbox"):
-            insert_at = idx + 1
-    items.insert(insert_at, {"label": jiggler_label, "id": "jiggler"})
+# Real apps live under Programs submenu (not Start root). Ensure Programs exists.
+programs = None
+for it in items:
+    if isinstance(it, dict) and it.get("label") == "Programs":
+        programs = it
+        break
+if programs is None:
+    programs = {"label": "Programs", "submenu": []}
+    items.insert(0, programs)
+submenu = programs.setdefault("submenu", [])
+if submenu and all(isinstance(x, str) for x in submenu):
+    # legacy string-only Programs -> keep jokes, apps get prepended as objects
+    submenu = list(submenu)
+    programs["submenu"] = submenu
 
-ts_label = (data.get("timesheet") or {}).get("desktopLabel") or "timesheet.xls"
-if ts_label not in labels and "timesheet" not in [i.get("id") for i in items]:
+def _sub_ids(sub):
+    ids = set()
+    labels = set()
+    for x in sub:
+        if isinstance(x, dict):
+            if x.get("id"):
+                ids.add(x["id"])
+            if x.get("label"):
+                labels.add(x["label"])
+        elif isinstance(x, str):
+            labels.add(x)
+    return ids, labels
+
+def _ensure_program(label, pid, after_ids=()):
+    ids, labels = _sub_ids(programs["submenu"])
+    if pid in ids or label in labels:
+        return
+    entry = {"label": label, "id": pid}
     insert_at = 0
-    for idx, it in enumerate(items):
-        if it.get("id") in ("jimbo", "inbox", "jiggler") or it.get("label") in ("Jimbo", "Inbox", jiggler_label):
+    for idx, x in enumerate(programs["submenu"]):
+        xid = x.get("id") if isinstance(x, dict) else None
+        if xid in after_ids:
             insert_at = idx + 1
-    items.insert(insert_at, {"label": ts_label, "id": "timesheet"})
+    programs["submenu"].insert(insert_at, entry)
+
+# Strip any root-level app rows (legacy bake) so Start root stays folders + Run/Shut Down
+ROOT_APP_IDS = {"jimbo", "inbox", "tickets", "teams", "slack", "jiggler", "timesheet"}
+ROOT_APP_LABELS = {"Jimbo", "Inbox", "Mail", "Tracker", "Sync", "Jimbo Mouse Jiggler", "timesheet.xls"}
+items[:] = [
+    it for it in items
+    if not (
+        isinstance(it, dict)
+        and (
+            it.get("id") in ROOT_APP_IDS
+            or (it.get("label") in ROOT_APP_LABELS and "submenu" not in it)
+        )
+    )
+]
+
+jiggler_label = (data.get("presence") or {}).get("jiggler", {}).get("menuLabel") or "Jimbo Mouse Jiggler"
+ts_label = (data.get("timesheet") or {}).get("desktopLabel") or "timesheet.xls"
+_ensure_program("Tracker", "tickets")
+_ensure_program("Sync", "teams", after_ids=("tickets",))
+_ensure_program("Mail", "inbox", after_ids=("tickets", "teams"))
+_ensure_program("Jimbo", "jimbo", after_ids=("tickets", "teams", "inbox"))
+_ensure_program(jiggler_label, "jiggler", after_ids=("tickets", "teams", "inbox", "jimbo"))
+_ensure_program(ts_label, "timesheet", after_ids=("tickets", "teams", "inbox", "jimbo", "jiggler"))
 
 data = deep_rebrand(data)
 
