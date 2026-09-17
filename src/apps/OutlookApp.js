@@ -357,6 +357,7 @@ export function installOutlookApp(d) {
   d.queueOrDeliver = function queueOrDeliver(mail) {
     if (d.interruptShielded() || d.state.modal || d.state.presenceForced) {
       d.state.emailQueue.push(mail);
+      if (d.state.emailQueue.length > 8) d.state.emailQueue.length = 8;
       d.state.unread = Math.max(1, d.state.unread + 1);
       d.audio.playSfx("newMail", { volume: 0.35 });
       d.toast(

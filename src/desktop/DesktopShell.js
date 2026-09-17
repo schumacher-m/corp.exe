@@ -118,7 +118,11 @@ export function installDesktopShell(d) {
       d.ctx.fillStyle = d.C.inv;
       d.ctx.font = "7px Tahoma, sans-serif";
       d.ctx.fillText(ic.label, bx + 4, by + 42);
-      d.state._deskIconHits.push({ id: ic.id, hit: { x: bx, y: by, w: 48, h: 48 } });
+      // Never let desk hits bleed into the taskbar (stole timesheet.xls → Jiggler)
+      const deskBottom = d.H - d.TASK_H;
+      if (by >= deskBottom) continue;
+      const hitH = Math.min(48, deskBottom - by);
+      if (hitH > 8) d.state._deskIconHits.push({ id: ic.id, hit: { x: bx, y: by, w: 48, h: hitH } });
     }
   }
 

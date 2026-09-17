@@ -1,5 +1,19 @@
 /** apps/TicketsApp.js -- install onto desktop bag `d`. */
 export function installTicketsApp(d) {
+  d.ellipsisText = function ellipsisText(str, maxW) {
+    const s = String(str == null ? "" : str);
+    if (!s) return "";
+    if (d.ctx.measureText(s).width <= maxW) return s;
+    let lo = 0;
+    let hi = s.length;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (d.ctx.measureText(s.slice(0, mid) + "…").width <= maxW) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo <= 0 ? "…" : s.slice(0, lo) + "…";
+  }
+
   d.makeUid = function makeUid() {
     return `tk-${++d.uidCounter}`;
   }
@@ -84,34 +98,46 @@ export function installTicketsApp(d) {
     const labels = ds.obligationLabels || {};
     const obs = d.state.obligations || {};
     const keys = ["tickets", "focusedMail", "syncChip", "timesheet"];
+    const spGutter = 38;
     let yy = y + 2;
     d.ctx.font = "6px Tahoma, sans-serif";
     if (ds.obligationsTitle) {
       d.ctx.fillStyle = d.C.text;
-      d.ctx.fillText(String(ds.obligationsTitle).slice(0, 28), x + 4, yy + 7);
+      d.ctx.fillText(d.ellipsisText(ds.obligationsTitle, w - 10), x + 4, yy + 7);
       yy += 9;
     }
     for (const key of keys) {
       const o = obs[key] || { need: 1, have: 0 };
       const mark = (o.have || 0) >= (o.need || 1) ? "*" : "o";
       const lab = labels[key] || key;
+      const tally = `${o.have || 0}/${o.need || 1}`;
+      const tallyW = d.ctx.measureText(tally).width;
       d.ctx.fillStyle = (o.have || 0) >= (o.need || 1) ? d.C.sick : d.C.shadow;
-      d.ctx.fillText(`${mark} ${lab} ${o.have || 0}/${o.need || 1}`, x + 4, yy + 7);
+      const left = d.ellipsisText(`${mark} ${lab}`, w - 12 - tallyW);
+      d.ctx.fillText(left, x + 4, yy + 7);
+      d.ctx.fillText(tally, x + w - 4 - tallyW, yy + 7);
       yy += 8;
     }
     yy += 2;
     d.ctx.font = "8px Tahoma, sans-serif";
     for (const tk of d.state.board) {
-      d.ctx.fillStyle = d.C.text;
-      d.ctx.fillText(`${tk.id}  ${tk.title.slice(0, 22)}`, x + 4, yy + 8);
+      const sp = `[${tk.pts}SP]`;
       d.ctx.fillStyle = d.C.amber;
-      d.ctx.fillText(`[${tk.pts}SP]`, x + w - 40, yy + 8);
+      d.ctx.fillText(sp, x + w - spGutter, yy + 8);
+      d.ctx.fillStyle = d.C.text;
+      const title = d.ellipsisText(`${tk.id}  ${tk.title}`, w - spGutter - 8);
+      d.ctx.fillText(title, x + 4, yy + 8);
       tk._hit = { x: x + 2, y: yy, w: w - 4, h: 14 };
       yy += 16;
       if (yy > y + h - 12) break;
     }
     d.ctx.fillStyle = d.C.shadow;
-    d.ctx.fillText(`Closed ${d.state.closedCount} - Ask Jimbo to submit`, x + 4, y + h - 6);
+    d.ctx.font = "7px Tahoma, sans-serif";
+    d.ctx.fillText(
+      d.ellipsisText(`Closed ${d.state.closedCount} - Ask Jimbo to submit`, w - 8),
+      x + 4,
+      y + h - 6
+    );
   }
 
   d.drawSlack = function drawSlack(x, y, w, h) {

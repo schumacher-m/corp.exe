@@ -43,6 +43,8 @@ Michael lock: real apps live under **Programs ►**, not the Start root.
 
 Root rows with a submenu show a right-pointing **►** (or `▸`) on the trailing edge. Hover or click **Programs** (same pattern for Documents / Settings / Find / Help) opens a **second raised-bevel panel** flush to the right of the Start menu (classic cascade). Keep the parent row **highlighted** (`#000080` + invert text, or selected face) while the flyout is open. Click outside / Start again dismisses both.
 
+**Z-order (Tester):** Start root **and** Programs flyout must paint **above every app window** (Tracker, Sync, Mail, …) — classic Win95. Never let Sync/Tracker title bars or client chrome cover the cascade. Draw Start after `drawWindow` / desk icons / stickies; do not clip the flyout under open windows. Taskbar stays under the menu panels.
+
 **Programs ► flyout** (real apps first, top → bottom; glyphs already shipped):
 
 | Label | `id` | Glyph |
@@ -292,6 +294,17 @@ Corporate inbox parody on classic CRT desktop. Player-facing: **Mail**. Abstract
 | New | `assets/outlook/new_mail.png` | 16×16 | Ribbon New / compose |
 
 Accent strip: `#286CC8` / `#5898E8` / `#184890` + purple `#783CBC` / `#A064DC` / `#503090` on face `#C0C0C0`. Classes: `.w95-outlook` `.w95-outlook-ribbon` `.w95-outlook-rail` `.w95-outlook-list` `.w95-outlook-read` `.w95-outlook-compose`.
+
+### Mail Focused list layout (cosmetic)
+
+Live Pages: Focused list **From / subject / snippet** look mid-word clipped in the narrow middle pane.
+
+**Chrome lock (no new glyphs):**
+- List rows are stacked text inside `listW`, not true spreadsheet columns — size truncates with `measureText` + `…` to the **actual** list pane width (minus unread-dot gutter), never a fixed `slice(0, N)` that still overflows.
+- Prefer **2 lines** when `listW` is tight: bold From + Subject; put Snippet only in the reading pane (or drop it under ~90px list width).
+- If keeping 3 lines, each line ellipsizes independently to `listW`; never paint past the sunken list bevel into the reading pane.
+- Optional polish: widen default Mail window / give list pane ≥ ~40% of client so From+Subject stay readable; reading pane keeps full subject wrap.
+
 
 ## Anti-patterns
 

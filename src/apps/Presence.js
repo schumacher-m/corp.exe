@@ -241,6 +241,7 @@ export function installPresence(d) {
     };
     mail.bucket = d.mailBucket(mail);
     d.state.inbox.push(mail);
+    if (d.state.inbox.length > 40) d.state.inbox.splice(0, d.state.inbox.length - 40);
     d.queueOrDeliver(mail);
   }
 

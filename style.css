@@ -92,7 +92,7 @@ html, body {
 #screen-title {
   align-items: center;
   justify-content: center;
-  background: var(--fog);
+  background: #1a1814; /* opaque; overrides translucent bleed */
   gap: 8px;
   text-align: center;
   padding: 12px;

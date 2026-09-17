@@ -1191,13 +1191,16 @@ function frame() {
     updateFarmFidget(farmWorkers, t);
   } else if (G.phase === "sit") updateSit(dt);
   else if (G.phase === "seated") updateSeated(dt);
-  else if (G.phase === "title" || G.phase === "boot" || G.phase === "ending") {
+  else if (G.phase === "boot" || G.phase === "ending") {
     // ambient orbit peek
     camera.position.set(Math.sin(t * 0.15) * 0.4 + 0.8, 1.6, 2.8);
     camera.lookAt(0, 1.0, -0.5);
     win95.render();
     crtTex.needsUpdate = true;
     updateFarmFidget(farmWorkers, t);
+  } else if (G.phase === "title") {
+    // Pause 3D under opaque title plate (Designer VISUAL.md) — cuts CRT bleed + GPU churn
+    return;
   }
 
   if (win95.state.sanity < 25) {

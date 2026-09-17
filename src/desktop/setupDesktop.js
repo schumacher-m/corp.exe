@@ -295,7 +295,7 @@ export function setupAfter_rebuildDrawBag(d) {
 export function setupAfter_activePrScript(d) {
 
   d.wins = {
-    tickets: { id: "tickets", title: "Tracker", x: 8, y: 12, w: 150, h: 168, open: true },
+    tickets: { id: "tickets", title: "Tracker", x: 8, y: 12, w: 190, h: 168, open: true },
     slack: { id: "slack", title: d.teamsCopy.windowTitle || "Sync -- Corporate Chat", x: 165, y: 14, w: 145, h: 120, open: true },
     ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
     pr: { id: "pr", title: "PR #884 - Kyle", x: 30, y: 20, w: 260, h: 175, open: false },
@@ -333,6 +333,8 @@ export function setupAfter_activePrScript(d) {
 
   d.order = ["meters", "tickets", "slack", "standup", "ide", "pr", "jimbo", "inbox", "timesheet"];
 
+  // Two columns so all icons sit above the taskbar (H=240, TASK_H=22).
+  // Old single column put jiggler/teams under timesheet.xls — hit boxes stole clicks.
   d.deskIcons = [
     { id: "jimbo", label: "Jimbo", x: 8, y: 8, img: "j32" },
     { id: "tickets", label: "Tracker", x: 8, y: 56, img: "tr32" },
@@ -347,15 +349,15 @@ export function setupAfter_activePrScript(d) {
     {
       id: "jiggler",
       label: d.jigglerCopy.desktopLabel || "Jiggler",
-      x: 8,
-      y: 200,
+      x: 64,
+      y: 8,
       img: "jig32",
     },
     {
       id: "teams",
       label: d.teamsCopy.desktopLabel || "Sync",
-      x: 8,
-      y: 248,
+      x: 64,
+      y: 56,
       img: "t32",
     },
   ];
