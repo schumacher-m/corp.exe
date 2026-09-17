@@ -59,8 +59,9 @@ Badge always required; 2-of-3 lobby beats; wrong floor = toast only.
     "arrive": "Your floor. Walk like you belong."
   },
   "plaza": {
-    "enterPrompt": "Enter tower",
-    "toast": "Welcome to the building. Leave is not a feature."
+    "enterPrompt": "E -- Enter lobby",
+    "toast": "Welcome to the building. Leave is not a feature.",
+    "doorPrompt": "E -- Enter lobby"
   }
 }
 ```

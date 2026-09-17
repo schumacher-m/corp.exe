@@ -3406,8 +3406,9 @@ export default {
       "arrive": "Your floor. Walk like you belong."
     },
     "plaza": {
-      "enterPrompt": "Enter tower",
-      "toast": "Welcome to the building. Leave is not a feature."
+      "enterPrompt": "E -- Enter lobby",
+      "toast": "Welcome to the building. Leave is not a feature.",
+      "doorPrompt": "E -- Enter lobby"
     }
   }
 };

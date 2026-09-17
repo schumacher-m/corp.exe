@@ -563,14 +563,21 @@ export function createTower(opts) {
     }
   }
 
+  /* Entrance volume: graybox door ~2.4 wide @ z=-4.4; keep forgiving for GLB/approach. */
+  const ENTRANCE_ENTER_R = 4.5;
+  const ENTRANCE_PROMPT_R = 6.5;
+
   function tryInteract() {
     if (interactCooldown > 0) return;
-    interactCooldown = 0.35;
 
     if (G.phase === "plaza") {
-      if (nearHook("tower_entrance", 2.4)) enterLobby();
+      if (nearHook("tower_entrance", ENTRANCE_ENTER_R)) {
+        interactCooldown = 0.35;
+        enterLobby();
+      }
       return;
     }
+    interactCooldown = 0.35;
 
     if (G.phase === "lobby") {
       if (nearHook("badge_reader", 1.9)) {
@@ -655,10 +662,10 @@ export function createTower(opts) {
     if (interactCooldown > 0) interactCooldown -= dt;
 
     if (G.phase === "plaza") {
-      updateFpMove(dt, { xmin: -10, xmax: 10, zmin: -6, zmax: 9 });
+      updateFpMove(dt, { xmin: -10, xmax: 10, zmin: -8.5, zmax: 9 });
       applyCamera(camera);
       setPrompt(
-        nearHook("tower_entrance", 2.4)
+        nearHook("tower_entrance", ENTRANCE_PROMPT_R)
           ? (ta().plaza || {}).enterPrompt || "E — Enter tower"
           : "WASD · walk to the tower entrance"
       );
