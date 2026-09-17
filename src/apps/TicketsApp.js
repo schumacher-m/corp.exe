@@ -561,6 +561,24 @@ export function installTicketsApp(d) {
   d.spawnTicket = function spawnTicket({ forceFiller = false } = {}) {
     // Active slots: keep 2-3 visible
     if (d.state.board.length >= 3) return;
+    // Hard guarantee: first post-open close must deal DROP once (GD retune)
+    if (d.state.forceDropDbOnce) {
+      const onBoard = d.state.board.some((tk) => (tk.mechanic || tk.type) === "dropdb");
+      if (onBoard) {
+        d.state.forceDropDbOnce = false;
+      } else {
+        const tpl = d.templateByType("dropdb");
+        if (tpl) {
+          d.state.forceDropDbOnce = false;
+          d.state.drawBag = (d.state.drawBag || []).filter((t) => t !== "dropdb");
+          const forced = d.cloneTicket(tpl);
+          d.state.board.push(forced);
+          d.toast("New ticket assigned");
+          return;
+        }
+        // No template — leave flag so flush/retry can try again
+      }
+    }
     const inst = d.drawFromDeck(forceFiller);
     if (!inst) return;
     d.state.board.push(inst);
@@ -585,7 +603,10 @@ export function installTicketsApp(d) {
       d.state.jimboTicketsUsed = (d.state.jimboTicketsUsed || 0) + 1;
     }
     if (d.bumpObligation) d.bumpObligation("tickets");
-    d.state.closedCount = (d.state.closedCount || 0) + 1;
+    const prevClosed = d.state.closedCount || 0;
+    d.state.closedCount = prevClosed + 1;
+    // Arm DROP for next spawn/flush (never opener; hard once)
+    if (prevClosed === 0) d.state.forceDropDbOnce = true;
     d.state.typesCompleted[type] = (d.state.typesCompleted[type] || 0) + 1;
     const uid = d.state.activeTicket?.uid;
     const doneToast = toastMsg || d.state.activeTicket?.toast || `Ticket closed +${pts} SP`;

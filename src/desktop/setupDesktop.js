@@ -193,6 +193,7 @@ export function setupAfter_rebuildDrawBag(d) {
     unread: Math.max(1, d.emailCopy.unreadFloor || 1),
     phase: "desktop", // desktop | ticket mechanic type
     closedCount: 0,
+    forceDropDbOnce: false, // CORP-DB-01: arm on first close
     typesCompleted: {}, // type -> count this shift
     drawBag: d.rebuildDrawBag(),
     board: (d.copy.tickets || []).slice(0, 3).map(d.cloneTicket), // 2-3 active slots
