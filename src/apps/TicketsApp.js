@@ -390,14 +390,22 @@ export function installTicketsApp(d) {
     d.kyleInterruptCd = 10 + Math.random() * 8;
     // Sabotage resets per open so Jimbo can sabotage each new ticket
     const mech = tk.mechanic || tk.type || "filler";
+    if (!d.state.jimboSabotaged || typeof d.state.jimboSabotaged !== "object") d.state.jimboSabotaged = {};
     delete d.state.jimboSabotaged[mech];
     d.state.phase = mech;
 
     if (mech === "semi") {
-      d.wins.ide.open = true;
-      d.wins.ide.title = "IDE - Semicolon Hell";
-      d.raise("ide");
-      d.ensureSemi();
+      try {
+        d.wins.ide.open = true;
+        d.wins.ide.title = "IDE - Semicolon Hell";
+        d.raise("ide");
+        if (d.ensureSemi) d.ensureSemi();
+      } catch (err) {
+        console.error("openTicket semi", err);
+        d.state.phase = "desktop";
+        d.wins.ide.open = false;
+        d.toast("IDE failed to open — try again");
+      }
     } else if (mech === "comment") {
       d.wins.ide.open = true;
       d.wins.ide.title = "IDE - Comment Policy";

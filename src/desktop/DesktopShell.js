@@ -725,7 +725,28 @@ export function installDesktopShell(d) {
       d.state.startFlyoutIndex = -1;
     }
 
-    // desktop icons
+    // Windows first (classic Win95) — desk icons must NOT steal clicks through Tracker/IDE
+    for (let i = d.order.length - 1; i >= 0; i--) {
+      const win = d.wins[d.order[i]];
+      if (!win.open) continue;
+      if (x >= win.x && x <= win.x + win.w && y >= win.y && y <= win.y + win.h) {
+        d.raise(win.id);
+        if (x >= win.x + win.w - 16 && x <= win.x + win.w - 6 && y >= win.y + 5 && y <= win.y + 15) {
+          if (win.id === "meters") return;
+          if (win.id === "inbox" && d.state.openMailId) {
+            d.closeOpenMail(false);
+            return;
+          }
+          win.open = false;
+          d.audio.playSfx("click");
+          return;
+        }
+        d.handleWinClick(win, x, y);
+        return;
+      }
+    }
+
+    // Desktop icons only on uncovered desktop
     if (d.state._deskIconHits) {
       for (const ic of d.state._deskIconHits) {
         if (d.hit(ic.hit, x, y)) {
@@ -750,26 +771,6 @@ export function installDesktopShell(d) {
           }
           return;
         }
-      }
-    }
-
-    for (let i = d.order.length - 1; i >= 0; i--) {
-      const win = d.wins[d.order[i]];
-      if (!win.open) continue;
-      if (x >= win.x && x <= win.x + win.w && y >= win.y && y <= win.y + win.h) {
-        d.raise(win.id);
-        if (x >= win.x + win.w - 16 && x <= win.x + win.w - 6 && y >= win.y + 5 && y <= win.y + 15) {
-          if (win.id === "meters") return;
-          if (win.id === "inbox" && d.state.openMailId) {
-            d.closeOpenMail(false);
-            return;
-          }
-          win.open = false;
-          d.audio.playSfx("click");
-          return;
-        }
-        d.handleWinClick(win, x, y);
-        return;
       }
     }
   }
@@ -963,7 +964,7 @@ export function installDesktopShell(d) {
         d.tryFinishTicket("semi", d.state.pendingFinish.pts);
         return;
       }
-      const semis = (d.semiLines && d.semiLines()) || d.state.semiLines || d.copy.semiLines || [];
+      const semis = (d.getSemiLines && d.getSemiLines()) || d.state.semiLines || d.copy.semiLines || [];
       for (const ln of semis) {
         if (ln && ln._hit && d.hit(ln._hit, x, y)) {
           d.trySemi(ln._hit.i);
@@ -1037,7 +1038,7 @@ export function installDesktopShell(d) {
     if (d.state.modal && d.state.modal.kind === "presenceTicket") return;
     if (d.state.phase === "semi" && e.key === ";") {
       d.ensureSemi();
-      const lines = (d.semiLines && d.semiLines()) || d.state.semiLines || [];
+      const lines = (d.getSemiLines && d.getSemiLines()) || d.state.semiLines || [];
       const next = lines.findIndex((l, i) => l.need && !d.state.semiPlaced[i]);
       if (next >= 0) d.trySemi(next);
     }

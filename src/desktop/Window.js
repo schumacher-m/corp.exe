@@ -34,7 +34,7 @@ export function installWindow(d) {
     d.ctx.fillRect(x + w - 1, y, 1, h);
   }
 
-    d.ellipsisText = function ellipsisText(str, maxW) {
+  d.ellipsisText = function ellipsisText(str, maxW) {
     const s = String(str == null ? "" : str);
     if (!s) return "";
     if (d.ctx.measureText(s).width <= maxW) return s;
@@ -48,7 +48,7 @@ export function installWindow(d) {
     return lo <= 0 ? "…" : s.slice(0, lo) + "…";
   }
 
-d.wrap = function wrap(s, n) {
+  d.wrap = function wrap(s, n) {
     const max = Math.max(1, n | 0);
     const words = String(s == null ? "" : s).split(/\s+/).filter(Boolean);
     const lines = [];
@@ -128,7 +128,8 @@ d.wrap = function wrap(s, n) {
   }
 
   d.hit = function hit(r, x, y) {
-    return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    // Half-open rects so adjacent desk/row hits do not double-fire
+    return r && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
   }
 
 }

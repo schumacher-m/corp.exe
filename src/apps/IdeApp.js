@@ -118,17 +118,20 @@ export function installIdeApp(d) {
   d.ensureSemi = function ensureSemi() {
     // Per-ticket working copy so Jimbo guide cannot permanently mutate shared bake
     if (!d.state.semiLines || !d.state.semiLines.length) {
-      const src = d.copy.semiLines || [];
-      d.state.semiLines = src.map((l) => ({ code: l.code, need: !!l.need }));
+      const src = Array.isArray(d.copy?.semiLines) ? d.copy.semiLines : [];
+      d.state.semiLines = src.map((l) => ({
+        code: String(l && l.code != null ? l.code : ""),
+        need: !!(l && l.need),
+      }));
     }
     if (!d.state.semiPlaced || d.state.semiPlaced.length !== d.state.semiLines.length) {
       d.state.semiPlaced = d.state.semiLines.map(() => false);
     }
   }
 
-  d.semiLines = function semiLines() {
+  d.getSemiLines = function getSemiLines() {
     d.ensureSemi();
-    return d.state.semiLines;
+    return d.state.semiLines || [];
   }
 
   d.ensureComment = function ensureComment() {
@@ -144,7 +147,11 @@ export function installIdeApp(d) {
     if (d.state.phase === "semi") {
       d.ensureSemi();
       let yy = y + 8;
-      d.semiLines().forEach((ln, i) => {
+      const lines = d.getSemiLines();
+      const maxLines = Math.min(lines.length, 24);
+      for (let i = 0; i < maxLines; i++) {
+        const ln = lines[i];
+        if (!ln) continue;
         const placed = d.state.semiPlaced[i];
         let semi = "";
         if (ln.need && placed) {
@@ -152,14 +159,20 @@ export function installIdeApp(d) {
           else if (d.state.semiStyle?.mode === "strip") semi = "";
           else semi = ";";
         }
-        // Jimbo strip: even placed lines lose ;
         if (d.state.semiStyle?.mode === "strip" && placed && ln.need && i % 2 === 0) semi = "";
         if (d.state.semiStyle?.mode === "double" && placed && ln.need && i % 2 === 0) semi = ";";
         d.ctx.fillStyle = placed && ln.need ? d.C.sick : "#c8c4b0";
-        d.ctx.fillText(`${String(i + 1).padStart(2)} ${ln.code}${semi}`, x + 4, yy);
-        ln._hit = { x, y: yy - 7, w, h: 9, i };
+        const label = String(i + 1).padStart(2, " ") + " " + String(ln.code || "") + semi;
+        d.ctx.fillText(label.slice(0, 48), x + 4, yy);
+        if (!ln._hit) ln._hit = { x: 0, y: 0, w: 0, h: 0, i: 0 };
+        ln._hit.x = x;
+        ln._hit.y = yy - 7;
+        ln._hit.w = w;
+        ln._hit.h = 9;
+        ln._hit.i = i;
         yy += 9;
-      });
+        if (yy > y + h - 36) break;
+      }
       d.ctx.fillStyle = d.C.face;
       d.ctx.fillRect(x, y + h - 28, w, 28);
       d.ctx.fillStyle = d.C.text;
@@ -384,7 +397,7 @@ export function installIdeApp(d) {
 
   d.trySemi = function trySemi(i) {
     d.ensureSemi();
-    const lines = d.semiLines();
+    const lines = d.getSemiLines();
     const ln = lines[i];
     if (!ln) return;
     d.audio.keyclack();
