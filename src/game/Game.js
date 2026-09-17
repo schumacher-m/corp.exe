@@ -148,8 +148,8 @@ postScene.add(
 );
 
 /* FARM.md lighting — floor lock: ambient ~1.55, fluo #f0ecd4 */
-scene.add(new THREE.AmbientLight(0x8a8680, 1.55));
-const keyL = new THREE.DirectionalLight(0xd0c8b0, 0.95);
+scene.add(new THREE.AmbientLight(0x9a968e, 1.55));
+const keyL = new THREE.DirectionalLight(0xe0d8c4, 1.05);
 keyL.position.set(2, 8, 4);
 scene.add(keyL);
 /* Player desk fluo — a bit stronger for seated CRT readability */
@@ -159,7 +159,7 @@ scene.add(fluo);
 /* Fluorescent banks along farm — #f0ecd4 ~0.85 */
 for (let iz = -8; iz <= 4; iz += 2) {
   for (const ix of [-8, -4, 0, 4, 8]) {
-    const fl = new THREE.PointLight(0xf0ecd4, 0.85, 5.5);
+    const fl = new THREE.PointLight(0xf0ecd4, 0.85, 7);
     fl.position.set(ix * 2.2, 2.45, iz * 2.6);
     scene.add(fl);
   }

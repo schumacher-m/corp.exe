@@ -76,9 +76,9 @@ Prefer **`InstancedMesh`** for neighbor bays / CRTs / workers if clone cost hurt
 
 | Light | Value |
 |-------|-------|
-| Ambient | `#8a8680`–`#9a968c`, intensity **~1.55** |
-| Key directional | `#d0c8b0` ~0.95 from above-front |
-| Fluorescent banks | `#f0ecd4` (`0xf0ecd4`), intensity **~0.85**, every ~2 cells along Z |
+| Ambient | `#9a968e`, intensity **1.55** |
+| Key directional | `#e0d8c4` **1.05** from above-front |
+| Fluorescent banks | `#f0ecd4` (`0xf0ecd4`), intensity **0.85**, distance **7**, every ~2 Z × every ~4 X |
 | Player desk fluo | same `#f0ecd4`, a bit stronger (~1.15) so seated CRT stays readable |
 | Fog | `THREE.Fog(0x4a4840, 12, 30)` |
 | Clear / bg | `#3a3830` (lifted from muddy `#2a2820`) — PS1, no bloom |

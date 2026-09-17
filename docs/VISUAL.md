@@ -129,6 +129,16 @@ Live Pages bug: after hard-refresh, **3D CRT/noise blobs briefly paint through**
 - Prefer hiding or pausing the 3D canvas while `phase === "title"` (same idea as seated fullscreen desktop). Brief soup flash on load is fine; mush over the wordmark is not.
 - No new glyphs.
 
+## Cubicle farm
+
+Dense neighbor farm + player bay: **brightness** and **aisle grammar** are locked in **`FARM.md`** (ambient `#9a968e` @ 1.55, fluo `#f0ecd4` @ 0.85 / dist 7, fog `THREE.Fog(0x4a4840, 12, 30)`, clear `#3a3830`; skip all bays at `iz === +1` and `ix === ±5`, desks/CRTs face −Z). No bloom — lights + albedos + CRT emissive only.
+
+Tower arrival floor kit (`specs/12-tower-arrival.md`, `docs/TOWER_HOOKS.md`) **reuses** this same brighter floor kit and aisle grammar.
+
+
+## Tower arrival (CORP-TOWER-01)
+
+Plaza → lobby → elevator graybox kits + prop GLBs: see **`TOWER_HOOKS.md`** (empties, phases, regenerator `assets/build_tower_assets.py`). Same PS1 nearest / muddy palette / low-tris rules as this bible; floor after elevator reuses **`FARM.md`**.
 ## Anti-patterns
 
 Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded SaaS panels, neon glow, caricature likeness for Kyle, Win95 full-screen instead of on the CRT face.

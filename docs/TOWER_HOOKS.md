@@ -5,19 +5,19 @@ Spec: `specs/12-tower-arrival.md`. Art: PS1 same as farm (`docs/VISUAL.md`, `doc
 
 ## Kits to load (modular — shipping / regenerating)
 
-| GLB | Role |
-|-----|------|
-| `assets/models/tower_plaza.glb` | Exterior plaza + tower massing |
-| `assets/models/tower_lobby.glb` | Lobby shell |
-| `assets/models/elevator_car.glb` | Elevator interior |
-| `assets/models/office_floor.glb` | Optional corridor stub → farm; or skip and spawn farm at `elevator_exit` |
-| `assets/models/prop_badge_reader.glb` | Lobby badge scan |
-| `assets/models/prop_coffee.glb` | Coffee machine beat |
-| `assets/models/prop_security_desk.glb` | Security stare beat |
-| `assets/models/prop_hr_poster.glb` | HR poster beat |
-| `assets/models/prop_elevator_panel.glb` | Call/floor buttons (or empties on car) |
+| GLB | Role | Status |
+|-----|------|--------|
+| `assets/models/tower_plaza.glb` | Exterior plaza + tower massing | ✅ shipped (graybox) |
+| `assets/models/tower_lobby.glb` | Lobby shell | ✅ shipped (graybox) |
+| `assets/models/elevator_car.glb` | Elevator interior | ✅ shipped (graybox) |
+| `assets/models/office_floor.glb` | Optional corridor stub → farm; or skip and spawn farm at `elevator_exit` | ⏳ optional / skip OK |
+| `assets/models/prop_badge_reader.glb` | Lobby badge scan | ✅ shipped |
+| `assets/models/prop_coffee.glb` | Coffee machine beat | ✅ shipped |
+| `assets/models/prop_security_desk.glb` | Security stare beat | ✅ shipped |
+| `assets/models/prop_hr_poster.glb` | HR poster beat | ✅ shipped |
+| `assets/models/prop_elevator_panel.glb` | Call/floor buttons (or empties on car) | ✅ shipped |
 
-Until GLBs land: gray-box with empties below is enough to wire phases.
+Graybox PS1 kits landed via `assets/build_tower_assets.py` (imports helpers from `build_ps1_assets.py`). Empties below are embedded as named nodes — Dev can wire phases.
 
 ## Phase empties / interact volumes
 
@@ -30,6 +30,7 @@ Until GLBs land: gray-box with empties below is enough to wire phases.
 ### Lobby (`phase: lobby`)
 | Name | Interact | Beat |
 |------|----------|------|
+| `lobby_spawn` | — | Player drop into lobby |
 | `badge_reader` | E / click | **Always required** badge |
 | `coffee_machine` | E | Daily pool |
 | `security_desk` | Hold / wait bar | Daily pool |
@@ -58,4 +59,4 @@ Checklist HUD: badge + 2-of-3 (GD pool). Elevator locked until done.
 Reuse FARM.md P0 brighten on floor/farm. Plaza/lobby: same ambient family, slightly cooler lobby fluo OK — no bloom.
 
 ## Manifest
-Add kits to `assets/manifest.json` when GLBs ship. Regenerators: extend `assets/build_ps1_assets.py` / new `assets/build_tower_assets.py`.
+Kits listed in `assets/manifest.json` (models + anchors + triangleCounts). Regenerator: `assets/build_tower_assets.py` (reuses `box_mesh` / `write_glb` from `build_ps1_assets.py`).
