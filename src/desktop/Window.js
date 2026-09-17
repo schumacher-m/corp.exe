@@ -35,16 +35,19 @@ export function installWindow(d) {
   }
 
   d.wrap = function wrap(s, n) {
-    const words = String(s).split(" ");
+    const max = Math.max(1, n | 0);
+    const words = String(s == null ? "" : s).split(/\s+/).filter(Boolean);
     const lines = [];
     let cur = "";
     for (const w of words) {
-      if ((cur + " " + w).trim().length > n) {
+      const piece = w.length > max ? w.slice(0, max) : w;
+      if ((cur + " " + piece).trim().length > max) {
         if (cur) lines.push(cur);
-        cur = w;
-      } else cur = (cur + " " + w).trim();
+        cur = piece;
+      } else cur = (cur + " " + piece).trim();
+      if (lines.length > 40) break;
     }
-    if (cur) lines.push(cur);
+    if (cur && lines.length <= 40) lines.push(cur);
     return lines;
   }
 

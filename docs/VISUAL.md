@@ -118,6 +118,17 @@ Win95-style low-fi purple parody glyphs (unbranded — abstract chat-bubble + ha
 
 Win95-style low-fi blue/purple parody glyphs (unbranded — abstract envelope; no mail-client trademark). Regenerator: `assets/outlook/build_outlook_assets.py`. Window / desktop title **Mail**. Folder stays `assets/outlook/`. Full glyph paths + rail/ribbon notes: `assets/outlook/OUTLOOK_UI.md` and `WIN95.md` § Mail Theater. Spec: `specs/04-outlook-theater.md`. See `docs/GENERIC_NAMES.md`.
 
+
+## Title / Clock In screen
+
+Live Pages bug: after hard-refresh, **3D CRT/noise blobs briefly paint through** the title + tagline (translucent `#screen-title` over `#game-canvas`).
+
+**Chrome lock:**
+- Keep the fog aesthetic, but put logo / tagline / INSERT BADGE / CLOCK IN on an **opaque plate** (`#1a1814` / `--fog`, alpha **1.0** — not `rgba(...,0.55)`).
+- Optional: soft vignette or quiet dither **outside** the plate only; never over readable text.
+- Prefer hiding or pausing the 3D canvas while `phase === "title"` (same idea as seated fullscreen desktop). Brief soup flash on load is fine; mush over the wordmark is not.
+- No new glyphs.
+
 ## Anti-patterns
 
 Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded SaaS panels, neon glow, caricature likeness for Kyle, Win95 full-screen instead of on the CRT face.

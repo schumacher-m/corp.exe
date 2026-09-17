@@ -70,6 +70,8 @@ const EXHAUSTED_ONESHOTS = [
 
 let muted = false;
 const cache = new Map();
+let sfxAlive = 0;
+const SFX_MAX_ALIVE = 12;
 let currentBgm = null;
 let ambExhaustedEl = null;
 let exhaustedBedTimer = null;
@@ -111,12 +113,17 @@ export function isMuted() {
 
 export function playSfx(name, { volume = 0.5 } = {}) {
   if (muted) return;
+  if (sfxAlive >= SFX_MAX_ALIVE) return;
   const a = el(name);
   if (a._missing) return;
   try {
     const c = a.cloneNode();
     c.volume = volume;
-    c.play().catch(() => {});
+    sfxAlive++;
+    const done = () => { sfxAlive = Math.max(0, sfxAlive - 1); };
+    c.addEventListener("ended", done);
+    c.addEventListener("error", done);
+    c.play().catch(done);
   } catch (_) {}
 }
 

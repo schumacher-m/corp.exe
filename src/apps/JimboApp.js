@@ -62,9 +62,11 @@ export function installJimboApp(d) {
         // wipe alternate placed semis visually (logic still counts placed)
       }
       if (mode === "guide") {
-        // invent style guide - flip need on one unused line mid-task
-        const idx = d.copy.semiLines.findIndex((l, i) => !l.need && !(d.state.semiPlaced && d.state.semiPlaced[i]));
-        if (idx >= 0) d.copy.semiLines[idx].need = true;
+        // invent style guide - flip need on one unused line mid-task (ticket-local copy only)
+        if (d.ensureSemi) d.ensureSemi();
+        const lines = d.state.semiLines || [];
+        const idx = lines.findIndex((l, i) => !l.need && !(d.state.semiPlaced && d.state.semiPlaced[i]));
+        if (idx >= 0) lines[idx].need = true;
       }
     } else if (type === "comment") {
       const nonsense = [
@@ -85,6 +87,7 @@ export function installJimboApp(d) {
         "LGTM if we invent four more nits first.",
       ];
       d.state.prJimboNit = d.pick(nits) || note;
+      if (!Array.isArray(d.state.prBubbles)) d.state.prBubbles = [];
       d.state.prBubbles.push({ who: "jimbo", t: d.state.prJimboNit });
     } else if (type === "spacewar") {
       const nits = d.jimboCopy.sabotage?.spacewar || [
@@ -93,6 +96,7 @@ export function installJimboApp(d) {
         "Opened a follow-up: Whitespace Diplomacy II.",
       ];
       d.state.prJimboNit = d.pick(nits) || note;
+      if (!Array.isArray(d.state.prBubbles)) d.state.prBubbles = [];
       d.state.prBubbles.push({ who: "jimbo", t: d.state.prJimboNit });
       // Optionally inject an extra beat by repeating current kyle line flavor
       d.hitSanity(5);
@@ -130,26 +134,33 @@ export function installJimboApp(d) {
   }
 
   d.askJimbo = function askJimbo() {
-    d.openJimbo({ chime: false });
-    d.audio.playSfx("jimboChime", { volume: 0.55 });
-    const inTicket = d.state.phase && d.state.phase !== "desktop" && d.state.phase !== "ending";
-    if (inTicket) {
-      if (!d.state.jimboUsedThisTicket) {
-        d.state.jimboUsedThisTicket = true;
-        d.applySabotage(d.state.phase);
+    if (d.state._askingJimbo) return;
+    d.state._askingJimbo = true;
+    try {
+      d.openJimbo({ chime: false });
+      d.audio.playSfx("jimboChime", { volume: 0.55 });
+      const inTicket = d.state.phase && d.state.phase !== "desktop" && d.state.phase !== "ending";
+      if (inTicket) {
+        if (!d.state.jimboUsedThisTicket) {
+          d.state.jimboUsedThisTicket = true;
+          d.applySabotage(d.state.phase);
+        } else {
+          d.state.jimboLine = d.pick(d.jimboCopy.responses) || "Still helping!";
+          d.toast(d.pick(d.jimboCopy.saveToasts) || "Jimbo saved you 4 hours!", { jimbo: true });
+          d.hitSanity(3);
+        }
+        if (d.state.pendingFinish && d.state.jimboUsedThisTicket) {
+          // Work already done - complete after Jimbo gate
+          const pf = d.state.pendingFinish;
+          d.state.pendingFinish = null; // clear before finish to avoid re-entry
+          d.finishTicket(pf.type, pf.pts, { toastMsg: pf.toastMsg, sanHit: pf.sanHit });
+        }
       } else {
-        d.state.jimboLine = d.pick(d.jimboCopy.responses) || "Still helping!";
-        d.toast(d.pick(d.jimboCopy.saveToasts) || "Jimbo saved you 4 hours!", { jimbo: true });
-        d.hitSanity(3);
+        d.state.jimboLine = d.pick(d.jimboCopy.greetings) || "Jimbo online.";
+        d.toast(d.pick(d.jimboCopy.jiggleToasts) || "I jiggled your mouse for you!", { jimbo: true });
       }
-      if (d.state.pendingFinish && d.state.jimboUsedThisTicket) {
-        // Work already done - complete after Jimbo gate
-        const pf = d.state.pendingFinish;
-        d.finishTicket(pf.type, pf.pts, { toastMsg: pf.toastMsg, sanHit: pf.sanHit });
-      }
-    } else {
-      d.state.jimboLine = d.pick(d.jimboCopy.greetings) || "Jimbo online.";
-      d.toast(d.pick(d.jimboCopy.jiggleToasts) || "I jiggled your mouse for you!", { jimbo: true });
+    } finally {
+      d.state._askingJimbo = false;
     }
   }
 

@@ -250,6 +250,20 @@ try {
   window.corpForceCall = (opts) => win95.forceCall(opts);
   window.corpAcceptCall = () => win95.acceptCall();
   window.corpDeclineCall = () => win95.declineCall({ timedOut: false });
+  // Dev/playtest: jump to seated fullscreen desktop without walk
+  window.corpForceDesk = () => {
+    try {
+      G.phase = "seated";
+      handsRoot && (handsRoot.visible = false);
+      setDesktopFullscreen(true);
+      win95.enableDaySystems?.();
+      win95.state.standupDone = true;
+      win95.state.dayBeat = "morning";
+      audio.playBgm("bgmDesk");
+    } catch (e) {
+      console.error(e);
+    }
+  };
 } catch (_) {}
 
 const crtTex = new THREE.CanvasTexture(win95.canvas);

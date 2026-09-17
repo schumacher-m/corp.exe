@@ -27,7 +27,13 @@ export function installDesktopShell(d) {
 
   d.hitSanity = function hitSanity(n) {
     d.state.sanity = Math.max(0, d.state.sanity - n);
-    if (d.state.sanity < 25) d.audio.playSfx("sanityLow", { volume: 0.35 });
+    if (d.state.sanity < 25) {
+      const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+      if (!d.state._sanitySfxAt || now - d.state._sanitySfxAt > 800) {
+        d.state._sanitySfxAt = now;
+        d.audio.playSfx("sanityLow", { volume: 0.35 });
+      }
+    }
   }
 
   d.drawDeskIcons = function drawDeskIcons() {
@@ -952,8 +958,9 @@ export function installDesktopShell(d) {
         d.tryFinishTicket("semi", d.state.pendingFinish.pts);
         return;
       }
-      for (const ln of d.copy.semiLines) {
-        if (d.hit(ln._hit, x, y)) {
+      const semis = (d.semiLines && d.semiLines()) || d.state.semiLines || d.copy.semiLines || [];
+      for (const ln of semis) {
+        if (ln && ln._hit && d.hit(ln._hit, x, y)) {
           d.trySemi(ln._hit.i);
           return;
         }
@@ -1025,7 +1032,8 @@ export function installDesktopShell(d) {
     if (d.state.modal && d.state.modal.kind === "presenceTicket") return;
     if (d.state.phase === "semi" && e.key === ";") {
       d.ensureSemi();
-      const next = d.copy.semiLines.findIndex((l, i) => l.need && !d.state.semiPlaced[i]);
+      const lines = (d.semiLines && d.semiLines()) || d.state.semiLines || [];
+      const next = lines.findIndex((l, i) => l.need && !d.state.semiPlaced[i]);
       if (next >= 0) d.trySemi(next);
     }
     if (d.state.phase === "comment" && e.key === "Enter") d.acceptComment();

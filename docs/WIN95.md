@@ -226,6 +226,20 @@ Desktop icon for the Tickets / Tracker window (clipboard + ticket-board tile). B
 
 Accent: `#a89030` / `#c8b050` / `#786420` on beige paper `#F0E8D0`. Nearest-neighbor only.
 
+### Tracker list layout (cosmetic)
+
+Live Pages: ticket **titles collide with `[nSP]`** (and obligation rows clip) in the narrow Tracker client.
+
+**Chrome lock (no new glyphs):**
+- Each board row is two columns: **title** (left) + **SP badge** (right).
+- Reserve a fixed right gutter (~36–40px) for `[nSP]` (amber); draw title only in the remaining width.
+- Truncate with ellipsis (`…`) via `measureText` — do **not** rely on a fixed `slice(0, 22)` that still overlaps at 8px Tahoma in a ~150px window.
+- Obligations block (DAY-01 checklist under the title): same rule — label ellipsis before `have/need`; keep 6px font.
+- Optional polish: default Tracker width ~180–200px (still chunky Win95), or allow one-line wrap for very long keys; never stack title glyphs on top of the SP tag.
+- Footer `Closed N - Ask Jimbo to submit` stays single-line ellipsis if needed.
+
+
+
 
 ## Call Theater / Sync
 

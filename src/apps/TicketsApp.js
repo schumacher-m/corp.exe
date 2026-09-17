@@ -53,7 +53,12 @@ export function installTicketsApp(d) {
     }
     d.state.boardRefillPaused = false;
     d.spawnTicket();
-    while (d.state.board.length < 2) d.spawnTicket();
+    let guard = 0;
+    while (d.state.board.length < 2 && guard++ < 8) {
+      const before = d.state.board.length;
+      d.spawnTicket({ forceFiller: guard > 2 });
+      if (d.state.board.length === before) break;
+    }
     d.hooks.onBoardRefill?.();
     return true;
   }
@@ -64,7 +69,12 @@ export function installTicketsApp(d) {
     d.state.boardRefillPaused = false;
     d.spawnTicket();
     if (d.state.board.length === 0) d.spawnTicket({ forceFiller: true });
-    while (d.state.board.length < 2) d.spawnTicket();
+    let guard = 0;
+    while (d.state.board.length < 2 && guard++ < 8) {
+      const before = d.state.board.length;
+      d.spawnTicket({ forceFiller: guard > 2 });
+      if (d.state.board.length === before) break;
+    }
     d.hooks.onBoardRefill?.();
   }
 
@@ -357,6 +367,7 @@ export function installTicketsApp(d) {
     d.state.semiStyle = null;
     d.state.commentOverrides = null;
     d.state.prJimboNit = null;
+    d.state.semiLines = null; // fresh clone on ensureSemi
     d.state.semiPlaced = null;
     d.state.commentDone = null;
     d.state.commentIdx = 0;
@@ -454,7 +465,18 @@ export function installTicketsApp(d) {
     return true;
   }
 
-  d.drawFromDeck = function drawFromDeck(forceFiller) {
+  d.drawFromDeck = function drawFromDeck(forceFiller, depth) {
+    const dpth = depth || 0;
+    if (dpth > 6) {
+      return d.cloneTicket({
+        id: "CORP-FILL",
+        title: "Document something temporary",
+        pts: 1,
+        type: "filler",
+        dod: "One-click close so the board never softlocks.",
+        meta: "Filler - Never empty",
+      });
+    }
     if (forceFiller || (!d.state.drawBag.length && !d.playableTemplates.length)) {
       const ft = d.pick(d.fillerTemplates) || {
         id: "CORP-FILL",
@@ -480,10 +502,10 @@ export function installTicketsApp(d) {
       pickType = d.state.drawBag.pop();
     }
     if (!pickType) {
-      return d.drawFromDeck(true);
+      return d.drawFromDeck(true, dpth + 1);
     }
     const template = d.templateByType(pickType);
-    if (!template) return d.drawFromDeck(true);
+    if (!template) return d.drawFromDeck(true, dpth + 1);
     return d.cloneTicket(template);
   }
 
@@ -497,6 +519,19 @@ export function installTicketsApp(d) {
   }
 
   d.finishTicket = function finishTicket(type, pts, { toastMsg, sanHit } = {}) {
+    // Guard re-entrancy (Ask Jimbo / submit can double-fire)
+    if (d.state._finishingTicket) return;
+    d.state._finishingTicket = true;
+    try {
+    d._finishTicketBody(type, pts, { toastMsg, sanHit });
+    } finally {
+      d.state._finishingTicket = false;
+    }
+  }
+
+  d._finishTicketBody = function _finishTicketBody(type, pts, { toastMsg, sanHit } = {}) {
+    // Clear pending before side effects so Ask Jimbo cannot re-enter finish
+    d.state.pendingFinish = null;
     if (d.state.jimboUsedThisTicket) {
       d.state.jimboTicketsUsed = (d.state.jimboTicketsUsed || 0) + 1;
     }
@@ -511,7 +546,6 @@ export function installTicketsApp(d) {
     d.state.sprint += pts;
     if (sanHit) d.hitSanity(sanHit);
     d.state.clockMinutes = Math.min(18 * 60, d.state.clockMinutes + 8);
-    d.state.pendingFinish = null;
     d.toast(doneToast);
     d.audio.playSfx("ticket");
     d.wins.ide.open = false;
@@ -533,7 +567,12 @@ export function installTicketsApp(d) {
     } else {
       d.spawnTicket();
       if (d.state.board.length === 0) d.spawnTicket({ forceFiller: true });
-      while (d.state.board.length < 2) d.spawnTicket();
+      let guard = 0;
+      while (d.state.board.length < 2 && guard++ < 8) {
+        const before = d.state.board.length;
+        d.spawnTicket({ forceFiller: guard > 2 });
+        if (d.state.board.length === before) break;
+      }
     }
     d.hooks.onTicketDone?.(type, pts);
     d.audio.playBgm("bgmDesk");

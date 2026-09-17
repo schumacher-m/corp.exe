@@ -116,7 +116,19 @@ export function installIdeApp(d) {
   }
 
   d.ensureSemi = function ensureSemi() {
-    if (!d.state.semiPlaced) d.state.semiPlaced = d.copy.semiLines.map(() => false);
+    // Per-ticket working copy so Jimbo guide cannot permanently mutate shared bake
+    if (!d.state.semiLines || !d.state.semiLines.length) {
+      const src = d.copy.semiLines || [];
+      d.state.semiLines = src.map((l) => ({ code: l.code, need: !!l.need }));
+    }
+    if (!d.state.semiPlaced || d.state.semiPlaced.length !== d.state.semiLines.length) {
+      d.state.semiPlaced = d.state.semiLines.map(() => false);
+    }
+  }
+
+  d.semiLines = function semiLines() {
+    d.ensureSemi();
+    return d.state.semiLines;
   }
 
   d.ensureComment = function ensureComment() {
@@ -132,7 +144,7 @@ export function installIdeApp(d) {
     if (d.state.phase === "semi") {
       d.ensureSemi();
       let yy = y + 8;
-      d.copy.semiLines.forEach((ln, i) => {
+      d.semiLines().forEach((ln, i) => {
         const placed = d.state.semiPlaced[i];
         let semi = "";
         if (ln.need && placed) {
@@ -372,7 +384,9 @@ export function installIdeApp(d) {
 
   d.trySemi = function trySemi(i) {
     d.ensureSemi();
-    const ln = d.copy.semiLines[i];
+    const lines = d.semiLines();
+    const ln = lines[i];
+    if (!ln) return;
     d.audio.keyclack();
     d.hooks.onType?.();
     d.bumpActivity();
@@ -386,7 +400,7 @@ export function installIdeApp(d) {
     if (d.state.semiPlaced[i]) return;
     d.state.semiPlaced[i] = true;
     d.state.sprint += 1;
-    const left = d.copy.semiLines.filter((l, j) => l.need && !d.state.semiPlaced[j]).length;
+    const left = lines.filter((l, j) => l.need && !d.state.semiPlaced[j]).length;
     if (left <= 0) {
       const pts = d.state.activeTicket?.pts || 3;
       if (d.state.jimboUsedThisTicket) d.finishTicket("semi", pts);
