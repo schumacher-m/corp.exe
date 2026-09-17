@@ -7,6 +7,7 @@ import { createDesktop, W as CRT_W, H as CRT_H } from "../desktop/Desktop.js";
 import * as audio from "../audio/Audio.js";
 import { loadCopy } from "../copy/loadCopy.js";
 import { farmWorkers, updateFarmFidget } from "./Farm.js";
+import { createTower } from "./Tower.js";
 
 let copy = { boot: { clockInButton: "CLOCK IN" }, tickets: [], ticketPool: [] };
 try {
@@ -69,7 +70,7 @@ function overlayPointer(e) {
 
 /* —— Game state —— */
 const G = {
-  phase: "title", // title | boot | walk | sit | seated | ending
+  phase: "title", // title | boot | plaza | lobby | elevator | floor | walk | sit | seated | ending
   muted: false,
   keys: Object.create(null),
   yaw: 0,
@@ -95,12 +96,12 @@ const RT_H = 240;
 const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: false, powerPreference: "low-power" });
 renderer.setSize(RT_W, RT_H, false);
 renderer.setPixelRatio(1);
-renderer.setClearColor(0x3a3830, 1);
+renderer.setClearColor(0x4a4840, 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x3a3830);
-scene.fog = new THREE.Fog(0x4a4840, 12, 30);
+scene.background = new THREE.Color(0x4a4840);
+scene.fog = new THREE.Fog(0x5a5848, 18, 40);
 
 const camera = new THREE.PerspectiveCamera(60, RT_W / RT_H, 0.08, 60);
 const player = {
@@ -148,18 +149,18 @@ postScene.add(
 );
 
 /* FARM.md lighting — floor lock: ambient ~1.55, fluo #f0ecd4 */
-scene.add(new THREE.AmbientLight(0x9a968e, 1.55));
-const keyL = new THREE.DirectionalLight(0xe0d8c4, 1.05);
+scene.add(new THREE.AmbientLight(0xb0aca0, 2.1));
+const keyL = new THREE.DirectionalLight(0xe8e0cc, 1.3);
 keyL.position.set(2, 8, 4);
 scene.add(keyL);
 /* Player desk fluo — a bit stronger for seated CRT readability */
-const fluo = new THREE.PointLight(0xf0ecd4, 1.15, 8);
+const fluo = new THREE.PointLight(0xf0ecd4, 1.4, 12);
 fluo.position.set(0, 2.4, -1);
 scene.add(fluo);
 /* Fluorescent banks along farm — #f0ecd4 ~0.85 */
 for (let iz = -8; iz <= 4; iz += 2) {
   for (const ix of [-8, -4, 0, 4, 8]) {
-    const fl = new THREE.PointLight(0xf0ecd4, 0.85, 7);
+    const fl = new THREE.PointLight(0xf0ecd4, 1.1, 10);
     fl.position.set(ix * 2.2, 2.45, iz * 2.6);
     scene.add(fl);
   }
@@ -258,6 +259,7 @@ try {
   // Dev/playtest: jump to seated fullscreen desktop without walk
   window.corpForceDesk = () => {
     try {
+      if (tower) tower.hideForDeskSkip();
       G.phase = "seated";
       handsRoot && (handsRoot.visible = false);
       setDesktopFullscreen(true);
@@ -270,6 +272,35 @@ try {
     }
   };
 } catch (_) {}
+
+/* CORP-TOWER-01 — plaza→lobby→elevator→floor graybox/GLB */
+let tower = null;
+try {
+  tower = createTower({
+    scene,
+    officeRoot: OfficeRoot,
+    audio,
+    toast,
+    setPrompt,
+    player,
+    G,
+    win95,
+    copy,
+    forceNearest,
+    onEnterWalk: () => {
+      // Clock still frozen until seated; start farm bed + walk bed only now
+      try { audio.stopLoop("floorAmb"); } catch (_) {}
+      audio.playBgm("bgmWalk");
+      audio.startExhaustedBed({ volume: 0.32 });
+      setPrompt("WASD · find Cubicle 4-B · E to sit");
+      // Allow approach from elevator_exit z≈10.4
+      player.pos.z = Math.min(player.pos.z, 10.4);
+    },
+  });
+} catch (e) {
+  console.warn("[corp.exe] tower init soft-fail", e);
+  tower = null;
+}
 
 const crtTex = new THREE.CanvasTexture(win95.canvas);
 crtTex.magFilter = THREE.NearestFilter;
@@ -848,7 +879,7 @@ function updateWalk(dt) {
     player.pos.z += (fz * forward + rz * strafe) * player.speed * dt;
     // soft bounds — FARM.md hellscape (−10…+10 / −8…+4) with margin
     player.pos.x = THREE.MathUtils.clamp(player.pos.x, -10.5, 10.5);
-    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -8.5, 5.0);
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -8.5, 11.5);
     footAcc += dt;
     if (footAcc > 0.38) {
       footAcc = 0;
@@ -897,6 +928,8 @@ function beginSit() {
   if (sitBtn) sitBtn.hidden = true;
   setPrompt("Sitting…");
   try { audio.playSfx("sit"); } catch (_) {}
+  try { tower?.onSitStart?.(); } catch (_) {}
+  try { audio.stopLoop("floorAmb"); } catch (_) {}
   G.sitT = 0;
 }
 
@@ -1006,17 +1039,24 @@ function stopSlackNoise() {
 }
 
 async function runBoot() {
-  /* BIOS loading screen killed (Michael) — skip overlay, go straight to walk */
-  G.phase = "walk";
+  /* CORP-TOWER-01: CLOCK IN → plaza (not cubicle walk) */
   showScreen("screen-title");
   $("screen-title").classList.remove("active");
   const boot = $("boot-overlay");
   if (boot) boot.classList.remove("show");
-  audio.playBgm("bgmWalk");
-  audio.startExhaustedBed({ volume: 0.32 });
-  player.pos.set(0, 1.55, 3.2);
-  G.yaw = 0;
-  setPrompt("WASD · find Cubicle 4-B · E to sit");
+  // Clock frozen until seated — do not start day systems / exhausted bed here
+  try { audio.stopBgm?.(); } catch (_) {}
+  if (tower) {
+    await tower.startPlaza();
+  } else {
+    // Soft-fallback if tower failed to init
+    G.phase = "walk";
+    audio.playBgm("bgmWalk");
+    audio.startExhaustedBed({ volume: 0.32 });
+    player.pos.set(0, 1.55, 3.2);
+    G.yaw = 0;
+    setPrompt("WASD · find Cubicle 4-B · E to sit");
+  }
 }
 
 function clockOut() {
@@ -1090,6 +1130,7 @@ window.addEventListener("keydown", (e) => {
     k === " " ||
     k === "enter" ||
     e.code === "Enter";
+  if (tower && tower.onKeyInteract(e)) return;
   if (G.phase === "walk" && sitKey) {
     e.preventDefault();
     // If somehow canSit false but they're past the doorway, still sit
@@ -1109,7 +1150,7 @@ window.addEventListener("keyup", (e) => {
 });
 
 $("stage").addEventListener("mousemove", (e) => {
-  if (G.phase === "walk") {
+  if (G.phase === "walk" || G.phase === "plaza" || G.phase === "lobby" || G.phase === "elevator" || G.phase === "floor") {
     const { nx, ny } = stagePointer(e);
     G.yaw = -nx * 0.6;
     G.lookY = ny * 0.25;
@@ -1117,6 +1158,7 @@ $("stage").addEventListener("mousemove", (e) => {
 });
 
 $("stage").addEventListener("mousedown", (e) => {
+  if (tower && tower.onPointerInteract()) return;
   if (G.phase === "walk" && G.canSit) {
     beginSit();
   }
@@ -1207,7 +1249,9 @@ function frame() {
   postUniforms.uTime.value = clock.elapsedTime;
 
   const t = clock.elapsedTime;
-  if (G.phase === "walk") {
+  if (G.phase === "plaza" || G.phase === "lobby" || G.phase === "elevator" || G.phase === "floor") {
+    if (tower) tower.update(dt, camera);
+  } else if (G.phase === "walk") {
     updateWalk(dt);
     updateFarmFidget(farmWorkers, t);
   } else if (G.phase === "sit") updateSit(dt);

@@ -76,12 +76,12 @@ Prefer **`InstancedMesh`** for neighbor bays / CRTs / workers if clone cost hurt
 
 | Light | Value |
 |-------|-------|
-| Ambient | `#9a968e`, intensity **1.55** |
-| Key directional | `#e0d8c4` **1.05** from above-front |
-| Fluorescent banks | `#f0ecd4` (`0xf0ecd4`), intensity **0.85**, distance **7**, every ~2 Z × every ~4 X |
+| Ambient | `#b0aca0` @ **2.1** (belt after murky FAIL; Designer floor albedo still landing) |
+| Key directional | `#e8e0cc` **1.3** above-front |
+| Fluorescent banks | `#f0ecd4` @ **1.1**, distance **10** |
 | Player desk fluo | same `#f0ecd4`, a bit stronger (~1.15) so seated CRT stays readable |
-| Fog | `THREE.Fog(0x4a4840, 12, 30)` |
-| Clear / bg | `#3a3830` (lifted from muddy `#2a2820`) — PS1, no bloom |
+| Fog | `THREE.Fog(0x5a5848, 18, 40)` |
+| Clear / bg | `#4a4840` |
 
 No bloom. Brightness = more lights + emissive CRTs, not post glow. Proxy walls prefer `MeshLambert` so ambient/fluo hit them.
 
