@@ -47,6 +47,7 @@ for key, fname in [
     ("emails", "emails.md"),
     ("eod", "eod-review.md"),
     ("daySim", "day-sim.md"),
+    ("towerArrival", "tower-arrival.md"),
 ]:
     p = COPY / fname
     if p.exists():
@@ -296,6 +297,7 @@ print(
     "incident", bool(inc),
     "ticketPool", len(data.get("ticketPool") or []),
     "dropDb", bool(data.get("dropDb")),
+    "towerArrival", bool(data.get("towerArrival")),
     "ticketStrings", len(data.get("ticketStrings") or {}),
     "teams", "teams" in data,
     "chatPool", len((data.get("teams") or {}).get("chatPool") or []),

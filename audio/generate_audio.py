@@ -1168,6 +1168,211 @@ def sfx_outlook_whoosh():
 
 
 # ---------------------------------------------------------------------------
+# Tower arrival (CORP-TOWER-01) — plaza → lobby → elevator → floor
+# ---------------------------------------------------------------------------
+
+def amb_plaza():
+    """Outdoor plaza bed — wind + distant HVAC, lonely approach to the tower."""
+    dur = 28.0
+    n = int(dur * SR)
+    # wind: filtered pink/brown with integer-cycle LFOs for seamless loop
+    wind = one_pole_lp(noise(n, "pink"), 900, SR) * 0.55
+    wind += one_pole_lp(noise(n, "brown"), 220, SR) * 0.4
+    wind *= 0.55 + 0.45 * _loop_lfo(3, n, sr=SR)
+    wind *= 0.7 + 0.3 * _loop_lfo(7, n, sr=SR, phase=1.2)
+    # distant tower HVAC bleed (quieter, duller than indoor)
+    distant = hvac_drone_loop(n) * 0.22
+    distant = one_pole_lp(distant, 280, SR)
+    # occasional soft outdoor whoosh (synth gust, not traffic sample)
+    gusts = np.zeros(n)
+    for k in range(5):
+        at = int((k + 0.5) * n / 5)
+        gn = int(1.4 * SR)
+        if at + gn > n:
+            continue
+        g = one_pole_bp_noise(gn, 200, 1400) * env_adsr(gn, 0.25, 0.4, 0.35, 0.5, SR)
+        g *= 0.045 + 0.015 * (k % 2)
+        gusts[at : at + gn] += g
+    gusts = make_loopable(gusts, fade_ms=250)
+    mix = wind * 0.55 + distant + gusts
+    mix = bitcrush(downsample_upsample(mix, 3), bits=10)
+    mix = soft_limit(mix * 0.95, drive=1.1)
+    mix = make_loopable(mix, fade_ms=280)
+    return normalize(mix, peak_db=-12.0)
+
+
+def sfx_badge_beep():
+    """Badge reader Accept — short cheap two-tone success beep."""
+    n = int(0.2 * SR)
+    out = np.zeros(n)
+    for f, start, amp in [(1046.5, 0.0, 0.45), (1318.5, 0.045, 0.38)]:
+        d = int(0.09 * SR)
+        st = int(start * SR)
+        tone = sine(f, d) * amp + square(f, d, duty=0.4) * 0.08
+        tone *= env_adsr(d, 0.001, 0.02, 0.35, 0.04, SR)
+        out[st : st + d] += tone
+    # tiny relay click
+    ck = int(0.012 * SR)
+    out[:ck] += one_pole_lp(noise(ck), 5000, SR) * 0.18
+    out = bitcrush(one_pole_lp(out, 6000, SR), bits=10)
+    return normalize(fade_edges(out, 3), peak_db=-3.0)
+
+
+def sfx_badge_deny():
+    """Soft badge deny chirp — quiet fail then still-success path (never softlock)."""
+    n = int(0.22 * SR)
+    out = np.zeros(n)
+    d = int(0.14 * SR)
+    t = np.arange(d) / SR
+    f = 620.0 * np.exp(-t * 4.5)
+    phase = 2 * np.pi * np.cumsum(f) / SR
+    chirp = np.sin(phase) * 0.45
+    chirp += square(380, d, duty=0.35) * env_adsr(d, 0.001, 0.03, 0.2, 0.06, SR) * 0.08
+    chirp *= env_adsr(d, 0.002, 0.04, 0.25, 0.08, SR)
+    out[:d] += chirp
+    # soft error tick
+    ck = int(0.02 * SR)
+    st = int(0.1 * SR)
+    out[st : st + ck] += one_pole_lp(noise(ck), 3500, SR) * 0.12
+    out = bitcrush(one_pole_lp(out, 4500, SR), bits=9)
+    # quieter than success beep
+    return normalize(fade_edges(out, 4), peak_db=-8.0)
+
+
+def amb_lobby():
+    """Indoor lobby bed — HVAC + fluorescent + distant nonsense murmur (no real words)."""
+    dur = 32.0
+    n = int(dur * SR)
+    bed = hvac_drone_loop(n) * 0.7 + fluorescent_hum_loop(n) * 0.55
+    # muffled lobby air / carpet hush
+    air = one_pole_lp(noise(n, "pink"), 450, SR) * 0.06
+    air *= 0.8 + 0.2 * _loop_lfo(5, n, sr=SR, phase=0.5)
+    air = make_loopable(air, fade_ms=220)
+    # distant nonsense babble — very low, band-limited (lobby murmur, not intelligible)
+    murmur = np.zeros(n)
+    for f0_base, amp in [(130.0, 0.55), (175.0, 0.35), (210.0, 0.22)]:
+        buf = []
+        filled = 0
+        while filled < n + SR:
+            # shorter quieter phrases with longer gaps
+            phrase = _babble_phrase(int(RNG.integers(2, 6)), f0_base)
+            gap = np.zeros(int(float(RNG.uniform(0.6, 2.2)) * SR))
+            buf.append(phrase)
+            buf.append(gap)
+            filled += len(phrase) + len(gap)
+        v = np.concatenate(buf)[:n]
+        v = bandpass(v, 280, 2200, SR)
+        v = one_pole_lp(v, 1800, SR)
+        v = bitcrush(v, bits=8, rate_div=3)
+        murmur += v * amp * 0.045
+    murmur = make_loopable(murmur, fade_ms=200)
+    # rare soft door whoosh / distant click (deterministic-ish via loop placement)
+    extras = np.zeros(n)
+    for at_frac, kind in [(0.22, "click"), (0.61, "whoosh"), (0.84, "click")]:
+        at = int(at_frac * n)
+        if kind == "click":
+            cn = int(0.04 * SR)
+            if at + cn < n:
+                extras[at : at + cn] += one_pole_lp(noise(cn), 3000, SR) * env_adsr(
+                    cn, 0.001, 0.01, 0.2, 0.02, SR
+                ) * 0.06
+        else:
+            wn = int(0.35 * SR)
+            if at + wn < n:
+                w = one_pole_bp_noise(wn, 400, 2800) * env_adsr(wn, 0.05, 0.1, 0.3, 0.15, SR)
+                extras[at : at + wn] += w * 0.04
+    extras = make_loopable(extras, fade_ms=180)
+    mix = bed + air + murmur + extras
+    mix = soft_limit(mix * 0.95, drive=1.12)
+    mix = make_loopable(mix, fade_ms=260)
+    return normalize(mix, peak_db=-11.5)
+
+
+def amb_elevator():
+    """Elevator car hum — motor drone loop while riding (~12s)."""
+    dur = 12.0
+    n = int(dur * SR)
+    # motor / cable fundamental stack
+    motor = (
+        0.4 * sine(62.0, n)
+        + 0.28 * sine(124.0, n, phase=0.3)
+        + 0.15 * sine(186.0, n, phase=1.0)
+        + 0.1 * sine(48.0, n)
+        + 0.08 * triangle(93.0, n)
+    )
+    wob = 0.88 + 0.12 * _loop_lfo(2, n, sr=SR)
+    motor *= wob
+    # mid buzz / gear whine
+    whine = sine(410.0, n) * 0.04 * (0.6 + 0.4 * _loop_lfo(4, n, sr=SR, phase=0.7))
+    whine += sine(820.0, n) * 0.015 * (0.5 + 0.5 * _loop_lfo(6, n, sr=SR))
+    # cabin air
+    air = one_pole_lp(noise(n, "brown"), 160, SR) * 0.1
+    air = make_loopable(air, fade_ms=150)
+    # tiny cable tick every ~3s (loop-locked)
+    ticks = np.zeros(n)
+    for k in range(4):
+        at = int(k * n / 4) + int(0.15 * SR)
+        tn = int(0.025 * SR)
+        if at + tn >= n:
+            continue
+        ticks[at : at + tn] += one_pole_hp(noise(tn), 2000, SR) * env_adsr(
+            tn, 0.0005, 0.005, 0.15, 0.012, SR
+        ) * 0.05
+    ticks = make_loopable(ticks, fade_ms=80)
+    mix = motor * 0.55 + whine + air + ticks
+    mix = bitcrush(one_pole_lp(mix, 3500, SR), bits=10, rate_div=2)
+    mix = soft_limit(mix, drive=1.15)
+    mix = make_loopable(mix, fade_ms=120)
+    return normalize(mix, peak_db=-10.0)
+
+
+def sfx_elevator_ding():
+    """Elevator arrive ding — cheap two-tone chime."""
+    n = int(0.55 * SR)
+    out = np.zeros(n)
+    for f, start, amp in [(784.0, 0.0, 0.5), (1046.5, 0.09, 0.42)]:
+        d = int(0.35 * SR)
+        st = int(start * SR)
+        if st + d > n:
+            d = n - st
+        tone = sine(f, d) * amp + sine(f * 2.01, d) * 0.12 + triangle(f * 0.5, d) * 0.08
+        tone *= env_adsr(d, 0.002, 0.08, 0.28, 0.22, SR)
+        out[st : st + d] += tone
+    # soft mechanical release
+    ck = int(0.03 * SR)
+    out[:ck] += one_pole_lp(noise(ck), 2500, SR) * 0.1
+    out = bitcrush(one_pole_lp(out, 5500, SR), bits=10)
+    return normalize(fade_edges(out, 6), peak_db=-3.5)
+
+
+def amb_floor():
+    """Open-plan floor fluorescent/HVAC bed — same A-minor palette as seated desktop BGM."""
+    # ~32s: aligned enough for ~0.5–0.8s crossfade into bgm-seated-desktop
+    dur = 32.0
+    n = int(dur * SR)
+    bed = hvac_drone_loop(n) * 0.75 + fluorescent_hum_loop(n) * 0.95
+    # shared cubicle-hell pad (A C E G Bb) — sparse, low, matches seated key center
+    pad_freqs = [110.0, 130.81, 164.81, 196.0, 233.08]  # A2 C3 E3 G3 Bb3
+    pad = np.zeros(n)
+    for i, f in enumerate(pad_freqs):
+        amp = 0.045 - 0.005 * i
+        tone = sine(f, n) * amp + triangle(f * 0.997, n) * (amp * 0.35)
+        # slow breathe locked to loop
+        tone *= 0.65 + 0.35 * _loop_lfo(2 + (i % 3), n, sr=SR, phase=i * 0.7)
+        pad += tone
+    pad = one_pole_lp(pad, 900, SR)
+    pad = bitcrush(pad, bits=10, rate_div=2)
+    # quiet CRT coil ghost (same family as walk BGM)
+    whine = sine(15600, n) * 0.0025 * (0.5 + 0.5 * _loop_lfo(3, n, sr=SR))
+    # soft distant printer whisper (very sparse) — same family as walk BGM
+    printers = distant_printer_bed(n, bpm=90.0) * 0.35
+    mix = bed + pad * 0.85 + whine + printers
+    mix = soft_limit(mix * 0.92, drive=1.12)
+    mix = make_loopable(mix, fade_ms=280)
+    return normalize(mix, peak_db=-11.0)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -1232,6 +1437,30 @@ def main():
     write_wav(wav_path, muffled)
     wav_to_ogg(wav_path, OUT / "sfx-muffled-call.ogg", bitrate="80k")
     print(f"    -> {(OUT / 'sfx-muffled-call.ogg').stat().st_size} bytes")
+
+    print("Generating Tower arrival (CORP-TOWER-01)...")
+    tower_ogg = [
+        ("amb-plaza.ogg", amb_plaza, "96k"),
+        ("amb-lobby.ogg", amb_lobby, "96k"),
+        ("amb-elevator.ogg", amb_elevator, "96k"),
+        ("amb-floor.ogg", amb_floor, "96k"),
+    ]
+    for name, fn, br in tower_ogg:
+        print(f"  {name}...")
+        audio = fn()
+        wav_path = TMP / (name.replace(".ogg", ".wav"))
+        write_wav(wav_path, audio)
+        wav_to_ogg(wav_path, OUT / name, bitrate=br)
+        print(f"    -> {(OUT / name).stat().st_size} bytes")
+    tower_wav = [
+        ("sfx-badge-beep.wav", sfx_badge_beep),
+        ("sfx-badge-deny.wav", sfx_badge_deny),
+        ("sfx-elevator-ding.wav", sfx_elevator_ding),
+    ]
+    for name, fn in tower_wav:
+        print(f"  {name}...")
+        write_wav(OUT / name, fn())
+        print(f"    -> {(OUT / name).stat().st_size} bytes")
 
     # cleanup temp wavs
     for p in TMP.glob("*.wav"):

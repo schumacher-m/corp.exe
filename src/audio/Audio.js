@@ -1,6 +1,6 @@
 /**
  * corp.exe audio — no-op stubs when files missing; gated on muted flag.
- * Expected under audio/: bgm-*.ogg, amb-cubicle-exhausted.ogg,
+ * Expected under audio/: bgm-*.ogg, amb-cubicle-exhausted.ogg, amb-plaza/lobby/elevator/floor,
  * sfx-*.wav one-shots (incl. tired farm: grunt/sigh/creak/ugh/key-dead/murmur/keys-far),
  * sfx-win95-*, sfx-key-01..03, sfx-mouse-click, sfx-slack-ping,
  * sfx-jiggler-tick, sfx-timesheet-save, sfx-teams-ring, sfx-muffled-call, sfx-call-accept, sfx-call-decline, sfx-teams-ping, exhausted farm pack, etc.
@@ -52,6 +52,14 @@ const FILES = {
   callDecline: "sfx-call-decline.wav",
   teamsPing: "sfx-teams-ping.wav",
   outlookWhoosh: "sfx-outlook-whoosh.wav",
+  // CORP-TOWER-01 arrival beds / SFX
+  plazaAmb: "amb-plaza.ogg",
+  badgeBeep: "sfx-badge-beep.wav",
+  badgeDeny: "sfx-badge-deny.wav",
+  lobbyAmb: "amb-lobby.ogg",
+  elevatorAmb: "amb-elevator.ogg",
+  elevatorDing: "sfx-elevator-ding.wav",
+  floorAmb: "amb-floor.ogg",
 };
 
 const EXHAUSTED_ONESHOTS = [
@@ -76,6 +84,7 @@ let currentBgm = null;
 let ambExhaustedEl = null;
 let exhaustedBedTimer = null;
 let exhaustedBedActive = false;
+const loops = new Map();
 
 function el(name) {
   if (cache.has(name)) return cache.get(name);
@@ -127,12 +136,18 @@ export function setMuted(m) {
     if (ambExhaustedEl) {
       try { ambExhaustedEl.pause(); } catch (_) {}
     }
+    for (const c of loops.values()) {
+      try { c.pause(); } catch (_) {}
+    }
   } else {
     if (currentBgm && !currentBgm._missing) {
       currentBgm.play().catch(() => {});
     }
     if (ambExhaustedEl && exhaustedBedActive && !ambExhaustedEl._missing) {
       ambExhaustedEl.play().catch(() => {});
+    }
+    for (const c of loops.values()) {
+      try { c.play().catch(() => {}); } catch (_) {}
     }
   }
 }
@@ -272,8 +287,6 @@ export function stopExhaustedBed() {
   _clearExhaustedTimer();
   stopAmbExhausted();
 }
-
-const loops = new Map();
 
 /** Loop a keyed clip (ring / muffled bed). Stops prior instance of same name. */
 export function playLoop(name, { volume = 0.4 } = {}) {

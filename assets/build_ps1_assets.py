@@ -18,8 +18,8 @@ MOD.mkdir(parents=True, exist_ok=True)
 # Muddy PS1 office + Win95 chrome accents
 PALETTE = {
     "fog": (26, 24, 20),
-    "wall": (61, 58, 50),       # #3d3a32
-    "wall_hi": (80, 76, 66),
+    "wall": (73, 70, 60),       # #49463c ~+20% lift (still muddy)
+    "wall_hi": (96, 91, 79),
     "desk": (42, 40, 32),       # #2a2820
     "desk_hi": (55, 52, 40),
     "panel": (36, 34, 24),
@@ -39,9 +39,9 @@ PALETTE = {
     "paper": (180, 170, 140),
     "sticky": (200, 180, 60),
     "mug": (120, 40, 40),
-    "floor": (48, 46, 38),
-    "floor_tile": (40, 38, 32),
-    "fluorescent": (200, 200, 160),
+    "floor": (62, 60, 49),      # ~+30% muddy olive-gray (not white)
+    "floor_tile": (52, 49, 42),
+    "fluorescent": (230, 228, 200),  # cool-white tube
     "skin": (140, 120, 100),    # #8c7864
     "skin_hi": (120, 100, 85),
     "shirt": (50, 55, 70),
@@ -117,7 +117,7 @@ def write_textures() -> dict[str, Path]:
     out["kyle"] = save_tex("kyle", dither_fill(32, 32, PALETTE["skin"], PALETTE["skin_hi"]))
     out["shirt"] = save_tex("shirt", dither_fill(16, 16, PALETTE["shirt"], (40, 44, 58)))
     out["hair"] = save_tex("hair", dither_fill(16, 16, PALETTE["hair"], (20, 18, 16)))
-    out["fluorescent"] = save_tex("fluorescent", dither_fill(32, 8, PALETTE["fluorescent"], (180, 180, 140)))
+    out["fluorescent"] = save_tex("fluorescent", dither_fill(32, 8, PALETTE["fluorescent"], (200, 198, 170)))
     out["sick"] = save_tex("sick", dither_fill(16, 16, PALETTE["sick"], PALETTE["sick_hi"]))
     out["teal"] = save_tex("teal", dither_fill(32, 32, PALETTE["teal"], PALETTE["teal_hi"]))
     out["gray"] = save_tex("gray", dither_fill(32, 32, PALETTE["gray"], PALETTE["gray_hi"]))

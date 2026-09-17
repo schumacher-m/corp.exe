@@ -20,7 +20,33 @@ Do **not** keep the old 3-bay layout (`±6.2m`). That reads as an empty warehous
 
 Player collision / sit stay local to the home bay. Neighbors are visual only (no colliders).
 
-**Spawn visibility:** skip neighbor at `(0, +1)` as well as `(0, 0)` — that aisle cell sits between walk-start (`z≈3.2`) and the player CRT and otherwise eclipses it with a green screen.
+**Aisles (floor lock — authoritative):**
+- Main aisle: clear the **entire** `iz === +1` row (E–W corridor). No neighbor bays on that row.
+- Cross aisles: clear entire columns `ix === 5` and `ix === -5` (N–S). No neighbor bays there.
+- Still skip player home `ix===0 && iz===0` (full cubicle stays).
+- Do **not** skip all of `ix===0` — only `(0,0)` for player; the E–W main aisle is `iz=+1`.
+- Desks face **−Z** (no `bay.rotation.y` toward center). Walk/elevator handoff approaches from **+Z** looking toward player desk `(0,0)`. Spawn ~`z≈3.2`.
+
+### Elevator / tower handoff (empties)
+
+| Empty | World pos (approx) | Notes |
+|-------|--------------------|-------|
+| `elevator_exit` | `(0, 0, 10.4)` | End of +Z farm; look −Z into main aisle |
+| `aisle_start` | `(0, 0, 2.6)` | On main aisle `iz=+1`; look −Z to desk |
+| Player desk | `(0, 0, 0)` | CRT faces −Z |
+
+```
+        +Z  elevator_exit
+             |
+    [bays] --+-- [bays]   cross ix=±5
+             |
+    ==== MAIN AISLE iz=+1 ====
+             |
+          player (0,0)
+             |
+           -Z farm
+```
+
 
 ### Pseudocode
 
@@ -28,9 +54,11 @@ Player collision / sit stay local to the home bay. Neighbors are visual only (no
 const PITCH_X = 2.2, PITCH_Z = 2.6;
 for (let ix = -10; ix <= 10; ix++) {
   for (let iz = -8; iz <= 4; iz++) {
-    if (ix === 0 && iz === 0) continue; // player
-    if (ix === 0 && iz === 1) continue; // aisle sightline
+    if (ix === 0 && iz === 0) continue; // player home
+    if (iz === 1) continue;             // E–W main aisle
+    if (ix === 5 || ix === -5) continue; // N–S cross aisles
     const bay = neighborBay.clone(); // or InstancedMesh
+    // desks face −Z — do not rotate toward center
     bay.position.set(ix * PITCH_X, 0, iz * PITCH_Z);
     farm.add(bay);
 
@@ -44,17 +72,18 @@ for (let ix = -10; ix <= 10; ix++) {
 
 Prefer **`InstancedMesh`** for neighbor bays / CRTs / workers if clone cost hurts. Cap draw with fog; don’t frustum-cull so hard the farm feels empty.
 
-## Lighting (brighter farm, still PS1)
+## Lighting (floor lock — brighter farm, still PS1)
 
-| Light | Suggestion |
-|-------|------------|
-| Ambient | `#8a8680` intensity **≥ 1.0** (was muddy) |
-| Key directional | `#d0c8b0` ~0.8 from above-front |
-| Fluorescent fills | Point/spot every **2–3 cells** along Z, color `#e8e4c8`, intensity 0.45, distance ~5 |
-| Fog | `THREE.Fog(0x3a3830, 8, 22)` — lifted near, still eats the horizon |
-| Clear / bg | `#2a2820` not pure black |
+| Light | Value |
+|-------|-------|
+| Ambient | `#8a8680`–`#9a968c`, intensity **~1.55** |
+| Key directional | `#d0c8b0` ~0.95 from above-front |
+| Fluorescent banks | `#f0ecd4` (`0xf0ecd4`), intensity **~0.85**, every ~2 cells along Z |
+| Player desk fluo | same `#f0ecd4`, a bit stronger (~1.15) so seated CRT stays readable |
+| Fog | `THREE.Fog(0x4a4840, 12, 30)` |
+| Clear / bg | `#3a3830` (lifted from muddy `#2a2820`) — PS1, no bloom |
 
-No bloom. Brightness = more lights + emissive CRTs, not post glow.
+No bloom. Brightness = more lights + emissive CRTs, not post glow. Proxy walls prefer `MeshLambert` so ambient/fluo hit them.
 
 ## CRT glow (every neighbor)
 
@@ -126,7 +155,7 @@ Oppressive exhausted bed — see Audio. Visual density should match constant uns
 - [ ] Screen glow via `crt_glow` / Basic `toneMapped:false` (not flat hero planes alone)
 - [ ] Fidgeting seated workers at desks (`farmWorkers[]`, phase-offset)
 - [ ] Pitch ≤ 2.2 / 2.6 (claustrophobic aisles)
-- [ ] Ambient + fluorescents lifted; fog not black soup
+- [ ] Ambient ~1.55 + fluo `#f0ecd4` ~0.85; fog `0x4a4840, 12, 30`; aisles iz=+1 + ix=±5
 - [ ] Player sit/Win95 unbroken
 - [ ] Farm tris stay in the ballpark above (~270 instances)
 

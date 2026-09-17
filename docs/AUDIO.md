@@ -185,6 +185,33 @@ Babble bed is original formant synth (not sampled speech). Never name third-part
 
 Soft whoosh (−10 dBFS). Not required to ship Mail Theater. Internal key `outlookWhoosh` OK.
 
+
+
+## Tower arrival (CORP-TOWER-01)
+
+Daily plaza → lobby → elevator → floor set piece before existing walk/sit/seated. Paths stable under `audio/`. Mute via `state.muted` / `setMuted` (BGM, exhausted bed, and all `playLoop` beds pause; SFX skip).
+
+| File | Key | When | Loop | Suggested vol |
+|------|-----|------|------|---------------|
+| `audio/amb-plaza.ogg` | `plazaAmb` | **plaza** — outside tower approach | Yes (`playLoop`) | 0.28–0.38 |
+| `audio/sfx-badge-beep.wav` | `badgeBeep` | Badge reader Accept | No (`playSfx`) | 0.55 |
+| `audio/sfx-badge-deny.wav` | `badgeDeny` | Optional soft deny chirp (then still success) | No | 0.35–0.45 |
+| `audio/amb-lobby.ogg` | `lobbyAmb` | **lobby** — HVAC + people murmur (**no real words**) | Yes (`playLoop`) | 0.28–0.36 |
+| `audio/amb-elevator.ogg` | `elevatorAmb` | **elevator** — while in car | Yes (`playLoop`) | 0.3–0.4 |
+| `audio/sfx-elevator-ding.wav` | `elevatorDing` | Elevator arrive / doors | No | 0.5–0.6 |
+| `audio/amb-floor.ogg` | `floorAmb` | **floor** — open-plan fluorescent/HVAC to cubicle | Yes (`playLoop`) | 0.28–0.36 |
+
+### Phase handoff
+
+1. CLOCK IN → start `playLoop("plazaAmb")`; stop on lobby enter.
+2. Lobby → `playLoop("lobbyAmb")`; badge → `playSfx("badgeBeep")` (optional prior `badgeDeny`).
+3. Elevator ride → stop lobby; `playLoop("elevatorAmb")`; on arrive → `playSfx("elevatorDing")` + stop elevator + `playLoop("floorAmb")`.
+4. Desk sit / seated → **crossfade** `floorAmb` into existing `playBgm("bgmDesk")` / `bgm-seated-desktop.ogg` (~400–800 ms equal-power). `amb-floor` shares the seated A-minor palette (A C E G Bb) + fluorescent/HVAC so the handoff does not key-jar.
+5. After seated, existing walk/sit/exhausted beds unchanged.
+
+`playLoop` / `stopLoop` / `stopAllLoops` already support these amb keys. Do **not** add wipe-blip.
+
+
 ## Dev integration checklist
 
 1. Preload BGM + critical SFX on boot (or first user gesture — browsers block autoplay).

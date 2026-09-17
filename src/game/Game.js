@@ -95,12 +95,12 @@ const RT_H = 240;
 const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: false, powerPreference: "low-power" });
 renderer.setSize(RT_W, RT_H, false);
 renderer.setPixelRatio(1);
-renderer.setClearColor(0x2a2820, 1);
+renderer.setClearColor(0x3a3830, 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a2820);
-scene.fog = new THREE.Fog(0x3a3830, 8, 22);
+scene.background = new THREE.Color(0x3a3830);
+scene.fog = new THREE.Fog(0x4a4840, 12, 30);
 
 const camera = new THREE.PerspectiveCamera(60, RT_W / RT_H, 0.08, 60);
 const player = {
@@ -147,18 +147,19 @@ postScene.add(
   )
 );
 
-/* FARM.md lighting — bright, still PS1 */
-scene.add(new THREE.AmbientLight(0x8a8680, 1.35));
+/* FARM.md lighting — floor lock: ambient ~1.55, fluo #f0ecd4 */
+scene.add(new THREE.AmbientLight(0x8a8680, 1.55));
 const keyL = new THREE.DirectionalLight(0xd0c8b0, 0.95);
 keyL.position.set(2, 8, 4);
 scene.add(keyL);
-const fluo = new THREE.PointLight(0xe8e4c8, 1.2, 8);
+/* Player desk fluo — a bit stronger for seated CRT readability */
+const fluo = new THREE.PointLight(0xf0ecd4, 1.15, 8);
 fluo.position.set(0, 2.4, -1);
 scene.add(fluo);
-/* fluorescents every ~2–3 cells along Z */
+/* Fluorescent banks along farm — #f0ecd4 ~0.85 */
 for (let iz = -8; iz <= 4; iz += 2) {
   for (const ix of [-8, -4, 0, 4, 8]) {
-    const fl = new THREE.PointLight(0xe8e4c8, 0.5, 5.5);
+    const fl = new THREE.PointLight(0xf0ecd4, 0.85, 5.5);
     fl.position.set(ix * 2.2, 2.45, iz * 2.6);
     scene.add(fl);
   }
@@ -385,8 +386,8 @@ async function loadOffice() {
   const crtScreenGeo = new THREE.PlaneGeometry(0.40, 0.30);
   const crtNeckGeo = new THREE.BoxGeometry(0.32, 0.08, 0.28);
   const crtRimGeo = new THREE.BoxGeometry(0.46, 0.36, 0.05);
-  const deskMat = new THREE.MeshBasicMaterial({ color: 0x2a2820 });
-  const wallMat = new THREE.MeshBasicMaterial({ color: 0x3d3a32 });
+  const deskMat = new THREE.MeshLambertMaterial({ color: 0x2a2820, flatShading: true });
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0x3d3a32, flatShading: true });
   const deskGeo = new THREE.BoxGeometry(1.0, 0.05, 0.5);
   const wallGeo = new THREE.BoxGeometry(2.0, 1.2, 0.06);
   const sideGeo = new THREE.BoxGeometry(0.06, 1.2, 1.6);
@@ -672,8 +673,10 @@ async function loadOffice() {
 
   for (let ix = -10; ix <= 10; ix++) {
     for (let iz = -8; iz <= 4; iz++) {
-      // Skip player home bay AND aisle cell (iz=+1) — spawn sightline to player CRT
-      if (ix === 0 && (iz === 0 || iz === 1)) continue;
+      // Floor lock aisles: player home; entire iz=+1 E–W; ix=±5 N–S. Do NOT clear all ix===0.
+      if (ix === 0 && iz === 0) continue;
+      if (iz === 1) continue;
+      if (ix === 5 || ix === -5) continue;
       const x = ix * PITCH_X;
       const z = iz * PITCH_Z;
       let bay;
