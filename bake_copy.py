@@ -114,6 +114,10 @@ if teams_path.exists():
         teams["replyChips"] = parts[3]
     if len(parts) >= 5:
         teams["followUps"] = parts[4]
+    if len(parts) >= 6:
+        teams["callChatPool"] = parts[5]
+    if len(parts) >= 7:
+        teams["callThreads"] = parts[6]
     data["teams"] = teams
     # Alias for Dev still reading slackPool
     data["slackPool"] = teams.get("chatPool") or data.get("slackPool")

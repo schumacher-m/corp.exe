@@ -2875,7 +2875,311 @@ export default {
         "Jimbo: Call summary: people spoke. Action: none.",
         "Jimbo: You sounded engaged (mute was on)."
       ]
-    }
+    },
+    "callChatPool": [
+      {
+        "name": "Dana",
+        "color": "#4a7080",
+        "text": "You're on mute."
+      },
+      {
+        "name": "Jess",
+        "color": "#5a6a8a",
+        "text": "Can you share? Just the tab. Not your soul."
+      },
+      {
+        "name": "Brad",
+        "color": "#6a5080",
+        "text": "I'll take that offline. (Nowhere.)"
+      },
+      {
+        "name": "Kyle",
+        "color": "#a05030",
+        "text": "Agenda item 1: your blank line."
+      },
+      {
+        "name": "Jimbo",
+        "color": "#705898",
+        "text": "Summary so far: people exist."
+      },
+      {
+        "name": "Priya",
+        "color": "#7a5a70",
+        "text": "Sorry, go ahead -- no, you go -- okay freeze."
+      },
+      {
+        "name": "Todd",
+        "color": "#6a7060",
+        "text": "Parking lot that. Lot is full."
+      },
+      {
+        "name": "Maya",
+        "color": "#4a6070",
+        "text": "Is this recorded? Asking for my future self's therapist."
+      },
+      {
+        "name": "Ops",
+        "color": "#6b8f3a",
+        "text": "Latency is fine. Meaning is not."
+      },
+      {
+        "name": "HR",
+        "color": "#8b3a2a",
+        "text": "Reminder: cameras optional, judgment mandatory."
+      },
+      {
+        "name": "Dana",
+        "color": "#4a7080",
+        "text": "We lost Brad. Emotionally he was already gone."
+      },
+      {
+        "name": "Kyle",
+        "color": "#a05030",
+        "text": "Nit: 'quick sync' is neither."
+      },
+      {
+        "name": "Jess",
+        "color": "#5a6a8a",
+        "text": "Action item: schedule a meeting about this meeting."
+      },
+      {
+        "name": "Jimbo",
+        "color": "#705898",
+        "text": "I captured decisions: [none]. Circling back!"
+      },
+      {
+        "name": "Skip",
+        "color": "#4a7080",
+        "text": "Great energy. Please keep suffering visibly."
+      },
+      {
+        "name": "InsightBot",
+        "color": "#504c40",
+        "text": "Sentiment: medium doomed. Tip: nod."
+      },
+      {
+        "name": "Brad",
+        "color": "#6a5080",
+        "text": "Looping Legal. They will not join. Perfect."
+      },
+      {
+        "name": "Maya",
+        "color": "#4a6070",
+        "text": "Can everyone mute unless speaking? Speaking is optional."
+      }
+    ],
+    "callThreads": [
+      {
+        "callerId": "brad-synergy",
+        "beats": [
+          {
+            "name": "Brad",
+            "color": "#6a5080",
+            "text": "Thanks for jumping on. This is about synergy."
+          },
+          {
+            "name": "Brad",
+            "color": "#6a5080",
+            "text": "Synergy means I need a screenshot of your face nodding."
+          },
+          {
+            "name": "Dana",
+            "color": "#4a7080",
+            "text": "You're on mute, Brad."
+          },
+          {
+            "name": "Brad",
+            "color": "#6a5080",
+            "text": "I was on mute on purpose. Leadership."
+          },
+          {
+            "name": "Jimbo",
+            "color": "#705898",
+            "text": "Note: synergy undefined. Filed under vibes."
+          },
+          {
+            "name": "Brad",
+            "color": "#6a5080",
+            "text": "Anyway I'll send a deck that is a meeting."
+          }
+        ]
+      },
+      {
+        "callerId": "kyle",
+        "beats": [
+          {
+            "name": "Kyle",
+            "color": "#a05030",
+            "text": "Quick call about your blank line."
+          },
+          {
+            "name": "Kyle",
+            "color": "#a05030",
+            "text": "Also the commit message. And your tone."
+          },
+          {
+            "name": "Jess",
+            "color": "#5a6a8a",
+            "text": "Can we not live-review in Sync chat."
+          },
+          {
+            "name": "Kyle",
+            "color": "#a05030",
+            "text": "Nit on the agenda: it has hopes."
+          },
+          {
+            "name": "Jimbo",
+            "color": "#705898",
+            "text": "Summary: Kyle found a space. Space is wrong."
+          },
+          {
+            "name": "Kyle",
+            "color": "#a05030",
+            "text": "Ship when green. Green is a feeling."
+          }
+        ]
+      },
+      {
+        "callerId": "director-alignment",
+        "beats": [
+          {
+            "name": "Director",
+            "color": "#8b3a2a",
+            "text": "We're here to align on alignment."
+          },
+          {
+            "name": "Director",
+            "color": "#8b3a2a",
+            "text": "Outcomes: clarity, ownership, another invite."
+          },
+          {
+            "name": "Todd",
+            "color": "#6a7060",
+            "text": "I'll take that offline into a doc nobody opens."
+          },
+          {
+            "name": "Director",
+            "color": "#8b3a2a",
+            "text": "Cameras on if you can. Souls optional."
+          },
+          {
+            "name": "Jimbo",
+            "color": "#705898",
+            "text": "Action items: be aligned. Due: forever."
+          },
+          {
+            "name": "Director",
+            "color": "#8b3a2a",
+            "text": "Great bridge. Building nothing."
+          }
+        ]
+      },
+      {
+        "callerId": "skip-manager",
+        "beats": [
+          {
+            "name": "Skip",
+            "color": "#4a7080",
+            "text": "Just a pulse check. How are we feeling?"
+          },
+          {
+            "name": "Skip",
+            "color": "#4a7080",
+            "text": "Visibility looks low. Please suffer louder."
+          },
+          {
+            "name": "Priya",
+            "color": "#7a5a70",
+            "text": "Sorry -- soft laptop. Hard week."
+          },
+          {
+            "name": "Skip",
+            "color": "#4a7080",
+            "text": "Love the honesty. Putting it in the review."
+          },
+          {
+            "name": "Jimbo",
+            "color": "#705898",
+            "text": "Pulse: present. Check: bounced."
+          },
+          {
+            "name": "Skip",
+            "color": "#4a7080",
+            "text": "Cool thanks bye. Calendar hold remains."
+          }
+        ]
+      },
+      {
+        "callerId": "maya",
+        "beats": [
+          {
+            "name": "Maya",
+            "color": "#4a6070",
+            "text": "Deploy window is today. Spiritually."
+          },
+          {
+            "name": "Maya",
+            "color": "#4a6070",
+            "text": "Can you share the pipeline? The red one."
+          },
+          {
+            "name": "Ops",
+            "color": "#6b8f3a",
+            "text": "Fog density normal. Confidence is not."
+          },
+          {
+            "name": "Maya",
+            "color": "#4a6070",
+            "text": "If it breaks we roll back to hope."
+          },
+          {
+            "name": "Jimbo",
+            "color": "#705898",
+            "text": "Rollback plan: blame the plant in 4-B."
+          },
+          {
+            "name": "Maya",
+            "color": "#4a6070",
+            "text": "Okay I'm hanging up before Friday finds us."
+          }
+        ]
+      },
+      {
+        "callerId": "unknown-ext",
+        "beats": [
+          {
+            "name": "Unknown",
+            "color": "#504c40",
+            "text": "Hi -- is this the right Sync?"
+          },
+          {
+            "name": "Unknown",
+            "color": "#504c40",
+            "text": "We're partners. On a slide. Somewhere."
+          },
+          {
+            "name": "Dana",
+            "color": "#4a7080",
+            "text": "You're on mute. Also mysterious."
+          },
+          {
+            "name": "Unknown",
+            "color": "#504c40",
+            "text": "I'll send a follow-up from a domain that expires."
+          },
+          {
+            "name": "Jimbo",
+            "color": "#705898",
+            "text": "External guest: authenticity 12%."
+          },
+          {
+            "name": "Unknown",
+            "color": "#504c40",
+            "text": "Great connecting. Meaning deferred."
+          }
+        ]
+      }
+    ]
   },
   "outlook": {
     "windowTitle": "Mail",

@@ -264,6 +264,8 @@ export function setupAfter_rebuildDrawBag(d) {
     callOpener: "",
     callChipDone: false,
     callMissedBadge: false,
+    callChatQueue: [],
+    callChatCd: 0,
     callJimboJoined: false,
   };
 

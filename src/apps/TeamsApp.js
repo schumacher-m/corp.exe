@@ -60,6 +60,8 @@ export function installTeamsApp(d) {
     d.state.callSinceFeed = 0;
     d.state.callChipDone = false;
     d.state.callJimboJoined = false;
+    d.state.callChatQueue = [];
+    d.state.callChatCd = 0;
     d.state._callHits = null;
   }
 
@@ -67,9 +69,13 @@ export function installTeamsApp(d) {
     d.stopCallAudio();
     const wasConnected = d.state.callPhase === "connected";
     d.state.callPhase = null;
+    d.state.callChatQueue = [];
+    d.state.callChatCd = 0;
     d.resetCallUiState();
     d.scheduleNextCall();
     if (wasConnected) {
+      // Leave Sync open with thread visible -- do not auto-close chat
+      d.wins.slack.open = true;
       d.toast(d.teamsCopy.unfreezeToast || "Call ended. Back to the board.");
       d.flushBoardRefill();
     }
@@ -101,8 +107,7 @@ export function installTeamsApp(d) {
     d.state.callOpener = d.pick(caller.openers) || "Do you have a minute?";
     d.state.callRingLeft = 8 + Math.random() * 4; // 8-12s
     d.state.callMissedBadge = false;
-    d.wins.slack.open = true;
-    d.raise("slack");
+    // Ringing: overlay only -- Sync chat waits until Accept (specs/09)
     d.audio.playLoop("teamsRing", { volume: 0.4 });
     return true;
   }
@@ -125,6 +130,114 @@ export function installTeamsApp(d) {
     d.scheduleNextCall();
   }
 
+
+  d.normalizeCallBeat = function normalizeCallBeat(ln, fallbackName, fallbackColor) {
+    if (ln == null) return null;
+    if (typeof ln === "string") {
+      return { name: fallbackName || "Sync", color: fallbackColor || "#706890", text: ln };
+    }
+    return {
+      name: ln.name || fallbackName || "Sync",
+      color: ln.color || fallbackColor || "#706890",
+      text: ln.text || "",
+    };
+  }
+
+  d.pickCallChatThread = function pickCallChatThread(caller) {
+    const c = caller || d.state.callCaller || {};
+    const opener = d.state.callOpener || d.pick(c.openers) || "Do you have a minute?";
+    const openerLine = {
+      name: c.name || "Caller",
+      color: c.color || "#6a5080",
+      text: opener,
+    };
+
+    // 1) per-caller chatLines
+    if (Array.isArray(c.chatLines) && c.chatLines.length) {
+      return c.chatLines
+        .map((ln) => d.normalizeCallBeat(ln, c.name, c.color))
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+
+    // 2) Writer bake: callThreads = [{ callerId, beats:[{name,color,text}] }, ...]
+    //    also accept map shape callThreads[id] = beats[]
+    const threads = d.teamsCopy.callThreads;
+    let beats = null;
+    if (Array.isArray(threads) && c.id) {
+      const entry = threads.find((th) => th && th.callerId === c.id);
+      if (entry && Array.isArray(entry.beats) && entry.beats.length) beats = entry.beats;
+    } else if (threads && typeof threads === "object" && c.id && Array.isArray(threads[c.id])) {
+      beats = threads[c.id];
+    }
+    if (beats && beats.length) {
+      // Scripted thread already has opener energy -- use beats as full drip
+      return beats.map((ln) => d.normalizeCallBeat(ln, c.name, c.color)).filter(Boolean).slice(0, 8);
+    }
+
+    // 3) Stitch opener + callChatPool side lines
+    const pool = d.teamsCopy.callChatPool || d.FALLBACK_CALL_CHAT_POOL || [];
+    const picks = [];
+    const used = new Set();
+    const n = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n && pool.length; i++) {
+      let ln = d.pick(pool);
+      let guard = 0;
+      while (ln && used.has((ln && ln.text) || ln) && guard++ < 8) ln = d.pick(pool);
+      if (!ln) break;
+      const norm = d.normalizeCallBeat(ln, "Sync", "#706890");
+      if (!norm || !norm.text) break;
+      used.add(norm.text);
+      picks.push(norm);
+    }
+    return [openerLine].concat(picks).slice(0, 8);
+  }
+
+  d.startCallChatThread = function startCallChatThread() {
+    const lines = d.pickCallChatThread(d.state.callCaller);
+    d.state.callChatQueue = lines.slice();
+    d.state.callChatCd = 0.35; // first line soon after Accept
+    d.wins.slack.open = true;
+    d.wins.slack.title = d.teamsCopy.windowTitle || "Sync -- Corporate Chat";
+    // Park Sync lower-left so drip is readable while call overlay stays topmost (WIN95.md)
+    if (d.wins.slack.y > 40) d.wins.slack.y = 18;
+    if (d.wins.slack.x < 8) d.wins.slack.x = 8;
+    d.raise("slack");
+  }
+
+  d.tickCallChat = function tickCallChat(dt) {
+    if (!d.state.callChatQueue || !d.state.callChatQueue.length) return;
+    if (d.state.callPhase !== "connected") {
+      // Leave remaining lines unflushed so hang-up does not dump; clear queue
+      d.state.callChatQueue = [];
+      d.state.callChatCd = 0;
+      return;
+    }
+    d.state.callChatCd -= dt;
+    if (d.state.callChatCd > 0) return;
+    const msg = d.state.callChatQueue.shift();
+    if (msg) {
+      d.pushSlack({
+        name: msg.name,
+        color: msg.color,
+        text: msg.text,
+      });
+      d.audio.playSfx("teamsPing", { volume: 0.28 });
+    }
+    d.state.callChatCd = 1.1 + Math.random() * 0.9; // ~1-2s
+  }
+
+  d.FALLBACK_CALL_CHAT_POOL = [
+    { name: "Dana", color: "#4a7080", text: "You're on mute. Spiritually." },
+    { name: "Jess", color: "#5a6a8a", text: "Can everyone see my slides? I see despair." },
+    { name: "Jimbo", color: "#705898", text: "Notetaking: [people made sounds]." },
+    { name: "Kyle", color: "#a05030", text: "Quick question before we start. And after." },
+    { name: "Ops", color: "#6b8f3a", text: "Bandwidth is fine. Courage is not." },
+    { name: "Skip", color: "#8b6a3a", text: "Let's take this offline. We are offline." },
+    { name: "Maya", color: "#4a6070", text: "I joined late on purpose." },
+    { name: "HR", color: "#8b3a2a", text: "Reminder: cameras optional, vibes mandatory." },
+  ];
+
   d.acceptCall = function acceptCall() {
     if (d.state.callPhase !== "ringing") return;
     d.audio.stopLoop("teamsRing");
@@ -145,8 +258,7 @@ export function installTeamsApp(d) {
       d.state.callJimboJoined = true;
       d.toast(d.teamsCopy.jimboJoinedToast || "Jimbo joined as a silent stakeholder!", { jimbo: true });
     }
-    d.wins.slack.open = true;
-    d.raise("slack");
+    d.startCallChatThread();
   }
 
   d.landCallChip = function landCallChip(chip) {
@@ -390,6 +502,7 @@ export function installTeamsApp(d) {
       if (d.state.callConnLeft <= 0 && !d.state.callChipDone) {
         d.failCallMissedChip();
       }
+      d.tickCallChat(dt);
       return;
     }
 

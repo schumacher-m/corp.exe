@@ -254,6 +254,8 @@ Purple parody of corporate chat + call overlay. Player-facing: **Sync** (not Sla
 
 Purple chrome: `#5A588E` / `#7A76B0` / `#3A3868` / `#282648`. Defaults: **Mute ON**, **Camera OFF**. Classes: `.w95-teams` `.w95-call-overlay` `.w95-call-chip` `.w95-attentiveness`.
 
+On **Accept**, raise/open the main **Sync** chat window and let the funny thread drip in behind or beside the call; keep `.w95-call-overlay` topmost (higher z-order) while enough of Sync remains visible to read the new messages.
+
 
 ## Mail Theater
 
