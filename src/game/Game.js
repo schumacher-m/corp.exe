@@ -338,6 +338,7 @@ async function loadOffice() {
       "assets/models/slack_panel.glb",
       "assets/models/worker_seated.glb",
       "assets/models/worker_seated_b.glb",
+      "assets/models/farm_ground.glb",
     ];
   }
   const by = {};
@@ -739,8 +740,40 @@ async function loadOffice() {
       neighborCount++;
     }
   }
+  // Aisle voids (iz=+1 / ix=±5) have no bay floors — Designer farm_ground slab
+  if (by.farm_ground) {
+    const ground = by.farm_ground.clone();
+    ground.name = "FarmGround";
+    ground.position.set(0, 0, 0);
+    farm.add(ground);
+  } else {
+    console.warn("[corp.exe] farm_ground.glb missing — aisle voids may read black");
+  }
   OfficeRoot.add(farm);
   forceNearest(farm);
+  // Keep farm ground / floor albedo readable (Designer floor.png ~128 avg)
+  farm.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    const n = (o.name || "").toLowerCase();
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const looksFloor = n.includes("floor") || n.includes("ground") || mats.some((m) => m.map && /floor/i.test(m.map.name || m.map.source?.data?.src || ""));
+    if (!looksFloor && o.parent?.name !== "FarmGround") return;
+    for (const m of mats) {
+      if ("color" in m && m.color) m.color.setRGB(1, 1, 1);
+      if ("emissive" in m) {
+        m.emissiveIntensity = Math.min(m.emissiveIntensity || 0, 0.15);
+      }
+      if (m.map) {
+        m.map.magFilter = THREE.NearestFilter;
+        m.map.minFilter = THREE.NearestFilter;
+        m.map.generateMipmaps = false;
+        m.map.colorSpace = THREE.SRGBColorSpace;
+        m.map.needsUpdate = true;
+      }
+      m.needsUpdate = true;
+    }
+  });
+
   // Ensure screen_face glow mats survived forceNearest (Basic, toneMapped:false)
   farm.traverse((o) => {
     if (o.name !== "screen_face") return;
@@ -1039,24 +1072,24 @@ function stopSlackNoise() {
 }
 
 async function runBoot() {
-  /* CORP-TOWER-01: CLOCK IN → plaza (not cubicle walk) */
+  /* BIOS loading screen killed (Michael) — skip overlay */
   showScreen("screen-title");
   $("screen-title").classList.remove("active");
   const boot = $("boot-overlay");
   if (boot) boot.classList.remove("show");
-  // Clock frozen until seated — do not start day systems / exhausted bed here
-  try { audio.stopBgm?.(); } catch (_) {}
-  if (tower) {
+  // CORP-TOWER-01 ready in Tower.js but gated until lighting PASS (Tester farm smoke).
+  // Flip true (or call tower.startPlaza) when CoS opens the Tower tip.
+  const TOWER_ON_CLOCK_IN = false;
+  if (TOWER_ON_CLOCK_IN && tower?.startPlaza) {
     await tower.startPlaza();
-  } else {
-    // Soft-fallback if tower failed to init
-    G.phase = "walk";
-    audio.playBgm("bgmWalk");
-    audio.startExhaustedBed({ volume: 0.32 });
-    player.pos.set(0, 1.55, 3.2);
-    G.yaw = 0;
-    setPrompt("WASD · find Cubicle 4-B · E to sit");
+    return;
   }
+  G.phase = "walk";
+  audio.playBgm("bgmWalk");
+  audio.startExhaustedBed({ volume: 0.32 });
+  player.pos.set(0, 1.55, 3.2);
+  G.yaw = 0;
+  setPrompt("WASD · find Cubicle 4-B · E to sit");
 }
 
 function clockOut() {

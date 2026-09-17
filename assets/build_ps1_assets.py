@@ -18,8 +18,8 @@ MOD.mkdir(parents=True, exist_ok=True)
 # Muddy PS1 office + Win95 chrome accents
 PALETTE = {
     "fog": (26, 24, 20),
-    "wall": (73, 70, 60),       # #49463c ~+20% lift (still muddy)
-    "wall_hi": (96, 91, 79),
+    "wall": (110, 105, 90),      # lifted with floor pass
+    "wall_hi": (128, 122, 104),
     "desk": (42, 40, 32),       # #2a2820
     "desk_hi": (55, 52, 40),
     "panel": (36, 34, 24),
@@ -39,8 +39,8 @@ PALETTE = {
     "paper": (180, 170, 140),
     "sticky": (200, 180, 60),
     "mug": (120, 40, 40),
-    "floor": (62, 60, 49),      # ~+30% muddy olive-gray (not white)
-    "floor_tile": (52, 49, 42),
+    "floor": (138, 132, 112),    # readable olive-gray avg~120-140
+    "floor_tile": (118, 112, 94),
     "fluorescent": (230, 228, 200),  # cool-white tube
     "skin": (140, 120, 100),    # #8c7864
     "skin_hi": (120, 100, 85),
@@ -398,7 +398,7 @@ TRIANGLE_COUNTS: dict[str, int] = {}
 
 def build_cubicle(tex: dict[str, Path]) -> None:
     parts = []
-    parts.append(box_mesh(6.0, 0.08, 6.0, 0, 0, 0, rgb01("floor")))
+    parts.append(box_mesh(6.0, 0.08, 6.0, 0, 0, 0, (0.95, 0.92, 0.82)))
     parts.append(box_mesh(6.0, 2.4, 0.1, 0, 1.2, -3.0, rgb01("wall")))
     parts.append(box_mesh(0.1, 1.4, 4.0, -3.0, 0.7, -1.0, rgb01("wall")))
     parts.append(box_mesh(0.1, 1.4, 4.0, 3.0, 0.7, -1.0, rgb01("wall")))
@@ -408,7 +408,7 @@ def build_cubicle(tex: dict[str, Path]) -> None:
     parts.append(box_mesh(6.0, 0.08, 6.0, 0, 2.42, 0, rgb01("panel")))
     pos, uv, col, idx = merge_meshes(parts)
     TRIANGLE_COUNTS["cubicle.glb"] = write_glb(
-        MOD / "cubicle.glb", pos, uv, col, idx, tex["wall"], "cubicle"
+        MOD / "cubicle.glb", pos, uv, col, idx, tex["floor"], "cubicle"
     )
 
 

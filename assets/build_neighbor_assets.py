@@ -27,7 +27,7 @@ CRT_DIM = (0x2A, 0x60, 0x30)  # #2a6030
 
 # Vertex color ~0.37, 0.81, 0.29
 SCREEN_VC = (0.37, 0.81, 0.29)
-FLOOR_VC = (0.24, 0.235, 0.19)  # ~+30% muddy olive-gray (matches lifted floor albedo)
+FLOOR_VC = (0.72, 0.70, 0.58)  # ~+30% muddy olive-gray (matches lifted floor albedo)
 WALL_VC = (0.29, 0.275, 0.235)  # ~+20% partition (matches lifted wall)
 DESK_VC = (0.16, 0.16, 0.125)  # #2a2820-ish
 PLASTIC_VC = (0.35, 0.345, 0.306)  # CRT body plastic

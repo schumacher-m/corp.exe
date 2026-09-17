@@ -85,6 +85,19 @@ Prefer **`InstancedMesh`** for neighbor bays / CRTs / workers if clone cost hurt
 
 No bloom. Brightness = more lights + emissive CRTs, not post glow. Proxy walls prefer `MeshLambert` so ambient/fluo hit them.
 
+
+## Farm ground (aisle voids)
+
+Clearing `iz=+1` / `ix=±5` removes bay floors — without a slab the aisle reads as a black void.
+
+| Asset | Path | Role |
+|-------|------|------|
+| Farm ground | `assets/models/farm_ground.glb` | Single bright `floor.png` slab under the whole farm (~24×36 m, y≈−0.02) |
+
+**Dev:** parent under `CubicleFarm` at origin (mesh already centered toward −Z). Nearest filter. Do not use MeshBasic black.
+
+`floor.png` target avg RGB **~120–140** olive-gray (Tester FAIL was ~(2,2,2) near-black).
+
 ## CRT glow (every neighbor)
 
 Use the upgraded **chunky** CRT (`neighbor_bay` embedded or standalone `neighbor_crt`): bevelled plastic body, thick base/neck, dark inset bezel, bright screen. Empty node **`screen_face`** sits at screen center — find it after load and apply emissive there (or swap a MeshBasic child).
