@@ -1085,6 +1085,7 @@ async function runBoot() {
     return;
   }
   G.phase = "walk";
+  console.info("[corp] farm-gate: TOWER_ON_CLOCK_IN=false → walk (Cubicle 4-B)");
   audio.playBgm("bgmWalk");
   audio.startExhaustedBed({ volume: 0.32 });
   player.pos.set(0, 1.55, 3.2);

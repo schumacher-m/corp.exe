@@ -49,8 +49,8 @@ const indexSrc = readFileSync(join(ROOT, "index.html"), "utf8");
 const indexOut = indexSrc
   .replace(/<script src="boot\.js"><\/script>\s*/g, "")
   .replace(
-    /<script type="module" src="game\.js"><\/script>/g,
-    '<script type="module" src="./game.js"></script>'
+    /<script type="module" src="\.?\/?game\.js(\?[^"]*)?"><\/script>/g,
+    '<script type="module" src="./game.js$1"></script>'
   );
 writeFileSync(join(OUT, "index.html"), indexOut);
 cpSync(join(ROOT, "style.css"), join(OUT, "style.css"));
