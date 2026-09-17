@@ -7,13 +7,21 @@ export function installDesktopShell(d) {
   }
 
   d.imgReady = function imgReady(im) {
-    return !!(im && im.complete && im.naturalWidth);
+    try {
+      return !!(im && im.complete && im.naturalWidth > 0);
+    } catch (_) {
+      return false;
+    }
   }
 
   d.drawImgOr = function drawImgOr(im, x, y, w, h, fallback) {
     if (d.imgReady(im)) {
-      d.ctx.drawImage(im, x, y, w, h);
-      return true;
+      try {
+        d.ctx.drawImage(im, x, y, w, h);
+        return true;
+      } catch (_) {
+        /* discarded/broken bitmap after tab restore */
+      }
     }
     if (fallback) fallback();
     return false;
@@ -43,12 +51,12 @@ export function installDesktopShell(d) {
     for (const ic of d.deskIcons) {
       const bx = ic.x;
       const by = ic.y;
-      if (ic.id === "jimbo" && d.imgs.j32.complete && d.imgs.j32.naturalWidth) {
-        d.ctx.drawImage(d.imgs.j32, bx + 8, by, 32, 32);
+      if (ic.id === "jimbo" && d.imgReady(d.imgs?.j32)) {
+        try { d.ctx.drawImage(d.imgs.j32, bx + 8, by, 32, 32); } catch (_) {}
       } else if (ic.id === "inbox") {
-        if (d.imgReady(d.imgs.ol32)) {
+        if (d.imgReady(d.imgs?.ol32)) {
           d.ctx.drawImage(d.imgs.ol32, bx + 8, by, 32, 32);
-        } else if (d.imgReady(d.imgs.ol48)) {
+        } else if (d.imgReady(d.imgs?.ol48)) {
           d.ctx.drawImage(d.imgs.ol48, bx + 4, by, 40, 40);
         } else {
           d.bevelRaised(bx + 8, by + 4, 28, 22, d.C.face);
@@ -69,7 +77,7 @@ export function installDesktopShell(d) {
         d.ctx.font = "bold 7px Tahoma, sans-serif";
         d.ctx.fillText(String(Math.min(99, u)), bx + 32, by + 10);
       } else if (ic.id === "timesheet") {
-        const im = d.imgs.ts32;
+        const im = d.imgs?.ts32;
         if (d.imgReady(im)) {
           d.ctx.drawImage(im, bx + 8, by, 32, 32);
         } else {
@@ -78,9 +86,9 @@ export function installDesktopShell(d) {
           d.ctx.fillRect(bx + 10, by + 4, 24, 6);
         }
       } else if (ic.id === "tickets") {
-        if (d.imgReady(d.imgs.tr32)) {
+        if (d.imgReady(d.imgs?.tr32)) {
           d.ctx.drawImage(d.imgs.tr32, bx + 8, by, 32, 32);
-        } else if (d.imgReady(d.imgs.tr48)) {
+        } else if (d.imgReady(d.imgs?.tr48)) {
           d.ctx.drawImage(d.imgs.tr48, bx + 4, by, 40, 40);
         } else {
           // Amber clipboard/board fallback until PNGs load
@@ -95,9 +103,9 @@ export function installDesktopShell(d) {
           d.ctx.fillRect(bx + 18, by + 4, 8, 5);
         }
       } else if (ic.id === "teams") {
-        if (d.imgReady(d.imgs.t32)) {
+        if (d.imgReady(d.imgs?.t32)) {
           d.ctx.drawImage(d.imgs.t32, bx + 8, by, 32, 32);
-        } else if (d.imgReady(d.imgs.t48)) {
+        } else if (d.imgReady(d.imgs?.t48)) {
           d.ctx.drawImage(d.imgs.t48, bx + 4, by, 40, 40);
         } else {
           // Unbranded Sync tile: chat bubble + handset cue (no letter T)
@@ -115,7 +123,7 @@ export function installDesktopShell(d) {
           d.ctx.fillRect(bx + 28, by + 25, 6, 3);
         }
       } else if (ic.id === "jiggler") {
-        if (d.imgReady(d.imgs.jig32)) d.ctx.drawImage(d.imgs.jig32, bx + 8, by, 32, 32);
+        if (d.imgReady(d.imgs?.jig32)) d.ctx.drawImage(d.imgs.jig32, bx + 8, by, 32, 32);
       }
       d.ctx.fillStyle = d.C.inv;
       d.ctx.font = "7px Tahoma, sans-serif";
@@ -141,8 +149,8 @@ export function installDesktopShell(d) {
 
     // Ask Jimbo toolbar
     d.bevelRaised(48, y + 3, 72, 16, d.C.jimbo);
-    if (d.imgs.jtb.complete && d.imgs.jtb.naturalWidth) {
-      d.ctx.drawImage(d.imgs.jtb, 52, y + 5, 12, 12);
+    if (d.imgReady(d.imgs?.jtb)) {
+      try { d.ctx.drawImage(d.imgs.jtb, 52, y + 5, 12, 12); } catch (_) {}
     }
     d.ctx.fillStyle = d.C.inv;
     d.ctx.font = "bold 7px Tahoma, sans-serif";
@@ -167,8 +175,8 @@ export function installDesktopShell(d) {
     d.bevelSunken(px, y + 3, 44, 16, d.C.face);
     d.ctx.fillStyle = d.presenceColor();
     d.ctx.fillRect(px + 3, y + 7, 6, 6);
-    if (d.state.jimboJiggler && d.imgs.jig16.complete && d.imgs.jig16.naturalWidth) {
-      d.ctx.drawImage(d.imgs.jig16, px + 2, y + 4, 12, 12);
+    if (d.state.jimboJiggler && d.imgReady(d.imgs?.jig16)) {
+      try { d.ctx.drawImage(d.imgs.jig16, px + 2, y + 4, 12, 12); } catch (_) {}
     }
     d.ctx.fillStyle = d.C.text;
     d.ctx.font = "7px Tahoma, sans-serif";
@@ -197,45 +205,72 @@ export function installDesktopShell(d) {
   }
 
   d.openStartFlyout = function openStartFlyout(index) {
-    const items = d.copy.startMenu?.items || [];
-    const it = items[index];
+    const items = (d.copy && d.copy.startMenu && Array.isArray(d.copy.startMenu.items))
+      ? d.copy.startMenu.items
+      : [];
+    const raw = items[index];
+    const it = raw && typeof raw === "object" ? raw : null;
     if (!d.startItemHasFlyout(it)) {
-      d.state.startFlyoutIndex = -1;
+      if (d.state.startFlyoutIndex !== -1) d.state.startFlyoutIndex = -1;
       return;
     }
-    d.state.startFlyoutIndex = index;
+    // Avoid pointer-move thrash rewriting the same index every frame
+    if (d.state.startFlyoutIndex !== index) d.state.startFlyoutIndex = index;
   }
 
   d.drawStartMenuRowGlyph = function drawStartMenuRowGlyph(id, label, x, iy) {
     const lab = label || "";
     let glyph = null;
-    if (id === "jimbo" || lab === "Jimbo") glyph = d.imgs.j16;
-    else if (id === "jiggler" || /mouse jiggler/i.test(lab)) glyph = d.imgs.jig16;
-    else if (id === "tickets" || /tracker/i.test(lab)) glyph = d.imgs.tr16;
-    else if (id === "teams" || id === "slack" || /sync/i.test(lab)) glyph = d.imgs.t16;
-    else if (id === "inbox" || /mail|inbox/i.test(lab)) glyph = d.imgs.ol16;
-    else if (id === "timesheet" || /timesheet/i.test(lab)) glyph = d.imgs.ts16;
+    const imgs = d.imgs || {};
+    if (id === "jimbo" || lab === "Jimbo") glyph = imgs.j16;
+    else if (id === "jiggler" || /mouse jiggler/i.test(lab)) glyph = imgs.jig16;
+    else if (id === "tickets" || /tracker/i.test(lab)) glyph = imgs.tr16;
+    else if (id === "teams" || id === "slack" || /sync/i.test(lab)) glyph = imgs.t16;
+    else if (id === "inbox" || /mail|inbox/i.test(lab)) glyph = imgs.ol16;
+    else if (id === "timesheet" || /timesheet/i.test(lab)) glyph = imgs.ts16;
     if (glyph && d.imgReady(glyph)) {
-      d.ctx.drawImage(glyph, x, iy + 1, 12, 12);
-      return 16;
+      try {
+        d.ctx.drawImage(glyph, x, iy + 1, 12, 12);
+        return 16;
+      } catch (_) {
+        return 0;
+      }
     }
     return 0;
   }
 
   d.drawStartMenu = function drawStartMenu() {
+    // Defensive: missing copy/imgs/null submenu rows must never kill the tab
+    try {
+      d._drawStartMenuInner();
+    } catch (_) {
+      try {
+        d.state.startFlyoutIndex = -1;
+        d.state._startItems = null;
+        d.state._startFlyoutHits = null;
+        d.state._startFlyoutHit = null;
+        d.state._startRootHit = null;
+      } catch (__) {}
+    }
+  }
+
+  d._drawStartMenuInner = function _drawStartMenuInner() {
     if (!d.state.startOpen) {
       d.state.startFlyoutIndex = -1;
       d.state._startItems = null;
       d.state._startFlyoutHits = null;
+      d.state._startFlyoutHit = null;
       d.state._startRootHit = null;
       return;
     }
-    const items = d.copy.startMenu?.items || [];
+    const items = (d.copy && d.copy.startMenu && Array.isArray(d.copy.startMenu.items))
+      ? d.copy.startMenu.items
+      : [];
     const rowH = 16;
     const padTop = 4;
     let sepExtra = 0;
     for (const it of items) {
-      if (it && it.separatorBefore) sepExtra += 5;
+      if (it && typeof it === "object" && it.separatorBefore) sepExtra += 5;
     }
     const menuH = padTop + items.length * rowH + 4 + sepExtra;
     const menuW = 148;
@@ -247,12 +282,13 @@ export function installDesktopShell(d) {
     d.ctx.fillRect(x + 2, y + 2, 16, menuH - 4);
     d.state._startItems = [];
     let iy = y + padTop;
-    items.forEach((it, i) => {
-      if (it && it.separatorBefore) {
+    items.forEach((raw, i) => {
+      const it = raw && typeof raw === "object" ? raw : { label: raw == null ? "" : String(raw) };
+      if (it.separatorBefore) {
         d.bevelSunken(x + 22, iy + 1, menuW - 28, 2, d.C.face);
         iy += 5;
       }
-      const lab = it.label || it.id || String(it);
+      const lab = String(it.label || it.id || "");
       const open = d.state.startFlyoutIndex === i;
       const hasFly = d.startItemHasFlyout(it);
       if (open) {
@@ -278,11 +314,13 @@ export function installDesktopShell(d) {
 
     // Cascade flyout
     d.state._startFlyoutHits = null;
+    d.state._startFlyoutHit = null;
     const fi = d.state.startFlyoutIndex;
     if (fi < 0 || fi >= items.length) return;
-    const parent = items[fi];
+    const parent = d.state._startItems[fi]?.item;
     if (!d.startItemHasFlyout(parent)) return;
-    const kids = parent.submenu.map((c) => d.normalizeStartChild(c));
+    const sub = Array.isArray(parent.submenu) ? parent.submenu : [];
+    const kids = sub.map((c) => d.normalizeStartChild(c));
     const flyW = 158;
     const flyH = 4 + kids.length * rowH + 4;
     const parentRow = d.state._startItems.find((r) => r.index === fi);
@@ -295,8 +333,8 @@ export function installDesktopShell(d) {
     d.state._startFlyoutHits = [];
     kids.forEach((child, ci) => {
       const cy = flyY + 4 + ci * rowH;
-      const lab = child.label || child.id || "";
-      const id = child.id || "";
+      const lab = child && (child.label || child.id) ? (child.label || child.id) : "";
+      const id = (child && child.id) || "";
       d.ctx.fillStyle = d.C.text;
       d.ctx.font = "8px Tahoma, sans-serif";
       const gOff = d.drawStartMenuRowGlyph(id, lab, flyX + 6, cy);
@@ -345,33 +383,42 @@ export function installDesktopShell(d) {
   }
 
   d.render = function render() {
-    d.ctx.setTransform(d.PIXEL_SCALE, 0, 0, d.PIXEL_SCALE, 0, 0);
-    d.ctx.imageSmoothingEnabled = true;
-    d.ctx.fillStyle = d.C.desktop;
-    d.ctx.fillRect(0, 0, d.W, d.H);
-    d.drawDeskIcons();
-    d.drawStickies();
-    for (const id of d.order) d.drawWindow(d.wins[id]);
-    d.drawTaskbar();
-    if (d.state.toastT > 0) {
-      d.state.toastT--;
-      if (d.state.toastJimbo) {
-        d.ctx.fillStyle = "#C0FFC0";
-        d.ctx.fillRect(d.W / 2 - 90, 4, 180, 20);
-        d.ctx.strokeStyle = "#000";
-        d.ctx.strokeRect(d.W / 2 - 90, 4, 180, 20);
-      } else {
-        d.bevelRaised(d.W / 2 - 90, 4, 180, 18, d.C.face);
+    try {
+      d.ctx.setTransform(d.PIXEL_SCALE, 0, 0, d.PIXEL_SCALE, 0, 0);
+      d.ctx.imageSmoothingEnabled = true;
+      d.ctx.fillStyle = d.C.desktop;
+      d.ctx.fillRect(0, 0, d.W, d.H);
+    } catch (_) { return; }
+    try { d.drawDeskIcons(); } catch (_) {}
+    try { d.drawStickies(); } catch (_) {}
+    try {
+      for (const id of d.order) {
+        try { d.drawWindow(d.wins[id]); } catch (_) {}
       }
-      d.ctx.fillStyle = d.C.text;
-      d.ctx.font = "8px Tahoma, sans-serif";
-      d.ctx.fillText(String(d.state.toast).slice(0, 40), d.W / 2 - 84, 16);
-    }
+    } catch (_) {}
+    try { d.drawTaskbar(); } catch (_) {}
+    try {
+      if (d.state.toastT > 0) {
+        d.state.toastT--;
+        if (d.state.toastJimbo) {
+          d.ctx.fillStyle = "#C0FFC0";
+          d.ctx.fillRect(d.W / 2 - 90, 4, 180, 20);
+          d.ctx.strokeStyle = "#000";
+          d.ctx.strokeRect(d.W / 2 - 90, 4, 180, 20);
+        } else {
+          d.bevelRaised(d.W / 2 - 90, 4, 180, 18, d.C.face);
+        }
+        d.ctx.fillStyle = d.C.text;
+        d.ctx.font = "8px Tahoma, sans-serif";
+        d.ctx.fillText(String(d.state.toast).slice(0, 40), d.W / 2 - 84, 16);
+      }
+    } catch (_) {}
     // WIN95 § Start z-order: root + Programs flyout above every app window (and toast)
+    // drawStartMenu is itself try/catch-hardened
     d.drawStartMenu();
-    d.drawCallOverlay();
-    d.drawModal();
-    d.drawCursor();
+    try { d.drawCallOverlay(); } catch (_) {}
+    try { d.drawModal(); } catch (_) {}
+    try { d.drawCursor(); } catch (_) {}
   }
 
 
@@ -627,37 +674,40 @@ export function installDesktopShell(d) {
       d.feedCallAttentiveness(0.08);
     }
     if (d.state.startOpen && d.state._startItems) {
-      const x = d.state.cursor.x;
-      const y = d.state.cursor.y;
-      let overFly = false;
-      if (d.state._startFlyoutHit && d.hit(d.state._startFlyoutHit, x, y)) overFly = true;
-      if (d.state._startFlyoutHits) {
-        for (const fh of d.state._startFlyoutHits) {
-          if (d.hit(fh.hit, x, y)) overFly = true;
-        }
-      }
-      let hovered = -1;
-      for (const it of d.state._startItems) {
-        if (d.hit(it.hit, x, y)) {
-          hovered = it.index;
-          if (it.hasFlyout) d.openStartFlyout(it.index);
-          else d.state.startFlyoutIndex = -1;
-          break;
-        }
-      }
-      if (hovered < 0 && !overFly && d.state._startRootHit && !d.hit(d.state._startRootHit, x, y)) {
-        // leave open until click-outside; keep current flyout
-      } else if (hovered < 0 && !overFly) {
-        // over root but not a flyout row -- close flyout unless still on parent
-        const cur = d.state.startFlyoutIndex;
-        const parent = (d.state._startItems || []).find((r) => r.index === cur);
-        if (!(parent && d.hit(parent.hit, x, y))) {
-          // stay if moving within root non-flyout? close flyout when hovering Run/Shut Down
-          if (hovered < 0) {
-            const onRoot = d.state._startRootHit && d.hit(d.state._startRootHit, x, y);
-            if (onRoot) d.state.startFlyoutIndex = -1;
+      try {
+        const x = d.state.cursor.x;
+        const y = d.state.cursor.y;
+        let overFly = false;
+        if (d.state._startFlyoutHit && d.hit(d.state._startFlyoutHit, x, y)) overFly = true;
+        if (d.state._startFlyoutHits) {
+          for (const fh of d.state._startFlyoutHits) {
+            if (fh && fh.hit && d.hit(fh.hit, x, y)) overFly = true;
           }
         }
+        let hovered = -1;
+        for (const it of d.state._startItems) {
+          if (!it || !it.hit) continue;
+          if (d.hit(it.hit, x, y)) {
+            hovered = it.index;
+            if (it.hasFlyout) d.openStartFlyout(it.index);
+            else if (d.state.startFlyoutIndex !== -1) d.state.startFlyoutIndex = -1;
+            break;
+          }
+        }
+        if (hovered < 0 && !overFly && d.state._startRootHit && !d.hit(d.state._startRootHit, x, y)) {
+          // leave open until click-outside; keep current flyout
+        } else if (hovered < 0 && !overFly) {
+          const cur = d.state.startFlyoutIndex;
+          const parent = (d.state._startItems || []).find((r) => r && r.index === cur);
+          if (!(parent && parent.hit && d.hit(parent.hit, x, y))) {
+            if (hovered < 0) {
+              const onRoot = d.state._startRootHit && d.hit(d.state._startRootHit, x, y);
+              if (onRoot && d.state.startFlyoutIndex !== -1) d.state.startFlyoutIndex = -1;
+            }
+          }
+        }
+      } catch (_) {
+        /* Start hover must never throw (corrupt hits after Timesheet/tab restore) */
       }
     }
   }
@@ -686,10 +736,12 @@ export function installDesktopShell(d) {
       return;
     }
 
-    if (d.hit(d.state._startBtn, x, y)) {
+    if (d.state._startBtn && d.hit(d.state._startBtn, x, y)) {
       d.state.startOpen = !d.state.startOpen;
       d.state.startFlyoutIndex = -1;
-      d.audio.playSfx(d.state.startOpen ? "start" : "click");
+      try {
+        d.audio.playSfx(d.state.startOpen ? "start" : "click");
+      } catch (_) {}
       return;
     }
     if (d.hit(d.state._askToolbar, x, y)) {
@@ -700,8 +752,8 @@ export function installDesktopShell(d) {
       // Flyout children first
       if (d.state._startFlyoutHits) {
         for (const fh of d.state._startFlyoutHits) {
-          if (d.hit(fh.hit, x, y)) {
-            d.handleStartItem(fh.item);
+          if (fh && fh.hit && d.hit(fh.hit, x, y)) {
+            try { d.handleStartItem(fh.item); } catch (_) {}
             d.state.startOpen = false;
             d.state.startFlyoutIndex = -1;
             return;
@@ -739,8 +791,13 @@ export function installDesktopShell(d) {
             d.closeOpenMail(false);
             return;
           }
+          if (win.id === "timesheet") {
+            try { d.closeTimesheetWindow(); } catch (_) { win.open = false; }
+            try { d.audio.playSfx("click"); } catch (_) {}
+            return;
+          }
           win.open = false;
-          d.audio.playSfx("click");
+          try { d.audio.playSfx("click"); } catch (_) {}
           return;
         }
         d.handleWinClick(win, x, y);
@@ -789,9 +846,14 @@ export function installDesktopShell(d) {
   }
 
   d.handleStartItem = function handleStartItem(item) {
+    if (item == null) return;
+    if (typeof item !== "object") {
+      try { d.deniedToast({ label: String(item) }); } catch (_) {}
+      return;
+    }
     const id = item.id || item.action || "";
     const label = item.label || "";
-    d.audio.playSfx("click");
+    try { d.audio.playSfx("click"); } catch (_) {}
     if (id === "jimbo" || label === "Jimbo") {
       d.openJimbo();
     } else if (id === "inbox" || /inbox|outlook|mail/i.test(label)) {
@@ -985,6 +1047,20 @@ export function installDesktopShell(d) {
         return;
       }
     }
+    if (win.id === "ide" && d.state.phase === "dropdb") {
+      const chips = d.state._sqlChipHits || [];
+      for (let i = 0; i < chips.length; i++) {
+        const ch = chips[i];
+        if (ch && d.hit(ch.hit, x, y)) {
+          d.appendSqlChip(ch.chip);
+          return;
+        }
+      }
+      if (d.hit(d.state._sqlRunBtn, x, y)) {
+        d.runSql();
+        return;
+      }
+    }
     if (win.id === "pr") {
       if (
         d.hit(d.state._submitBtn, x, y) &&
@@ -1046,6 +1122,21 @@ export function installDesktopShell(d) {
       if (next >= 0) d.trySemi(next);
     }
     if (d.state.phase === "comment" && e.key === "Enter") d.acceptComment();
+    if (d.state.phase === "dropdb") {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "Backspace") {
+        d.state.sqlBuffer = (d.state.sqlBuffer || "").slice(0, -1);
+        d.state._uiDirty = true;
+        return;
+      }
+      if (e.key.length === 1) {
+        let buf = (d.state.sqlBuffer || "") + e.key;
+        if (buf.length > 80) buf = buf.slice(0, 80);
+        d.state.sqlBuffer = buf;
+        d.state._uiDirty = true;
+        if (d.audio.keyclack) d.audio.keyclack();
+      }
+    }
   }
 
   d.onPointerUp = function onPointerUp() {

@@ -306,6 +306,23 @@ Live Pages: Focused list **From / subject / snippet** look mid-word clipped in t
 - Optional polish: widen default Mail window / give list pane ≥ ~40% of client so From+Subject stay readable; reading pane keeps full subject wrap.
 
 
+
+## IDE — SQL mode (CORP-DB-01)
+
+Spec: `specs/11-drop-database.md`. Reuse the existing IDE window family — **no** new `dbadmin.exe`, no new 3D/glyphs.
+
+| Spec | Value |
+|------|-------|
+| Window title | `IDE — Query` (or Writer’s line) |
+| Client | Sunken white/black code pane + face-gray chrome |
+| Query buffer | Monospace (`Consolas` / `Courier New` / `monospace`), dark text on white or inverse green-on-black OK if it stays chunky Win95 |
+| Chip row | Raised bevel face buttons: `DROP` · `DATABASE` · `corp` · `;` — same `.w95-btn` bevel as other chrome |
+| Run | Raised `Run` button (bold); pressed = sunken |
+| Result pane | Narrow sunken strip under buffer: empty-set / `DROP DATABASE` / `0 relations` one-liners |
+| Classes | `.w95-ide` `.w95-ide-sql` `.w95-ide-chips` `.w95-ide-run` `.w95-ide-result` |
+
+Jimbo autofill uses existing Ask Jimbo toast path — no special chrome.
+
 ## Anti-patterns
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.

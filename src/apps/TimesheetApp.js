@@ -155,15 +155,28 @@ export function installTimesheetApp(d) {
   }
 
   d.closeTimesheetWindow = function closeTimesheetWindow() {
-    d.wins.timesheet.open = false;
-    if (d.state.timesheetGateOpen && !d.state.timesheetAcceptedOpen) {
-      d.toast(
-        d.timesheetCopy.incompleteToast ||
-          d.timesheetValidation.incomplete ||
-          "Timesheet incomplete"
-      );
-      d.audio.playSfx("error");
-    }
+    try {
+      if (d.wins && d.wins.timesheet) d.wins.timesheet.open = false;
+    } catch (_) {}
+    // Leave gate flags intact (forced timesheet still owed) but clear transient UI hits
+    // so a later Start open/draw never walks stale timesheet hit-tests.
+    try {
+      if (d.state) {
+        d.state._tsHits = null;
+        d.state._tsJimboBtn = null;
+        d.state._tsAcceptBtn = null;
+      }
+    } catch (_) {}
+    try {
+      if (d.state.timesheetGateOpen && !d.state.timesheetAcceptedOpen) {
+        d.toast(
+          d.timesheetCopy?.incompleteToast ||
+            d.timesheetValidation?.incomplete ||
+            "Timesheet incomplete"
+        );
+        d.audio.playSfx("error");
+      }
+    } catch (_) {}
   }
 
   d.drawTimesheet = function drawTimesheet(x, y, w, h) {

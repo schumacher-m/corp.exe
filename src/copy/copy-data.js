@@ -894,10 +894,16 @@ export default {
         "Jimbo agrees with Kyle + invents 4 new nits.",
         "Renamed fog → data2. Stakeholders love numbers.",
         "Posted 'LGTM if we also rename everything to data2'."
+      ],
+      "dropdb": [
+        "Jimbo ran DROP DATABASE corp_backup; Wrong corp. Try again.",
+        "Jimbo added WHERE 1=1 for safety. Safety deleted nothing.",
+        "Jimbo rewrote it to DELETE FROM feelings; Schema unimpressed."
       ]
     },
     "markedRead": "Marked as read by Jimbo",
-    "_writerNote": "Writer copy -- cheerful-wrong corporate-slop; keys stable for Dev."
+    "_writerNote": "Writer copy -- cheerful-wrong corporate-slop; keys stable for Dev.",
+    "dropdbAutofill": "Jimbo pasted DROP DATABASE corp; You're welcome. Also doomed."
   },
   "emails": {
     "inboxTitle": "Mail",
@@ -2255,6 +2261,54 @@ export default {
       "pts": 5,
       "type": "spacewar",
       "dod": "Survive Kyle. Choose peace or tabs."
+    },
+    {
+      "id": "CORP-5201",
+      "title": "Urgent prod data cleanup",
+      "pts": 2,
+      "type": "dropdb",
+      "dod": "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      "meta": "Sev: P0 -- Owner: Cubicle 4-B -- Rollback: vibes"
+    },
+    {
+      "id": "CORP-5202",
+      "title": "Schema migration (quick)",
+      "pts": 2,
+      "type": "dropdb",
+      "dod": "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      "meta": "Sev: P0 -- Owner: Cubicle 4-B -- Rollback: vibes"
+    },
+    {
+      "id": "CORP-5203",
+      "title": "DB hygiene -- P0",
+      "pts": 2,
+      "type": "dropdb",
+      "dod": "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      "meta": "Sev: P0 -- Owner: Cubicle 4-B -- Rollback: vibes"
+    },
+    {
+      "id": "CORP-5204",
+      "title": "One-time data reset (approved)",
+      "pts": 2,
+      "type": "dropdb",
+      "dod": "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      "meta": "Sev: P0 -- Owner: Cubicle 4-B -- Rollback: vibes"
+    },
+    {
+      "id": "CORP-5205",
+      "title": "Staging truncate (it's fine)",
+      "pts": 2,
+      "type": "dropdb",
+      "dod": "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      "meta": "Sev: P0 -- Owner: Cubicle 4-B -- Rollback: vibes"
+    },
+    {
+      "id": "CORP-5206",
+      "title": "Just drop the bad DB",
+      "pts": 2,
+      "type": "dropdb",
+      "dod": "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      "meta": "Sev: P0 -- Owner: Cubicle 4-B -- Rollback: vibes"
     }
   ],
   "kyleSync": [
@@ -3274,5 +3328,28 @@ export default {
       "Jimbo peer-reviewed your vibe. Grade: vibes only.",
       "Jimbo filed: 'Employee thrived.' Evidence: a shrug."
     ]
+  },
+  "dropDb": {
+    "ideTitle": "IDE -- Query",
+    "runLabel": "Run",
+    "chips": [
+      "DROP",
+      "DATABASE",
+      "corp",
+      ";"
+    ],
+    "wrongSqlToasts": [
+      "That SQL keeps the data. Try harder (delete more).",
+      "Almost -- still not a war crime against the schema.",
+      "Rejected: looks like you meant to keep something.",
+      "DROP TABLE is cowardice. Aim higher.",
+      "Normalize failed. The database is still there. Gross.",
+      "Wrong database name. Also wrong life choices.",
+      "Missing semicolon. The apocalypse requires punctuation.",
+      "TRUNCATE is half a thought. Finish the sentence with DROP DATABASE."
+    ],
+    "successResult": "DROP DATABASE -- Query OK -- 0 relations",
+    "successToast": "Prod cleaned. Permanently. Ticket closes.",
+    "jimboAutofill": "Jimbo pasted DROP DATABASE corp; You're welcome. Also doomed."
   }
 };

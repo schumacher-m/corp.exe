@@ -8,6 +8,7 @@ export function installTicketsApp(d) {
     const type = template.type || "filler";
     return {
       ...template,
+      ...(type === "dropdb" ? { pts: 2 } : {}),
       uid: d.makeUid(),
       mechanic: type, // type key === mechanic (fillers stay filler)
     };
@@ -412,6 +413,14 @@ export function installTicketsApp(d) {
       d.wins.ide.title = "IDE - Comment Policy";
       d.raise("ide");
       d.ensureComment();
+    } else if (mech === "dropdb") {
+      d.state.sqlBuffer = "";
+      d.state.sqlResult = null;
+      d.state._sqlChipHits = null;
+      d.state._sqlRunBtn = null;
+      d.wins.ide.open = true;
+      d.wins.ide.title = d.copy.dropDb?.ideTitle || "IDE -- Query";
+      d.raise("ide");
     } else if (mech === "pr" || mech === "spacewar") {
       d.wins.pr.open = true;
       d.wins.pr.title =
@@ -515,12 +524,22 @@ export function installTicketsApp(d) {
     // Prefer types not currently on the board
     const onBoardTypes = new Set(d.state.board.map((t) => t.mechanic || t.type));
     let pickType = null;
-    const unusedOffBoard = d.state.drawBag.filter((t) => !onBoardTypes.has(t));
-    if (unusedOffBoard.length) {
-      pickType = d.pick(unusedOffBoard);
-      d.state.drawBag = d.state.drawBag.filter((t) => t !== pickType);
+    // Soft prefer dropdb after first close (mid-morning punchline; never opener)
+    if (
+      (d.state.closedCount || 0) >= 1 &&
+      d.state.drawBag.includes("dropdb") &&
+      !onBoardTypes.has("dropdb")
+    ) {
+      pickType = "dropdb";
+      d.state.drawBag = d.state.drawBag.filter((t) => t !== "dropdb");
     } else {
-      pickType = d.state.drawBag.pop();
+      const unusedOffBoard = d.state.drawBag.filter((t) => !onBoardTypes.has(t));
+      if (unusedOffBoard.length) {
+        pickType = d.pick(unusedOffBoard);
+        d.state.drawBag = d.state.drawBag.filter((t) => t !== pickType);
+      } else {
+        pickType = d.state.drawBag.pop();
+      }
     }
     if (!pickType) {
       return d.drawFromDeck(true, dpth + 1);

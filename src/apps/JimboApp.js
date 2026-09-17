@@ -2,8 +2,8 @@
 export function installJimboApp(d) {
   d.drawJimbo = function drawJimbo(x, y, w, h) {
     d.bevelSunken(x, y, w, h, d.C.white);
-    if (d.imgs.jban.complete && d.imgs.jban.naturalWidth) {
-      d.ctx.drawImage(d.imgs.jban, x + w - 100, y + 4, 96, 48);
+    if (d.imgReady(d.imgs?.jban)) {
+      try { d.ctx.drawImage(d.imgs.jban, x + w - 100, y + 4, 96, 48); } catch (_) {}
     }
     d.ctx.font = "7px Tahoma, sans-serif";
     d.ctx.fillStyle = d.C.text;
@@ -21,8 +21,8 @@ export function installJimboApp(d) {
     }
     // Ask Jimbo
     d.bevelRaised(x + 4, y + h - 28, 88, 18, d.C.jimbo);
-    if (d.imgs.jtb.complete && d.imgs.jtb.naturalWidth) {
-      d.ctx.drawImage(d.imgs.jtb, x + 8, y + h - 25, 12, 12);
+    if (d.imgReady(d.imgs?.jtb)) {
+      try { d.ctx.drawImage(d.imgs.jtb, x + 8, y + h - 25, 12, 12); } catch (_) {}
     }
     d.ctx.fillStyle = d.C.inv;
     d.ctx.font = "bold 8px Tahoma, sans-serif";
@@ -89,6 +89,18 @@ export function installJimboApp(d) {
       d.state.prJimboNit = d.pick(nits) || note;
       if (!Array.isArray(d.state.prBubbles)) d.state.prBubbles = [];
       d.state.prBubbles.push({ who: "jimbo", t: d.state.prJimboNit });
+    } else if (type === "dropdb") {
+      // One-shot autofill of the correct DROP — catharsis helper, not a wipe
+      d.state.sqlBuffer = "DROP DATABASE corp;";
+      const msg =
+        (d.dropDbCopy && d.dropDbCopy().jimboAutofill) ||
+        d.jimboCopy.dropdbAutofill ||
+        "Jimbo pasted DROP DATABASE corp; You're welcome. Also doomed.";
+      d.toast(msg, { jimbo: true });
+      d.audio.playSfx("jimboChime", { volume: 0.55 });
+      d.hitSanity(2);
+      d.state._uiDirty = true;
+      return;
     } else if (type === "spacewar") {
       const nits = d.jimboCopy.sabotage?.spacewar || [
         "Agreed with Kyle. Also: two spaces after comma now.",

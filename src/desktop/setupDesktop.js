@@ -132,7 +132,7 @@ export function setupAfter_mailBucket(d) {
   // Endless ticket queue (GD tickets-extra refill)
   // Playable = core tickets + ticketPool/extraTickets (implemented types as they land)
   // Fillers = padding / never-empty fallback (1-tap stub)
-  d.CORE_TYPES = ["semi", "comment", "pr", "spacewar"];
+  d.CORE_TYPES = ["semi", "comment", "pr", "spacewar", "dropdb"];
   d.STUB_TYPES = [
     "align",
     "rename",

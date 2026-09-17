@@ -109,6 +109,8 @@ export function createDesktop(copy, hooks) {
     canvas: d.canvas,
     state: d.state,
     wins: d.wins,
+    /** Internal bag for smoke/devtools (Start crash hardening). Not a player API. */
+    __d: d,
     render: d.render,
     onPointerMove: d.onPointerMove,
     onPointerDown: d.onPointerDown,

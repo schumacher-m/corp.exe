@@ -141,7 +141,67 @@ export function installIdeApp(d) {
     }
   }
 
+
+  d.dropDbCopy = function dropDbCopy() {
+    return d.copy.dropDb || {};
+  }
+
+  d.normalizeSql = function normalizeSql(s) {
+    const raw = String(s ?? "").trim().replace(/\s+/g, " ");
+    if (!raw.endsWith(";")) return "";
+    const body = raw.slice(0, -1).trim().replace(/\s+/g, " ");
+    const m = /^DROP\s+DATABASE\s+([A-Za-z_][\w]*)$/i.exec(body);
+    if (!m) return "";
+    if (String(m[1]).toLowerCase() !== "corp") return "";
+    return "DROP DATABASE corp;";
+  }
+
+  d.appendSqlChip = function appendSqlChip(chip) {
+    const c = String(chip ?? "");
+    let buf = d.state.sqlBuffer || "";
+    if (c === ";") {
+      buf = buf + ";";
+    } else if (!buf) {
+      buf = c;
+    } else {
+      buf = buf + " " + c;
+    }
+    if (buf.length > 80) buf = buf.slice(0, 80);
+    d.state.sqlBuffer = buf;
+    d.audio.playSfx("click");
+    d.state._uiDirty = true;
+  }
+
+  d.runSql = function runSql() {
+    if (d.state._runningSql) return;
+    d.state._runningSql = true;
+    try {
+      if (d.state.phase !== "dropdb") return;
+      const db = d.dropDbCopy();
+      const norm = d.normalizeSql(d.state.sqlBuffer || "");
+      if (norm === "DROP DATABASE corp;") {
+        d.state.sqlResult = db.successResult || "DROP DATABASE -- Query OK -- 0 relations";
+        const toastMsg = db.successToast || "Prod cleaned. Permanently. Ticket closes.";
+        d.audio.playSfx("click");
+        d.state._uiDirty = true;
+        const pts = d.state.activeTicket?.pts || 2;
+        // Catharsis: no Jimbo gate on success
+        d.finishTicket("dropdb", pts, { toastMsg, sanHit: 0 });
+      } else {
+        const toasts = db.wrongSqlToasts || [];
+        d.toast(d.pick(toasts) || "Wrong SQL.");
+        d.audio.playSfx("error");
+      }
+    } finally {
+      d.state._runningSql = false;
+    }
+  }
+
   d.drawIde = function drawIde(x, y, w, h) {
+    if (d.state.phase === "dropdb") {
+      d.drawIdeDropDb(x, y, w, h);
+      return;
+    }
     d.bevelSunken(x, y, w, h - 28, "#000000");
     d.ctx.font = "7px 'Courier New', monospace";
     if (d.state.phase === "semi") {
@@ -230,6 +290,69 @@ export function installIdeApp(d) {
       d.ctx.fillStyle = "#c8c4b0";
       d.ctx.fillText("// open a ticket from Tickets", x + 6, y + 14);
       d.state._submitBtn = null;
+    }
+  }
+
+
+  d.drawIdeDropDb = function drawIdeDropDb(x, y, w, h) {
+    const db = d.dropDbCopy();
+    d.state._sqlChipHits = [];
+    d.state._sqlRunBtn = null;
+    d.state._submitBtn = null;
+    d.state._cmtBtn = null;
+
+    const chipH = 16;
+    const runH = 16;
+    const resultH = 16;
+    const chromeH = chipH + runH + resultH + 18;
+    const bufH = Math.max(28, h - chromeH);
+
+    // Query buffer (sunken white / monospace)
+    d.bevelSunken(x, y, w, bufH, d.C.white);
+    d.ctx.font = "8px 'Courier New', monospace";
+    d.ctx.fillStyle = "#000000";
+    const buf = d.state.sqlBuffer || "";
+    const blink = Math.floor(Date.now() / 500) % 2 === 0;
+    const shown = buf + (blink ? "|" : " ");
+    d.ctx.fillText(shown.slice(0, 42), x + 4, y + 12);
+    // wrap second line if needed
+    if (shown.length > 42) {
+      d.ctx.fillText(shown.slice(42, 84), x + 4, y + 22);
+    }
+
+    let yy = y + bufH + 4;
+    // Chip row
+    const chips = Array.isArray(db.chips) ? db.chips : ["DROP", "DATABASE", "corp", ";"];
+    let bx = x + 4;
+    d.ctx.font = "bold 7px Tahoma, sans-serif";
+    for (let i = 0; i < chips.length; i++) {
+      const lab = String(chips[i]);
+      const bw = Math.max(28, lab.length * 7 + 10);
+      if (bx + bw > x + w - 4) break;
+      d.bevelRaised(bx, yy, bw, chipH, d.C.face);
+      d.ctx.fillStyle = d.C.text;
+      d.ctx.fillText(lab, bx + 5, yy + 11);
+      d.state._sqlChipHits.push({ chip: lab, hit: { x: bx, y: yy, w: bw, h: chipH } });
+      bx += bw + 4;
+    }
+    yy += chipH + 4;
+
+    // Run button
+    const runLab = db.runLabel || "Run";
+    const runW = 48;
+    d.bevelRaised(x + 4, yy, runW, runH, d.C.face);
+    d.ctx.fillStyle = d.C.text;
+    d.ctx.font = "bold 8px Tahoma, sans-serif";
+    d.ctx.fillText(runLab, x + 14, yy + 11);
+    d.state._sqlRunBtn = { x: x + 4, y: yy, w: runW, h: runH };
+    yy += runH + 4;
+
+    // Result strip
+    d.bevelSunken(x, yy, w, resultH, "#000000");
+    if (d.state.sqlResult) {
+      d.ctx.fillStyle = d.C.sick;
+      d.ctx.font = "7px 'Courier New', monospace";
+      d.ctx.fillText(String(d.state.sqlResult).slice(0, 48), x + 4, yy + 11);
     }
   }
 

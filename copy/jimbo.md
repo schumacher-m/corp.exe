@@ -50,11 +50,17 @@
     ],
     "pr": [
       "Jimbo agrees with Kyle + invents 4 new nits.",
-      "Renamed fog → data2. Stakeholders love numbers.",
+      "Renamed fog \u2192 data2. Stakeholders love numbers.",
       "Posted 'LGTM if we also rename everything to data2'."
+    ],
+    "dropdb": [
+      "Jimbo ran DROP DATABASE corp_backup; Wrong corp. Try again.",
+      "Jimbo added WHERE 1=1 for safety. Safety deleted nothing.",
+      "Jimbo rewrote it to DELETE FROM feelings; Schema unimpressed."
     ]
   },
   "markedRead": "Marked as read by Jimbo",
-  "_writerNote": "Writer copy -- cheerful-wrong corporate-slop; keys stable for Dev."
+  "_writerNote": "Writer copy -- cheerful-wrong corporate-slop; keys stable for Dev.",
+  "dropdbAutofill": "Jimbo pasted DROP DATABASE corp; You're welcome. Also doomed."
 }
 ```

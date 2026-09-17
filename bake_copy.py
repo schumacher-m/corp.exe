@@ -197,6 +197,19 @@ if te_path.exists():
             })
 
 
+
+# CORP-DB-01 DROP DATABASE -- copy/drop-database.md
+dd_path = COPY / "drop-database.md"
+if dd_path.exists():
+    dd_parts = fences(dd_path)
+    if len(dd_parts) >= 1 and isinstance(dd_parts[0], list):
+        pool = list(data.get("ticketPool") or [])
+        pool = [t for t in pool if not (isinstance(t, dict) and t.get("type") == "dropdb")]
+        pool.extend(dd_parts[0])
+        data["ticketPool"] = pool
+    if len(dd_parts) >= 2 and isinstance(dd_parts[1], dict):
+        data["dropDb"] = dd_parts[1]
+
 items = data.setdefault("startMenu", {}).setdefault("items", [])
 # Real apps live under Programs submenu (not Start root). Ensure Programs exists.
 programs = None
@@ -282,6 +295,7 @@ print(
     "buckets", len((data.get("timesheet") or {}).get("buckets") or []),
     "incident", bool(inc),
     "ticketPool", len(data.get("ticketPool") or []),
+    "dropDb", bool(data.get("dropDb")),
     "ticketStrings", len(data.get("ticketStrings") or {}),
     "teams", "teams" in data,
     "chatPool", len((data.get("teams") or {}).get("chatPool") or []),

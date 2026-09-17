@@ -79,11 +79,41 @@ let exhaustedBedActive = false;
 
 function el(name) {
   if (cache.has(name)) return cache.get(name);
-  const a = new Audio(BASE + FILES[name]);
-  a.preload = "auto";
-  a.addEventListener("error", () => {
-    a._missing = true;
-  });
+  if (!name || !FILES[name]) {
+    const missing = {
+      _missing: true,
+      volume: 0,
+      loop: false,
+      preload: "none",
+      currentTime: 0,
+      play() { return Promise.resolve(); },
+      pause() {},
+      cloneNode() { return el(name); },
+      addEventListener() {},
+    };
+    cache.set(name, missing);
+    return missing;
+  }
+  let a;
+  try {
+    a = new Audio(BASE + FILES[name]);
+    a.preload = "auto";
+    a.addEventListener("error", () => {
+      a._missing = true;
+    });
+  } catch (_) {
+    a = {
+      _missing: true,
+      volume: 0,
+      loop: false,
+      preload: "none",
+      currentTime: 0,
+      play() { return Promise.resolve(); },
+      pause() {},
+      cloneNode() { return el(name); },
+      addEventListener() {},
+    };
+  }
   cache.set(name, a);
   return a;
 }
@@ -114,16 +144,30 @@ export function isMuted() {
 export function playSfx(name, { volume = 0.5 } = {}) {
   if (muted) return;
   if (sfxAlive >= SFX_MAX_ALIVE) return;
-  const a = el(name);
-  if (a._missing) return;
+  let a;
   try {
-    const c = a.cloneNode();
+    a = el(name);
+  } catch (_) {
+    return;
+  }
+  if (!a || a._missing) return;
+  try {
+    const c = a.cloneNode ? a.cloneNode() : null;
+    if (!c || c._missing) return;
     c.volume = volume;
     sfxAlive++;
-    const done = () => { sfxAlive = Math.max(0, sfxAlive - 1); };
-    c.addEventListener("ended", done);
-    c.addEventListener("error", done);
-    c.play().catch(done);
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      sfxAlive = Math.max(0, sfxAlive - 1);
+    };
+    try { c.addEventListener("ended", done); } catch (_) {}
+    try { c.addEventListener("error", done); } catch (_) {}
+    // Cap: if play never settles (broken element after tab restore), free the slot
+    setTimeout(done, 4000);
+    const p = c.play();
+    if (p && typeof p.catch === "function") p.catch(done);
   } catch (_) {}
 }
 
