@@ -37,7 +37,8 @@ export function installDesktopShell(d) {
   }
 
   d.drawDeskIcons = function drawDeskIcons() {
-    d.state._deskIconHits = [];
+    if (!d.state._deskIconHits) d.state._deskIconHits = [];
+    d.state._deskIconHits.length = 0;
     for (const ic of d.deskIcons) {
       const bx = ic.x;
       const by = ic.y;

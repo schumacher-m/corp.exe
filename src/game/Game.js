@@ -173,6 +173,8 @@ const nodes = {};
 const SEAT = new THREE.Vector3(0.0, 0, 0.4); // chair spot (XZ)
 const SIT_CAM = new THREE.Vector3(0.15, 1.2, 0.55);
 const SIT_LOOK = new THREE.Vector3(0.0, 1.05, -0.55);
+const _sitLook = new THREE.Vector3();
+
 const SIT_RADIUS = 3.2; // almost whole cubicle — E should work once you see the CRT
 
 function forceNearest(root) {
@@ -916,32 +918,38 @@ function updateSit(dt) {
   }
 }
 
-function updateSeated(dt) {
-  // light mouse look around CRT
-  camera.position.copy(SIT_CAM);
-  const look = SIT_LOOK.clone();
-  look.x += G.lookX * 0.15;
-  look.y += G.lookY * 0.1;
-  camera.lookAt(look);
+function isDesktopFullscreen() {
+  const ov = $("desktop-overlay");
+  return !!(ov && ov.classList.contains("show"));
+}
 
-  // hand anim
-  if (handsRoot) {
+function updateSeated(dt) {
+  const fs = isDesktopFullscreen();
+  // When fullscreen, user sees overlay 2D canvas — skip CRT look / hand / texture upload
+  if (!fs) {
+    camera.position.copy(SIT_CAM);
+    _sitLook.copy(SIT_LOOK);
+    _sitLook.x += G.lookX * 0.15;
+    _sitLook.y += G.lookY * 0.1;
+    camera.lookAt(_sitLook);
+
+    if (handsRoot) {
+      G.handTypeT = Math.max(0, G.handTypeT - dt);
+      G.handClickT = Math.max(0, G.handClickT - dt);
+      const bob = Math.sin(performance.now() * 0.02) * 0.002;
+      handsRoot.position.y = -0.35 + bob + (G.handTypeT > 0 ? Math.sin(performance.now() * 0.05) * 0.01 : 0);
+      if (keyboardMesh && G.handTypeT > 0) keyboardMesh.rotation.x = Math.sin(performance.now() * 0.08) * 0.02;
+      if (mouseMesh && G.handClickT > 0) mouseMesh.position.y = 0.005;
+      else if (mouseMesh) mouseMesh.position.y = 0;
+    }
+  } else {
     G.handTypeT = Math.max(0, G.handTypeT - dt);
     G.handClickT = Math.max(0, G.handClickT - dt);
-    const left = handsRoot.getObjectByName("left_wrist") || handsRoot;
-    const right = handsRoot.getObjectByName("right_wrist") || handsRoot;
-    const bob = Math.sin(performance.now() * 0.02) * 0.002;
-    handsRoot.position.y = -0.35 + bob + (G.handTypeT > 0 ? Math.sin(performance.now() * 0.05) * 0.01 : 0);
-    if (keyboardMesh && G.handTypeT > 0) keyboardMesh.rotation.x = Math.sin(performance.now() * 0.08) * 0.02;
-    if (mouseMesh && G.handClickT > 0) mouseMesh.position.y = 0.005;
-    else if (mouseMesh) mouseMesh.position.y = 0;
-    void left;
-    void right;
   }
 
   win95.tick(dt);
   win95.render();
-  crtTex.needsUpdate = true;
+  if (!fs) crtTex.needsUpdate = true;
 }
 
 
@@ -1190,8 +1198,11 @@ function frame() {
     updateWalk(dt);
     updateFarmFidget(farmWorkers, t);
   } else if (G.phase === "sit") updateSit(dt);
-  else if (G.phase === "seated") updateSeated(dt);
-  else if (G.phase === "boot" || G.phase === "ending") {
+  else if (G.phase === "seated") {
+    updateSeated(dt);
+    // Fullscreen Win95 overlay: skip hidden 3D + post (was OOM/tab-discard under Timesheet)
+    if (isDesktopFullscreen()) return;
+  } else if (G.phase === "boot" || G.phase === "ending") {
     // ambient orbit peek
     camera.position.set(Math.sin(t * 0.15) * 0.4 + 0.8, 1.6, 2.8);
     camera.lookAt(0, 1.0, -0.5);

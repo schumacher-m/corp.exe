@@ -175,31 +175,39 @@ export function installTimesheetApp(d) {
     const doneN = d.state.ticketsCompletedSinceLock;
     d.ctx.fillText("CORP tickets since lock: " + doneN, x + 3, y + 17);
 
-    d.state._tsHits = [];
+    if (!d.state._tsHits) d.state._tsHits = [];
+    d.state._tsHits.length = 0;
     let yy = y + 22;
     const rowH = 14;
+    let hi = 0;
     for (const b of d.timesheetBuckets) {
       const hours = Number(d.state.timesheetHours[b.id] || 0);
       d.ctx.fillStyle = d.C.text;
       d.ctx.font = "7px Tahoma, sans-serif";
       d.ctx.fillText(String(b.label).slice(0, 22), x + 3, yy + 9);
-      // value box
       d.bevelSunken(x + w - 70, yy + 1, 28, 11, d.C.white);
       d.ctx.fillStyle = d.C.text;
       d.ctx.fillText(hours.toFixed(1), x + w - 66, yy + 9);
-      // minus
       d.bevelRaised(x + w - 40, yy + 1, 14, 11, d.C.face);
       d.ctx.fillStyle = d.C.text;
       d.ctx.font = "bold 8px Tahoma, sans-serif";
       d.ctx.fillText("-", x + w - 36, yy + 9);
-      d.state._tsHits.push({ kind: "minus", id: b.id, hit: { x: x + w - 40, y: yy + 1, w: 14, h: 11 } });
-      // plus
+      let minus = d.state._tsHits[hi];
+      if (!minus) { minus = { kind: "minus", id: b.id, hit: { x: 0, y: 0, w: 14, h: 11 } }; d.state._tsHits[hi] = minus; }
+      minus.kind = "minus"; minus.id = b.id;
+      minus.hit.x = x + w - 40; minus.hit.y = yy + 1; minus.hit.w = 14; minus.hit.h = 11;
+      hi++;
       d.bevelRaised(x + w - 24, yy + 1, 14, 11, d.C.face);
       d.ctx.fillText("+", x + w - 20, yy + 9);
-      d.state._tsHits.push({ kind: "plus", id: b.id, hit: { x: x + w - 24, y: yy + 1, w: 14, h: 11 } });
+      let plus = d.state._tsHits[hi];
+      if (!plus) { plus = { kind: "plus", id: b.id, hit: { x: 0, y: 0, w: 14, h: 11 } }; d.state._tsHits[hi] = plus; }
+      plus.kind = "plus"; plus.id = b.id;
+      plus.hit.x = x + w - 24; plus.hit.y = yy + 1; plus.hit.w = 14; plus.hit.h = 11;
+      hi++;
       yy += rowH;
       if (yy > y + h - 36) break;
     }
+    d.state._tsHits.length = hi;
 
     const sum = d.timesheetSum();
     const ok = d.timesheetSumExact();
