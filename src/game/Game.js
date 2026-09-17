@@ -1079,13 +1079,13 @@ async function runBoot() {
   if (boot) boot.classList.remove("show");
   // CORP-TOWER-01 ready in Tower.js but gated until lighting PASS (Tester farm smoke).
   // Flip true (or call tower.startPlaza) when CoS opens the Tower tip.
-  const TOWER_ON_CLOCK_IN = false;
+  const TOWER_ON_CLOCK_IN = true;
   if (TOWER_ON_CLOCK_IN && tower?.startPlaza) {
     await tower.startPlaza();
     return;
   }
   G.phase = "walk";
-  console.info("[corp] farm-gate: TOWER_ON_CLOCK_IN=false → walk (Cubicle 4-B)");
+  console.info("[corp] tower-gate: TOWER_ON_CLOCK_IN=true → plaza");
   audio.playBgm("bgmWalk");
   audio.startExhaustedBed({ volume: 0.32 });
   player.pos.set(0, 1.55, 3.2);
