@@ -23,7 +23,9 @@ export function installTicketsApp(d) {
   }
 
   d.templateByType = function templateByType(type) {
-    return d.playableTemplates.find((t) => t.type === type) || d.fillerTemplates[0] || d.playableTemplates[0];
+    const matches = d.playableTemplates.filter((t) => t && t.type === type);
+    if (matches.length) return d.pick(matches) || matches[0];
+    return d.fillerTemplates[0] || d.playableTemplates[0];
   }
 
   d.rebuildDrawBag = function rebuildDrawBag() {
@@ -525,20 +527,27 @@ export function installTicketsApp(d) {
     const onBoardTypes = new Set(d.state.board.map((t) => t.mechanic || t.type));
     let pickType = null;
     // Soft prefer dropdb after first close (mid-morning punchline; never opener)
+    const canDropDb = (d.state.closedCount || 0) >= 1;
     if (
-      (d.state.closedCount || 0) >= 1 &&
+      canDropDb &&
       d.state.drawBag.includes("dropdb") &&
       !onBoardTypes.has("dropdb")
     ) {
       pickType = "dropdb";
       d.state.drawBag = d.state.drawBag.filter((t) => t !== "dropdb");
     } else {
-      const unusedOffBoard = d.state.drawBag.filter((t) => !onBoardTypes.has(t));
+      // Hold dropdb in the bag until first close — never opener / early refill
+      const eligible = d.state.drawBag.filter((t) => t !== "dropdb" || canDropDb);
+      const unusedOffBoard = eligible.filter((t) => !onBoardTypes.has(t));
       if (unusedOffBoard.length) {
         pickType = d.pick(unusedOffBoard);
         d.state.drawBag = d.state.drawBag.filter((t) => t !== pickType);
+      } else if (eligible.length) {
+        pickType = eligible[eligible.length - 1];
+        d.state.drawBag = d.state.drawBag.filter((t) => t !== pickType);
       } else {
-        pickType = d.state.drawBag.pop();
+        // Bag only had dropdb while too early — leave it, draw filler
+        return d.drawFromDeck(true, dpth + 1);
       }
     }
     if (!pickType) {

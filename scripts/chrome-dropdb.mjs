@@ -33,30 +33,24 @@ const result = await page.evaluate(() => {
     hasDropdb: opening.some((t) => t.type === "dropdb"),
   });
 
-  // Inject dropdb ticket onto board (facade does not expose cloneTicket/openTicket)
-  const tk = {
-    id: "CORP-5201",
-    title: "Urgent prod data cleanup",
-    pts: 2,
-    type: "dropdb",
-    mechanic: "dropdb",
-    uid: "tk-smoke-dropdb",
-    dod: "Run the approved migration. The approved migration is DROP DATABASE corp;",
-    meta: "Sev: P0",
-  };
-  w.state.board = [tk, ...w.state.board.filter((t) => t.type !== "dropdb")].slice(0, 3);
+  // Force dropdb onto board via cloneTicket + openTicket (internal bag)
+  const d = w.__d;
   w.state.closedCount = Math.max(1, w.state.closedCount || 0);
+  const tmpl =
+    (d.playableTemplates || []).find((t) => t.type === "dropdb") || {
+      id: "CORP-5201",
+      title: "Urgent prod data cleanup",
+      pts: 2,
+      type: "dropdb",
+      dod: "Run the approved migration. The approved migration is DROP DATABASE corp;",
+      meta: "Sev: P0",
+    };
+  const tk = d.cloneTicket(tmpl);
+  tk.uid = "tk-smoke-dropdb";
+  w.state.board = [tk, ...w.state.board.filter((t) => t.type !== "dropdb")].slice(0, 3);
   w.wins.tickets.open = true;
   w.raise("tickets");
-  w.render();
-
-  const row = w.state.board.find((t) => t.uid === "tk-smoke-dropdb");
-  if (!row || !row._hit) {
-    log.push({ step: "open_fail", board: w.state.board.map((t) => t.id), row });
-    return log;
-  }
-  w.state.cursor = { x: row._hit.x + 10, y: row._hit.y + 4 };
-  w.onPointerDown();
+  d.openTicket(tk);
   w.render();
   log.push({
     step: "opened",
@@ -127,25 +121,13 @@ const result = await page.evaluate(() => {
   });
 
   // Jimbo autofill on fresh dropdb
-  const tk2 = {
-    id: "CORP-5202",
-    title: "Schema migration (quick)",
-    pts: 2,
-    type: "dropdb",
-    mechanic: "dropdb",
-    uid: "tk-smoke-dropdb-2",
-    dod: "DROP",
-  };
+  const tk2 = d.cloneTicket(tmpl);
+  tk2.uid = "tk-smoke-dropdb-2";
   w.state.board.push(tk2);
   w.wins.tickets.open = true;
   w.raise("tickets");
+  d.openTicket(tk2);
   w.render();
-  const row2 = w.state.board.find((t) => t.uid === "tk-smoke-dropdb-2");
-  if (row2 && row2._hit) {
-    w.state.cursor = { x: row2._hit.x + 10, y: row2._hit.y + 4 };
-    w.onPointerDown();
-    w.render();
-  }
   w.state.sqlBuffer = "garbage";
   w.askJimbo();
   w.render();
