@@ -872,7 +872,7 @@ export function createTower(opts) {
     audio.playLoop("floorAmb", { volume: 0.32 });
     if (audio.playSfx) audio.playSfx("elevatorDing", { volume: 0.55 });
     toast((ta().elevator || {}).arrive || "Your floor. Walk like you belong.", true);
-    setPrompt("WASD · walk to Cubicle 4-B");
+    setPrompt((ta().farmWalk || {}).walkPrompt || "WASD -- walk to Cubicle 4-B");
   }
 
   function handoffToWalk() {
@@ -881,7 +881,7 @@ export function createTower(opts) {
     setTowerLook(false);
     G.phase = "walk";
     if (typeof onEnterWalk === "function") onEnterWalk();
-    else setPrompt("WASD · find Cubicle 4-B · E to sit");
+    else setPrompt((ta().farmWalk || {}).walkPrompt || "WASD -- walk to Cubicle 4-B");
   }
 
 

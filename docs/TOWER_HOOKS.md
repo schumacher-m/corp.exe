@@ -155,3 +155,5 @@ Reuse FARM.md P0 brighten on floor/farm. Plaza/lobby: same ambient family, sligh
 
 ## Manifest
 Kits listed in `assets/manifest.json` (models + anchors + triangleCounts). Regenerator: `assets/build_tower_assets.py` (reuses `box_mesh` / `write_glb` from `build_ps1_assets.py`).
+
+**CORP-FARM-04:** Floor after elev — clear `ix=0` spine iz≥1 + bay colliders + brighter fluo. Spec: `specs/20-office-floor-path.md`.

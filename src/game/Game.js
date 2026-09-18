@@ -43,6 +43,20 @@ function setPrompt(t) {
   hudPrompt.textContent = t;
 }
 
+
+function farmWalkCopy() {
+  return (copy.towerArrival && copy.towerArrival.farmWalk) || {};
+}
+function farmWalkPrompt(nearSit) {
+  const fw = farmWalkCopy();
+  if (nearSit) return fw.canSitPrompt || "E / Click / SIT -- Cubicle 4-B";
+  return fw.walkPrompt || "WASD -- walk to Cubicle 4-B";
+}
+function farmWalkTooFar() {
+  return farmWalkCopy().tooFarToast || "Get closer to your desk";
+}
+
+
 function setDesktopFullscreen(on) {
   const ov = $("desktop-overlay");
   if (!ov || !win95?.canvas) return;
@@ -101,7 +115,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x4a4840);
-scene.fog = new THREE.Fog(0x5a5848, 18, 40);
+scene.fog = new THREE.Fog(0x5a5848, 20, 46); /* CORP-FARM-04: slightly more open aisles */
 
 const camera = new THREE.PerspectiveCamera(60, RT_W / RT_H, 0.08, 60);
 const player = {
@@ -149,21 +163,21 @@ postScene.add(
 );
 
 /* FARM.md lighting — floor lock: ambient ~1.55, fluo #f0ecd4 */
-scene.add(new THREE.AmbientLight(0xb0aca0, 2.1));
+scene.add(new THREE.AmbientLight(0xb0aca0, 2.35)); /* CORP-FARM-04: was 2.1 */
 const keyL = new THREE.DirectionalLight(0xe8e0cc, 1.3);
 keyL.position.set(2, 8, 4);
 scene.add(keyL);
 /* Player desk fluo — a bit stronger for seated CRT readability */
-const fluo = new THREE.PointLight(0xf0ecd4, 1.4, 12);
+const fluo = new THREE.PointLight(0xf0ecd4, 1.55, 12); /* CORP-FARM-04: was 1.4 */
 fluo.position.set(0, 2.4, -1);
 scene.add(fluo);
-/* Fluorescent banks along farm — #f0ecd4 ~0.85; paused during tower commute (Phase B) */
+/* Fluorescent banks along farm — CORP-FARM-04 bump ~1.3; paused during tower commute (Phase B) */
 const farmFluoLights = [];
-fluo.userData.baseI = 1.4;
+fluo.userData.baseI = 1.55;
 for (let iz = -8; iz <= 4; iz += 2) {
   for (const ix of [-8, -4, 0, 4, 8]) {
-    const fl = new THREE.PointLight(0xf0ecd4, 1.1, 10);
-    fl.userData.baseI = 1.1;
+    const fl = new THREE.PointLight(0xf0ecd4, 1.3, 10);
+    fl.userData.baseI = 1.3;
     fl.position.set(ix * 2.2, 2.45, iz * 2.6);
     scene.add(fl);
     farmFluoLights.push(fl);
@@ -183,6 +197,8 @@ scene.add(OfficeRoot);
 
 const nodes = {};
 // farmWorkers imported from Farm.js
+const farmColliders = []; // CORP-FARM-04 XZ AABBs (neighbor bays + player walls)
+const FARM_PLAYER_R = 0.22; // walk capsule radius on XZ
 const SEAT = new THREE.Vector3(0.0, 0, 0.4); // chair spot (XZ)
 const SIT_CAM = new THREE.Vector3(0.15, 1.2, 0.55);
 const SIT_LOOK = new THREE.Vector3(0.0, 1.05, -0.55);
@@ -304,7 +320,7 @@ try {
       try { audio.stopLoop("floorAmb"); } catch (_) {}
       audio.playBgm("bgmWalk");
       audio.startExhaustedBed({ volume: 0.32 });
-      setPrompt("WASD · find Cubicle 4-B · E to sit");
+      setPrompt(farmWalkPrompt(false));
       // Allow approach from elevator_exit z≈10.4
       player.pos.z = Math.min(player.pos.z, 10.4);
     },
@@ -386,6 +402,10 @@ async function loadOffice() {
   farm.name = "CubicleFarm";
   const PITCH_X = 2.2;
   const PITCH_Z = 2.6;
+  /* CORP-FARM-04: XZ AABB blockers — neighbor_bay ≤1.95×2.35; spine stays clear */
+  const BAY_HX = 1.95 * 0.5;
+  const BAY_HZ = 2.35 * 0.5;
+  farmColliders.length = 0;
   farmWorkers.length = 0;
 
   const texLoader = new THREE.TextureLoader();
@@ -691,6 +711,13 @@ async function loadOffice() {
   c0.name = "Cubicle";
   c0.position.set(0, 0, 0);
   farm.add(c0);
+  /* Player cubicle walls — U-shape open toward +Z aisle / elev approach; desk/CRT block */
+  farmColliders.push(
+    { minX: -1.05, maxX: -0.92, minZ: -1.15, maxZ: 0.55 }, // L wall
+    { minX: 0.92, maxX: 1.05, minZ: -1.15, maxZ: 0.55 }, // R wall
+    { minX: -1.05, maxX: 1.05, minZ: -1.2, maxZ: -0.85 }, // back wall −Z
+    { minX: -0.55, maxX: 0.55, minZ: -0.75, maxZ: -0.05 } // desk/CRT
+  );
 
   let neighborCount = 0;
   let crtCount = 0;
@@ -717,10 +744,11 @@ async function loadOffice() {
 
   for (let ix = -10; ix <= 10; ix++) {
     for (let iz = -8; iz <= 4; iz++) {
-      // Floor lock aisles: player home; entire iz=+1 E–W; ix=±5 N–S. Do NOT clear all ix===0.
+      // Floor lock aisles + CORP-FARM-04 spine: player home; iz=+1 E–W; ix=±5 N–S; ix===0 && iz>=1 elev→desk.
       if (ix === 0 && iz === 0) continue;
       if (iz === 1) continue;
       if (ix === 5 || ix === -5) continue;
+      if (ix === 0 && iz >= 1) continue; // elev z≈10.4 → aisle → Cubicle 4-B
       const x = ix * PITCH_X;
       const z = iz * PITCH_Z;
       let bay;
@@ -750,6 +778,12 @@ async function loadOffice() {
       bay.position.set(x, 0, z);
       /* Designer bay 1.95×2.35 — no extra shrink */
       farm.add(bay);
+      farmColliders.push({
+        minX: x - BAY_HX,
+        maxX: x + BAY_HX,
+        minZ: z - BAY_HZ,
+        maxZ: z + BAY_HZ,
+      });
       neighborCount++;
     }
   }
@@ -912,6 +946,38 @@ const pointer = new THREE.Vector2();
 const clock = new THREE.Clock();
 let footAcc = 0;
 
+
+/** CORP-FARM-04 — circle vs XZ AABB; push out on min penetration (spine aisles stay clear). */
+function resolveFarmColliders(pos) {
+  const r = FARM_PLAYER_R;
+  for (let i = 0; i < farmColliders.length; i++) {
+    const b = farmColliders[i];
+    const cx = Math.max(b.minX, Math.min(pos.x, b.maxX));
+    const cz = Math.max(b.minZ, Math.min(pos.z, b.maxZ));
+    let dx = pos.x - cx;
+    let dz = pos.z - cz;
+    const d2 = dx * dx + dz * dz;
+    if (d2 >= r * r) continue;
+    if (d2 < 1e-8) {
+      // Center inside box — push along shallowest axis
+      const penL = pos.x - b.minX + r;
+      const penR = b.maxX - pos.x + r;
+      const penN = pos.z - b.minZ + r;
+      const penS = b.maxZ - pos.z + r;
+      const m = Math.min(penL, penR, penN, penS);
+      if (m === penL) pos.x = b.minX - r;
+      else if (m === penR) pos.x = b.maxX + r;
+      else if (m === penN) pos.z = b.minZ - r;
+      else pos.z = b.maxZ + r;
+      continue;
+    }
+    const d = Math.sqrt(d2);
+    const push = (r - d) / d;
+    pos.x += dx * push;
+    pos.z += dz * push;
+  }
+}
+
 function updateWalk(dt) {
   const forward = (G.keys["w"] || G.keys["arrowup"] ? 1 : 0) - (G.keys["s"] || G.keys["arrowdown"] ? 1 : 0);
   const strafe = (G.keys["d"] || G.keys["arrowright"] ? 1 : 0) - (G.keys["a"] || G.keys["arrowleft"] ? 1 : 0);
@@ -923,6 +989,7 @@ function updateWalk(dt) {
     const rz = -Math.sin(ang);
     player.pos.x += (fx * forward + rx * strafe) * player.speed * dt;
     player.pos.z += (fz * forward + rz * strafe) * player.speed * dt;
+    resolveFarmColliders(player.pos);
     // soft bounds — FARM.md hellscape (−10…+10 / −8…+4) with margin
     player.pos.x = THREE.MathUtils.clamp(player.pos.x, -10.5, 10.5);
     player.pos.z = THREE.MathUtils.clamp(player.pos.z, -8.5, 11.5);
@@ -952,11 +1019,7 @@ function updateWalk(dt) {
     sitBtn.hidden = !G.canSit;
     sitBtn.style.pointerEvents = G.canSit ? "auto" : "none";
   }
-  setPrompt(
-    G.canSit
-      ? "E / Space / SIT — Cubicle 4-B"
-      : "WASD · walk toward the glowing CRT"
-  );
+  setPrompt(farmWalkPrompt(G.canSit));
   // soft auto-sit if basically on the chair
   if (dist < 0.85) {
     G._autoSitT = (G._autoSitT || 0) + dt;
@@ -1111,7 +1174,7 @@ async function runBoot() {
   audio.startExhaustedBed({ volume: 0.32 });
   player.pos.set(0, 1.55, 3.2);
   G.yaw = 0;
-  setPrompt("WASD · find Cubicle 4-B · E to sit");
+  setPrompt(farmWalkPrompt(false));
 }
 
 function clockOut() {
@@ -1191,7 +1254,7 @@ window.addEventListener("keydown", (e) => {
     // If somehow canSit false but they're past the doorway, still sit
     if (!G.canSit && player.pos.z < 2.2) G.canSit = true;
     if (G.canSit) beginSit();
-    else toast("Get closer to your desk (walk toward the CRT)");
+    else toast(farmWalkTooFar());
   }
   if (e.key === "m" || e.key === "M") {
     G.muted = !G.muted;

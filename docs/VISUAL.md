@@ -133,6 +133,8 @@ Live Pages bug: after hard-refresh, **3D CRT/noise blobs briefly paint through**
 
 Dense neighbor farm + player bay: **brightness** and **aisle grammar** are locked in **`FARM.md`** (ambient `#9a968e` @ 1.55, fluo `#f0ecd4` @ 0.85 / dist 7, fog `THREE.Fog(0x4a4840, 12, 30)`, clear `#3a3830`; skip all bays at `iz === +1` and `ix === ±5`, desks/CRTs face −Z). No bloom — lights + albedos + CRT emissive only.
 
+**CORP-FARM-04 light (tip `farm1`):** ambient `#b0aca0` @ **2.35**, grid fluo `#f0ecd4` @ **1.3**, desk fluo **1.55**, fog `0x5a5848` near/far **20/46**. Spine skip `ix===0&&iz>=1`; still grim PS1, no bloom. See `FARM.md` shipped deltas.
+
 Tower arrival floor kit (`specs/12-tower-arrival.md`, `docs/TOWER_HOOKS.md`) **reuses** this same brighter floor kit and aisle grammar.
 
 

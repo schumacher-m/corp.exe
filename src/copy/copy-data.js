@@ -3423,6 +3423,13 @@ export default {
         "prompt": "E -- Acknowledge hazard",
         "toast": "Wet floor noted. Dignity not covered by policy."
       }
+    },
+    "farmWalk": {
+      "walkPrompt": "WASD -- walk to Cubicle 4-B",
+      "walkPromptAlt": "WASD -- walk to your desk",
+      "canSitPrompt": "E / Click / SIT -- Cubicle 4-B",
+      "tooFarToast": "Get closer to your desk",
+      "_writerNote": "CORP-FARM-04: replace Game.js glowing CRT walk/toast. Monitor off until sit."
     }
   }
 };

@@ -18,14 +18,15 @@ Do **not** keep the old 3-bay layout (`±6.2m`). That reads as an empty warehous
 | Optional glow quad | `assets/models/crt_glow.glb` / `textures/crt_glow.png` | If you instance screen faces alone |
 | Seated worker | `assets/models/worker_seated.glb` (+ `_b` variant) | Blocky sit-pose clerk; fidget empties |
 
-Player collision / sit stay local to the home bay. Neighbors are visual only (no colliders).
+Player collision / sit stay local to the home bay. **CORP-FARM-04:** remaining neighbor bays + player cubicle walls use simple XZ AABB colliders (footprint ≤1.95×2.35); aisle spine stays walkable.
 
 **Aisles (floor lock — authoritative):**
 - Main aisle: clear the **entire** `iz === +1` row (E–W corridor). No neighbor bays on that row.
 - Cross aisles: clear entire columns `ix === 5` and `ix === -5` (N–S). No neighbor bays there.
+- **CORP-FARM-04 spine:** also skip `ix === 0 && iz >= 1` (elev `z≈10.4` → aisle → Cubicle 4-B). Keep player home `(0,0)` only.
 - Still skip player home `ix===0 && iz===0` (full cubicle stays).
-- Do **not** skip all of `ix===0` — only `(0,0)` for player; the E–W main aisle is `iz=+1`.
-- Desks face **−Z** (no `bay.rotation.y` toward center). Walk/elevator handoff approaches from **+Z** looking toward player desk `(0,0)`. Spawn ~`z≈3.2`.
+- Do **not** skip all of `ix===0` below iz=1 — only spine `iz>=1` plus `(0,0)` for player; the E–W main aisle is `iz=+1`.
+- Player CRT faces **+Z** (Designer confirm); elev handoff at +Z looks **−Z** down spine. Neighbor bays: no yaw into spine.
 
 ### Elevator / tower handoff (empties)
 
@@ -57,6 +58,7 @@ for (let ix = -10; ix <= 10; ix++) {
     if (ix === 0 && iz === 0) continue; // player home
     if (iz === 1) continue;             // E–W main aisle
     if (ix === 5 || ix === -5) continue; // N–S cross aisles
+    if (ix === 0 && iz >= 1) continue;  // CORP-FARM-04 elev→desk spine
     const bay = neighborBay.clone(); // or InstancedMesh
     // desks face −Z — do not rotate toward center
     bay.position.set(ix * PITCH_X, 0, iz * PITCH_Z);
@@ -76,11 +78,11 @@ Prefer **`InstancedMesh`** for neighbor bays / CRTs / workers if clone cost hurt
 
 | Light | Value |
 |-------|-------|
-| Ambient | `#b0aca0` @ **2.1** (belt after murky FAIL; Designer floor albedo still landing) |
+| Ambient | `#b0aca0` @ **2.35** (CORP-FARM-04; was 2.1) |
 | Key directional | `#e8e0cc` **1.3** above-front |
-| Fluorescent banks | `#f0ecd4` @ **1.1**, distance **10** |
-| Player desk fluo | same `#f0ecd4`, a bit stronger (~1.15) so seated CRT stays readable |
-| Fog | `THREE.Fog(0x5a5848, 18, 40)` |
+| Fluorescent banks | `#f0ecd4` @ **1.3**, distance **10** (was 1.1) |
+| Player desk fluo | same `#f0ecd4` @ **1.55** (was 1.4) |
+| Fog | `THREE.Fog(0x5a5848, 20, 46)` (was 18/40 — aisles read lit) |
 | Clear / bg | `#4a4840` |
 
 No bloom. Brightness = more lights + emissive CRTs, not post glow. Proxy walls prefer `MeshLambert` so ambient/fluo hit them.
@@ -212,4 +214,32 @@ Perf: shared geometries/materials; clone meshes (not re-load GLTF); keep CLOCK I
 ### Console ping
 
 `console.info` farm neighbor / CRT / worker counts on load.
+
+
+## CORP-FARM-04 — elev→desk spine (2026-09-18)
+
+After tower elev handoff at `elevator_exit` (0,~,10.4), also **skip neighbor bays on `ix===0 && iz>=1`** so the center spine is walkable. Add AABB colliders on remaining bays (neighbors were visual-only). Copy: no “glowing CRT” while player monitor is off. Slight fluo bump — see `specs/20-office-floor-path.md`.
+
+### Shipped deltas (Dev tip `?v=farm1`)
+
+| Item | Value |
+|------|-------|
+| Spine skip | `ix===0 && iz>=1` (+ keep `iz===1`, `ix===±5`, player `(0,0)`) |
+| Colliders | XZ AABB per neighbor bay (1.95×2.35) + player U-walls/desk; circle r≈0.22 resolve in `updateWalk` |
+| Ambient / grid fluo / desk fluo | **2.35** / **1.3** / **1.55** |
+| Fog | near **20**, far **46** (color unchanged `#5a5848`) |
+| Prompts | `towerArrival.farmWalk` — walk / canSit / tooFar (no “glowing CRT”) |
+
+## CORP-FARM-04 — Designer confirm (2026-09-18)
+
+Spec: `specs/20-office-floor-path.md`. Tip `?v=farm1`.
+
+| Check | Status |
+|-------|--------|
+| `neighbor_bay.glb` footprint | ✅ **1.95 × 2.35** (≤ pitch−0.2) — OK with spine skip `ix===0 && iz>=1`; no kit rebuild unless smoke shows spill |
+| Player desk / CRT | ✅ `desk_set` screen toward **+Z** (seated player); approach from elev **+Z** looking **−Z** down spine — leave as-is |
+| Albedo | Hold — Dev fluo bump first; only retouch `floor.png` / `farm_ground` if aisle still mud after tip |
+
+Soft DROP parked.
+
 
