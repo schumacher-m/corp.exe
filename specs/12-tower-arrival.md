@@ -7,6 +7,8 @@
 **Replaces:** Title → CLOCK IN → immediate cubicle spawn. CLOCK IN now drops you in the **plaza**.  
 **Related:** Existing `walk` / `sit` / `seated` after floor arrival; CORP-BAL-01 — **do not regress**
 
+**Follow-up:** Plaza/lobby **brutalist redesign + bugfix** → `specs/13-plaza-lobby-redesign.md` (ship redesign first).
+
 ---
 
 ## Goal

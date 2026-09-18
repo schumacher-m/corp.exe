@@ -3,13 +3,18 @@
 Spec: `specs/12-tower-arrival.md`. Art: PS1 same as farm (`docs/VISUAL.md`, `docs/FARM.md`).
 **Floor after elevator = brighter aisle-grid farm** (reuse FARM locks — do not invent a second office).
 
+
+## CORP-TOWER-02 — Brutalist redesign (2026-09-18)
+
+See **`specs/13-plaza-lobby-redesign.md`**. Empties unchanged. Ship **redesign kits first**, then **bugfix** (ceiling props / nav / farm-pause perf). Soft DROP still parked.
+
 ## Kits to load (modular — shipping / regenerating)
 
 | GLB | Role | Status |
 |-----|------|--------|
-| `assets/models/tower_plaza.glb` | Exterior plaza + tower massing | ✅ shipped (readable grim) |
-| `assets/models/tower_lobby.glb` | Lobby shell | ✅ shipped (readable grim) |
-| `assets/models/elevator_car.glb` | Elevator interior | ✅ shipped (readable grim) |
+| `assets/models/tower_plaza.glb` | Exterior plaza + tower massing | ✅ CORP-TOWER-02 Phase A (brutalist) |
+| `assets/models/tower_lobby.glb` | Lobby shell | ✅ CORP-TOWER-02 Phase A (brutalist) |
+| `assets/models/elevator_car.glb` | Elevator interior | ✅ CORP-TOWER-02 Phase A (brutalist) |
 | `assets/models/office_floor.glb` | Optional corridor stub → farm; or skip and spawn farm at `elevator_exit` | ⏳ optional / skip OK |
 | `assets/models/prop_badge_reader.glb` | Lobby badge scan | ✅ shipped |
 | `assets/models/prop_coffee.glb` | Coffee machine beat | ✅ shipped |
@@ -36,6 +41,22 @@ Plaza→tower walk must read silhouettes / grounds / walls. **Not** flat near-bl
 - Soft DROP toast polish still parked.
 
 Status: ✅ **readable-grim pass shipped** (empties unchanged).
+
+
+
+## CORP-TOWER-02 Phase A — Brutalist redesign
+
+Direction: Silent Hill office mass / heavy concrete (not glass). Spec: `specs/13-plaza-lobby-redesign.md`.
+
+| Kit | What changed |
+|-----|----------------|
+| `tower_plaza.glb` | Monolithic tall mass, recessed slot-window grid, deep portal + double doors, plaza seams/curbs |
+| `tower_lobby.glb` | Low ~2.7m ceiling, thick walls + pilasters, clear aisle spawn→elev, security desk landmark |
+| `elevator_car.glb` | Heavier jamb/lintel language (same empties) |
+
+**Empties unchanged** (names + floor Y). Albedo guards still refuse avg < 100. Readable-grim lighting from tower7 stays. Phase B (ceiling props / nav / perf) waits for CoS after this tip.
+
+Soft DROP parked.
 
 
 ## Phase empties / interact volumes

@@ -141,6 +141,9 @@ Tower arrival floor kit (`specs/12-tower-arrival.md`, `docs/TOWER_HOOKS.md`) **r
 Plaza → lobby → elevator kits + prop GLBs: see **`TOWER_HOOKS.md`** (empties, phases, regenerator `assets/build_tower_assets.py`). Same PS1 nearest / muddy palette / low-tris rules as this bible; floor after elevator reuses **`FARM.md`**.
 
 **Readable grim (not void):** plaza slab / tower facade / door surround / lobby floors+walls use textured albedos avg ~100–140 (olive/concrete) with bright VCs — never flat near-black Lambert. Textures: `floor.png`, `plaza_concrete.png`, `tower_facade.png`, `lobby_wall.png`. Dev owns plaza light rig on top.
+
+**CORP-TOWER-02 Phase A (brutalist):** plaza/lobby kits are Silent Hill concrete mass — heavy slabs, recessed slot windows, obvious portal, low oppressive lobby atrium. Same empties/floor Y; albedo ~100–140. Phase B bugfix (props Y / nav / perf) after tip ships.
+
 ## Anti-patterns
 
 Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded SaaS panels, neon glow, caricature likeness for Kyle, Win95 full-screen instead of on the CRT face.

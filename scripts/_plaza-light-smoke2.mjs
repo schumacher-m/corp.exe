@@ -10,7 +10,7 @@ await page.setViewport({ width: 960, height: 540 });
 const logs=[];
 page.on("console", (m) => { const t=m.text(); if (/tower|gate|corp|WebGL|error/i.test(t)) logs.push(t); });
 page.on("pageerror", (e) => logs.push("PAGEERR "+e));
-await page.goto("http://127.0.0.1:8766/?v=tower5", { waitUntil: "domcontentloaded", timeout: 60000 });
+await page.goto("http://127.0.0.1:8766/?v=tower8", { waitUntil: "domcontentloaded", timeout: 60000 });
 for (let i=0;i<50;i++){ if(await page.$("#btn-clock-in")) break; await new Promise(r=>setTimeout(r,300)); }
 await page.click("#btn-clock-in");
 await new Promise(r=>setTimeout(r,4000));

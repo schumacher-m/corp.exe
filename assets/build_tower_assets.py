@@ -94,28 +94,55 @@ def write_tower_textures() -> dict[str, Path]:
 
 
 def build_tower_plaza(tex: dict[str, Path]) -> tuple[int, list[dict]]:
-    """Flat plaza + blocky tower mass + doors. Empties: plaza_spawn, tower_entrance."""
+    """Brutalist Silent Hill office mass — heavy slabs, slot windows, obvious door.
+    Empties: plaza_spawn, tower_entrance (floor Y locked).
+    """
     ground = []
-    # Plaza slab (~20×20) — floor.png (avg~119) + near-white VC
-    ground.append(box_mesh(20.0, 0.12, 20.0, 0.0, -0.06, 0.0, VC_WHITE))
-    # Subtle curb strip toward tower
-    ground.append(box_mesh(10.0, 0.18, 0.4, 0.0, 0.03, -3.2, VC_WHITE))
-    # Low plaza planters
-    for x in (-6.0, 6.0):
-        ground.append(box_mesh(1.4, 0.5, 1.4, x, 0.25, 2.0, VC_DESK))
+    # Wide plaza slab with seam strips
+    ground.append(box_mesh(22.0, 0.14, 22.0, 0.0, -0.07, 0.0, VC_WHITE))
+    # Approach seams / curbs toward entrance
+    ground.append(box_mesh(4.0, 0.08, 10.0, 0.0, 0.02, 1.5, VC_WHITE))
+    ground.append(box_mesh(12.0, 0.2, 0.35, 0.0, 0.05, -3.0, VC_FACADE))
+    ground.append(box_mesh(0.35, 0.2, 8.0, -3.0, 0.05, 1.0, VC_FACADE))
+    ground.append(box_mesh(0.35, 0.2, 8.0, 3.0, 0.05, 1.0, VC_FACADE))
+    # Concrete planters (blocks, not greenery)
+    for x in (-7.5, 7.5):
+        ground.append(box_mesh(1.8, 0.7, 1.8, x, 0.35, 3.5, VC_DESK))
+        ground.append(box_mesh(1.4, 0.15, 1.4, x, 0.75, 3.5, VC_DOOR))
 
     facade = []
-    # Tower mass — stepped blocky (base / mid / crown)
-    facade.append(box_mesh(9.0, 8.0, 7.0, 0.0, 4.0, -8.5, VC_FACADE))
-    facade.append(box_mesh(8.0, 10.0, 6.2, 0.0, 13.0, -8.5, VC_FACADE))
-    facade.append(box_mesh(6.5, 6.0, 5.2, 0.0, 21.0, -8.5, VC_FACADE))
-    # Entrance recess + door panels (facing +Z toward plaza)
-    facade.append(box_mesh(3.2, 2.6, 0.5, 0.0, 1.3, -4.85, VC_FACADE))
-    facade.append(box_mesh(1.2, 2.2, 0.12, -0.7, 1.1, -4.55, VC_DOOR))
-    facade.append(box_mesh(1.2, 2.2, 0.12, 0.7, 1.1, -4.55, VC_DOOR))
-    # Door handles
-    facade.append(box_mesh(0.08, 0.25, 0.08, -0.15, 1.1, -4.45, VC_METAL))
-    facade.append(box_mesh(0.08, 0.25, 0.08, 0.15, 1.1, -4.45, VC_METAL))
+    # Monolithic base (wide, tall, oppressive) — sits at -Z
+    facade.append(box_mesh(14.0, 12.0, 10.0, 0.0, 6.0, -9.5, VC_FACADE))
+    # Mid slab setback
+    facade.append(box_mesh(12.5, 10.0, 9.0, 0.0, 17.0, -9.5, VC_FACADE))
+    # Crown slab (heavy, not glass)
+    facade.append(box_mesh(11.0, 8.0, 8.0, 0.0, 26.0, -9.5, VC_FACADE))
+    # Top lip / parapet
+    facade.append(box_mesh(12.0, 1.2, 8.5, 0.0, 30.6, -9.5, VC_DOOR))
+    # Side buttresses
+    facade.append(box_mesh(1.5, 14.0, 2.0, -7.5, 7.0, -6.5, VC_FACADE))
+    facade.append(box_mesh(1.5, 14.0, 2.0, 7.5, 7.0, -6.5, VC_FACADE))
+
+    # Recessed horizontal slot windows on +Z face (rows)
+    for yi, y in enumerate((3.5, 5.5, 7.5, 9.5, 14.5, 16.5, 18.5, 23.5, 25.5)):
+        for x in (-4.0, -1.3, 1.3, 4.0):
+            facade.append(box_mesh(1.0, 0.55, 0.35, x, y, -4.45, VC_DOOR))
+
+    # Deep entrance portal (obvious from spawn) — facing +Z
+    # Outer portal frame
+    facade.append(box_mesh(5.5, 0.8, 1.2, 0.0, 3.5, -4.2, VC_FACADE))  # lintel
+    facade.append(box_mesh(0.9, 3.4, 1.2, -2.6, 1.7, -4.2, VC_FACADE))  # L jamb
+    facade.append(box_mesh(0.9, 3.4, 1.2, 2.6, 1.7, -4.2, VC_FACADE))  # R jamb
+    # Inner recess walls
+    facade.append(box_mesh(4.2, 3.2, 1.5, 0.0, 1.6, -5.3, VC_FACADE))
+    # Double doors
+    facade.append(box_mesh(1.5, 2.6, 0.18, -0.85, 1.3, -4.35, VC_DOOR))
+    facade.append(box_mesh(1.5, 2.6, 0.18, 0.85, 1.3, -4.35, VC_DOOR))
+    # Handles
+    facade.append(box_mesh(0.1, 0.35, 0.1, -0.15, 1.25, -4.2, VC_METAL))
+    facade.append(box_mesh(0.1, 0.35, 0.1, 0.15, 1.25, -4.2, VC_METAL))
+    # HelixStack plaque stub above door
+    facade.append(box_mesh(2.2, 0.45, 0.12, 0.0, 3.0, -4.05, VC_METAL))
 
     empties = [
         {"name": "plaza_spawn", "translation": [0.0, 0.0, 7.0]},
@@ -124,7 +151,6 @@ def build_tower_plaza(tex: dict[str, Path]) -> tuple[int, list[dict]]:
 
     g_pos, g_uv, g_col, g_idx = merge_meshes(ground)
     f_pos, f_uv, f_col, f_idx = merge_meshes(facade)
-    # Ground: reuse floor.png; facade: dedicated tower_facade
     tris = write_glb_multi(
         MOD / "tower_plaza.glb",
         [
@@ -152,29 +178,41 @@ def build_tower_plaza(tex: dict[str, Path]) -> tuple[int, list[dict]]:
 
 
 def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
-    """Box lobby + ceiling fluo strips. Empties for beats + spawn."""
+    """Low oppressive brutalist atrium. Empties floor-Y locked for floor props."""
     floors = []
-    floors.append(box_mesh(12.0, 0.1, 14.0, 0.0, -0.05, 0.0, VC_WHITE))
+    floors.append(box_mesh(12.0, 0.12, 14.0, 0.0, -0.06, 0.0, VC_WHITE))
+    # Center aisle seam toward elevator
+    floors.append(box_mesh(2.4, 0.04, 12.0, 0.0, 0.02, 0.0, VC_FACADE))
 
     walls = []
-    # Ceiling
-    walls.append(box_mesh(12.0, 0.1, 14.0, 0.0, 3.55, 0.0, VC_WALL))
-    # Walls: -Z (elevator bank), +Z (entrance), ±X
-    walls.append(box_mesh(12.0, 3.6, 0.15, 0.0, 1.8, -7.0, VC_WALL))
-    walls.append(box_mesh(12.0, 3.6, 0.15, 0.0, 1.8, 7.0, VC_WALL))
-    walls.append(box_mesh(0.15, 3.6, 14.0, -6.0, 1.8, 0.0, VC_WALL))
-    walls.append(box_mesh(0.15, 3.6, 14.0, 6.0, 1.8, 0.0, VC_WALL))
-    # Entrance opening hint (+Z wall recess)
-    walls.append(box_mesh(2.4, 2.4, 0.2, 0.0, 1.2, 6.85, VC_FACADE))
-    # Elevator bank recess (-Z)
-    walls.append(box_mesh(2.0, 2.4, 0.4, 0.0, 1.2, -6.7, VC_FACADE))
-    walls.append(box_mesh(1.4, 2.1, 0.08, 0.0, 1.05, -6.45, VC_DOOR))
-    # Low reception stub
-    walls.append(box_mesh(2.4, 1.0, 0.8, 2.5, 0.5, 1.5, VC_DESK))
+    # Low oppressive ceiling (~2.7m)
+    walls.append(box_mesh(12.0, 0.18, 14.0, 0.0, 2.75, 0.0, VC_WALL))
+    # Thick outer walls
+    walls.append(box_mesh(12.0, 2.9, 0.35, 0.0, 1.4, -7.0, VC_WALL))
+    walls.append(box_mesh(12.0, 2.9, 0.35, 0.0, 1.4, 7.0, VC_WALL))
+    walls.append(box_mesh(0.35, 2.9, 14.0, -6.0, 1.4, 0.0, VC_WALL))
+    walls.append(box_mesh(0.35, 2.9, 14.0, 6.0, 1.4, 0.0, VC_WALL))
+    # Corner pilasters
+    for x, z in ((-5.5, -6.5), (5.5, -6.5), (-5.5, 6.5), (5.5, 6.5)):
+        walls.append(box_mesh(0.55, 2.7, 0.55, x, 1.35, z, VC_FACADE))
+    # Entrance recess (+Z)
+    walls.append(box_mesh(3.2, 2.5, 0.5, 0.0, 1.25, 6.7, VC_FACADE))
+    walls.append(box_mesh(0.4, 2.5, 0.8, -1.8, 1.25, 6.5, VC_FACADE))
+    walls.append(box_mesh(0.4, 2.5, 0.8, 1.8, 1.25, 6.5, VC_FACADE))
+    # Elevator bank recess (-Z) — heavy lintel
+    walls.append(box_mesh(3.0, 0.5, 0.6, 0.0, 2.3, -6.55, VC_FACADE))
+    walls.append(box_mesh(2.4, 2.4, 0.5, 0.0, 1.2, -6.65, VC_FACADE))
+    walls.append(box_mesh(1.5, 2.1, 0.12, 0.0, 1.05, -6.35, VC_DOOR))
+    # Security desk landmark (near empty) — heavy concrete
+    walls.append(box_mesh(2.8, 1.15, 0.9, 2.5, 0.55, 1.5, VC_DESK))
+    walls.append(box_mesh(2.8, 0.12, 1.0, 2.5, 1.15, 1.5, VC_DESK))
+    # Side benches (clear of center aisle)
+    walls.append(box_mesh(0.5, 0.45, 2.5, -5.2, 0.22, -0.5, VC_DESK))
+    walls.append(box_mesh(0.5, 0.45, 2.5, 5.2, 0.22, -3.0, VC_DESK))
 
     fluo = []
-    for z in (-4.0, -1.0, 2.0, 5.0):
-        fluo.append(box_mesh(8.0, 0.06, 0.35, 0.0, 3.45, z, FLUO))
+    for z in (-4.5, -1.0, 2.5, 5.5):
+        fluo.append(box_mesh(7.0, 0.05, 0.28, 0.0, 2.65, z, FLUO))
 
     empties = [
         {"name": "lobby_spawn", "translation": [0.0, 0.0, 5.5]},
@@ -234,12 +272,14 @@ def build_elevator_car(tex: dict[str, Path]) -> tuple[int, list[dict]]:
     parts.append(box_mesh(1.6, 2.4, 0.08, 0.0, 1.2, -0.9, VC_WALL))
     parts.append(box_mesh(0.08, 2.4, 1.8, -0.8, 1.2, 0.0, VC_WALL))
     parts.append(box_mesh(0.08, 2.4, 1.8, 0.8, 1.2, 0.0, VC_WALL))
-    # Door jambs (+Z)
-    parts.append(box_mesh(0.2, 2.2, 0.08, -0.7, 1.1, 0.9, VC_DOOR))
-    parts.append(box_mesh(0.2, 2.2, 0.08, 0.7, 1.1, 0.9, VC_DOOR))
-    parts.append(box_mesh(1.6, 0.15, 0.08, 0.0, 2.2, 0.9, VC_DOOR))
+    # Door jambs (+Z) — heavier brutalist frame
+    parts.append(box_mesh(0.28, 2.3, 0.12, -0.72, 1.15, 0.9, VC_DOOR))
+    parts.append(box_mesh(0.28, 2.3, 0.12, 0.72, 1.15, 0.9, VC_DOOR))
+    parts.append(box_mesh(1.6, 0.22, 0.12, 0.0, 2.25, 0.9, VC_DOOR))
     # Closed door slab
-    parts.append(box_mesh(1.2, 2.0, 0.06, 0.0, 1.05, 0.88, VC_DOOR))
+    parts.append(box_mesh(1.15, 2.0, 0.08, 0.0, 1.05, 0.88, VC_DOOR))
+    # Concrete bumper rail
+    parts.append(box_mesh(1.5, 0.12, 0.08, 0.0, 0.35, -0.82, VC_FACADE))
     # Handrail
     parts.append(box_mesh(1.4, 0.04, 0.04, 0.0, 0.95, -0.82, VC_METAL))
     # Button panel plate on +X wall
@@ -410,7 +450,7 @@ def update_manifest(
 def main() -> None:
     MOD.mkdir(parents=True, exist_ok=True)
     TEX.mkdir(parents=True, exist_ok=True)
-    print("CORP-TOWER-01 kits (readable grim)…")
+    print("CORP-TOWER-02 Phase A kits (brutalist)…")
 
     tex = write_tower_textures()
 
@@ -454,7 +494,7 @@ def main() -> None:
 
     print("triangle counts:", json.dumps(counts, indent=2))
     for name, t in counts.items():
-        budget = 400 if "tower_" in name or "elevator_car" in name else 80
+        budget = 900 if "tower_plaza" in name else (500 if "tower_" in name or "elevator_car" in name else 80)
         if t > budget:
             print(f"WARNING: {name} {t} > {budget} tris")
     print("done")
