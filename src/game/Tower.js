@@ -1014,6 +1014,23 @@ export function createTower(opts) {
   const BEAT_NEAR_R = 2.35;
   const BADGE_NEAR_R = 2.7;
   const SECURITY_NEAR_R = 2.65;
+  /* CORP-TOWER-03.3.3 — elev-call forgive (authored empty offset from door centerline) */
+  const ELEV_CALL_NEAR_R = 3.75;
+  const ELEV_APERTURE_X = 1.2;
+  const ELEV_APERTURE_Z = -5.2;
+
+  function elevDoorCenterX() {
+    return doorBlocker ? doorBlocker.position.x : 0;
+  }
+
+  function nearElevAperture() {
+    const dx = Math.abs(player.pos.x - elevDoorCenterX());
+    return dx < ELEV_APERTURE_X && player.pos.z < ELEV_APERTURE_Z;
+  }
+
+  function nearElevCall() {
+    return nearHook("elevator_call", ELEV_CALL_NEAR_R) || nearElevAperture();
+  }
 
   function plazaDoorPrompt() {
     const pl = ta().plaza || {};
@@ -1069,11 +1086,15 @@ export function createTower(opts) {
           return;
         }
       }
-      if (nearHook("elevator_call", BEAT_NEAR_R)) {
-        if (!badgeDone || doorOpenT < 0.85) {
-          toast(badgeDone ? "Wait for the doors." : "Badge the turnstile first.");
+      if (nearElevCall()) {
+        if (!badgeDone) {
+          toast("Badge the turnstile first.");
         } else if (!elevatorUnlocked) {
           toast((ta().checklist || {}).elevatorLocked || "Elevator locked. Badge + 2 beats first.");
+        } else if (doorOpenT < 0.85) {
+          /* Checklist met at bank — ensure peek/open even if badge was across lobby */
+          startDoorOpen();
+          if (doorOpenT < 0.85) toast("Wait for the doors.");
         } else {
           enterElevator();
         }
@@ -1154,12 +1175,16 @@ export function createTower(opts) {
         const dx = Math.abs(player.pos.x - (doorBlocker ? doorBlocker.position.x : 0));
         if (dx < 0.85) player.pos.z = Math.max(player.pos.z, -5.55);
       }
+      /* Checklist + near bank: start peek/open even if badge was elsewhere */
+      if (elevatorUnlocked && nearElevAperture() && doorOpenT <= 0 && !doorOpening) {
+        startDoorOpen();
+      }
       /* Walk-into-car when open enough + checklist met (E-call stays shortcut) */
       if (
         !doorsBlocking() &&
         elevatorUnlocked &&
         player.pos.z < -6.45 &&
-        Math.abs(player.pos.x - (doorBlocker ? doorBlocker.position.x : 0)) < 0.9
+        Math.abs(player.pos.x - elevDoorCenterX()) < 0.9
       ) {
         enterElevator();
         applyCamera(camera);
@@ -1186,7 +1211,7 @@ export function createTower(opts) {
         let prompt = checklistHud();
         if (!badgeDone && nearHook("badge_reader", BADGE_NEAR_R)) {
           prompt = (ta().badge || {}).prompt || "E — Scan badge";
-        } else if (nearHook("elevator_call", BEAT_NEAR_R) || (!doorsBlocking() && elevatorUnlocked && player.pos.z < -5.2)) {
+        } else if (nearElevCall()) {
           if (!elevatorUnlocked) {
             prompt = (ta().checklist || {}).elevatorLocked || "Elevator locked";
           } else if (doorsBlocking()) {
