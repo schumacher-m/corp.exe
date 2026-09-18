@@ -225,7 +225,10 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
     # Low oppressive ceiling (~2.7m)
     walls.append(box_mesh(12.0, 0.18, 14.0, 0.0, 2.75, 0.0, VC_WALL))
     # Thick outer walls
-    walls.append(box_mesh(12.0, 2.9, 0.35, 0.0, 1.4, -7.0, VC_WALL))
+    # -Z wall SPLIT for elev aperture (peek into car when doors open) — no grey plug
+    walls.append(box_mesh(5.25, 2.9, 0.35, -3.375, 1.4, -7.0, VC_WALL))  # left of opening
+    walls.append(box_mesh(5.25, 2.9, 0.35, 3.375, 1.4, -7.0, VC_WALL))  # right of opening
+    # Opening clear ~|x|<0.75, y 0–2.2 between jambs; car visible through open leaves
     walls.append(box_mesh(12.0, 2.9, 0.35, 0.0, 1.4, 7.0, VC_WALL))
     walls.append(box_mesh(0.35, 2.9, 14.0, -6.0, 1.4, 0.0, VC_WALL))
     walls.append(box_mesh(0.35, 2.9, 14.0, 6.0, 1.4, 0.0, VC_WALL))
@@ -650,7 +653,7 @@ def update_manifest(
 def main() -> None:
     MOD.mkdir(parents=True, exist_ok=True)
     TEX.mkdir(parents=True, exist_ok=True)
-    print("CORP-TOWER-03.3 elev doors + Guard scale…")
+    print("CORP-TOWER-03.3.1 elev aperture peek…")
 
     tex = write_tower_textures()
 

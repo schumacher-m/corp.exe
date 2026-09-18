@@ -27,6 +27,7 @@ See **`specs/17-elev-doors-guard-scale.md`**. Doors **open on badge success** (b
 - **Primary empties on `tower_lobby`:** `elevator_door_L` / `elevator_door_R` / `elevator_door` at z≈−6.4 flush in jamb (open aperture — no grey filler plug).
 - Leaves: `prop_elev_door_L/R`. **Open slide = local ±X** (L −0.55, R +0.55). Closed seals opening.
 - Car also has L/R empties for interior; prefer lobby hooks for lobby-facing doors.
+- Lobby **-Z wall is split** around elev opening (|x|<~0.75) so open leaves reveal car interior (no grey backface plug). tower17.
 
 
 ## CORP-TOWER-03.2 — Guard + turnstile (2026-09-18)

@@ -326,3 +326,7 @@ Jimbo autofill uses existing Ask Jimbo toast path — no special chrome.
 ## Anti-patterns
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.
+
+## IDE client — CORP-IDE-01 (2026-09-18)
+
+Outer frame stays classic Win95. **Client area** is a VS Code parody (dark activity bar, sidebar, tabs, `#1e1e1e` editor, status bar). Spec: `specs/18-ide-vscode-chrome.md`. No VS Code / Microsoft trademarks.

@@ -148,6 +148,7 @@ export function createTower(opts) {
   let offered = [];
   let badgeDone = false;
   let doorOpenT = 0; /* 0 closed … 1 open */
+  let elevPeek = false;
   let doorOpening = false;
   let doorL = null;
   let doorR = null;
@@ -734,6 +735,9 @@ export function createTower(opts) {
     plaza.visible = false;
     lobby.visible = false;
     elevator.visible = false;
+    elevPeek = false;
+    elevator.position.set(0, 0, 0);
+    elevator.rotation.set(0, 0, 0);
   }
 
   function stopTowerAmbs() {
@@ -808,6 +812,7 @@ export function createTower(opts) {
   function enterLobby() {
     hideAllSets();
     lobby.visible = true;
+    hideElevatorPeek();
     if (officeRoot) officeRoot.visible = false;
     G.phase = "lobby";
     setTowerLook(true);
@@ -819,14 +824,33 @@ export function createTower(opts) {
   }
 
   function enterElevator() {
-    hideAllSets();
+    plaza.visible = false;
+    lobby.visible = false;
+    dockElevatorBehindJamb();
     elevator.visible = true;
+    elevPeek = false;
     if (officeRoot) officeRoot.visible = false;
     G.phase = "elevator";
     setTowerLook(true);
-    placeAtHook("elevator_interior", Math.PI);
-    player.pos.x = 0;
-    player.pos.z = 0;
+    /* Continuous walk-in: stay in world space inside docked car (no origin teleport) */
+    const interior = worldOf("elevator_interior");
+    const doorW = worldOf("elevator_door");
+    if (interior) {
+      player.pos.x = THREE.MathUtils.clamp(player.pos.x, interior.x - 0.55, interior.x + 0.55);
+      /* Prefer current walk-in z if already past jamb; else seat just inside door */
+      if (doorW && player.pos.z > doorW.z - 0.15) {
+        player.pos.z = doorW.z - 0.35;
+      } else if (player.pos.z > interior.z + 0.55 || player.pos.z < interior.z - 0.55) {
+        player.pos.z = interior.z;
+      }
+      player.pos.y = player.eye;
+    } else {
+      player.pos.x = elevator.position.x;
+      player.pos.z = elevator.position.z;
+      player.pos.y = player.eye;
+    }
+    G.yaw = Math.PI;
+    G.lookY = 0;
     wrongFloorHit = false;
     G._elevWantCorrect = false;
     stopTowerAmbs();
@@ -864,9 +888,54 @@ export function createTower(opts) {
   const DOOR_OPEN_SEC = 0.85;
   const DOOR_SLIDE = 0.55;
 
+  /* CORP-TOWER-03.3.2 — dock car behind lobby jamb so open aperture reads as shaft, not grey void */
+  function findNamedOnRoot(root, name) {
+    let found = null;
+    root.traverse((o) => {
+      if (o.name === name) found = o;
+    });
+    return found;
+  }
+
+  function dockElevatorBehindJamb() {
+    const jamb =
+      findNamedOnRoot(lobby, "elevator_door") ||
+      findNamedOnRoot(grayLobby, "elevator_door");
+    let jx = 0;
+    let jz = -6.4;
+    if (jamb) {
+      const wp = new THREE.Vector3();
+      jamb.getWorldPosition(wp);
+      jx = wp.x;
+      jz = wp.z;
+    }
+    let doorLocalZ = 0.9;
+    const carDoor =
+      findNamedOnRoot(elevator, "elevator_door") ||
+      findNamedOnRoot(grayElev, "elevator_door");
+    if (carDoor) doorLocalZ = carDoor.position.z;
+    elevator.position.set(jx, 0, jz - doorLocalZ);
+    elevator.rotation.set(0, 0, 0);
+  }
+
+  function revealElevatorPeek() {
+    dockElevatorBehindJamb();
+    elevator.visible = true;
+    elevPeek = true;
+  }
+
+  function hideElevatorPeek() {
+    if (G.phase === "elevator") return;
+    elevator.visible = false;
+    elevator.position.set(0, 0, 0);
+    elevator.rotation.set(0, 0, 0);
+    elevPeek = false;
+  }
+
   function startDoorOpen() {
     if (doorOpening || doorOpenT >= 1) return;
     doorOpening = true;
+    revealElevatorPeek();
     try {
       if (audio.playSfx) audio.playSfx("elevatorWhoosh", { volume: 0.35 });
     } catch (_) {}
@@ -880,6 +949,7 @@ export function createTower(opts) {
     if (doorL) doorL.position.x = (doorL.userData.closedX != null ? doorL.userData.closedX : doorL.position.x);
     if (doorR) doorR.position.x = (doorR.userData.closedX != null ? doorR.userData.closedX : doorR.position.x);
     /* blocker stays invisible — collision uses doorsBlocking() */
+    if (G.phase !== "elevator") hideElevatorPeek();
   }
 
   function updateElevDoors(dt) {
@@ -888,6 +958,7 @@ export function createTower(opts) {
       doorOpenT = Math.min(1, doorOpenT + dt / DOOR_OPEN_SEC);
       if (doorOpenT >= 1) doorOpening = false;
     }
+    if (doorOpenT > 0 && !elevPeek && G.phase === "lobby") revealElevatorPeek();
     if (doorL && doorL.userData.closedX != null) {
       doorL.position.x = doorL.userData.closedX - DOOR_SLIDE * doorOpenT;
     }
@@ -1166,7 +1237,9 @@ export function createTower(opts) {
 
     if (G.phase === "elevator") {
       updateElevDoors(dt);
-      updateFpMove(dt, { xmin: -0.7, xmax: 0.7, zmin: -0.7, zmax: 0.7 });
+      const ex = elevator.position.x;
+      const ez = elevator.position.z;
+      updateFpMove(dt, { xmin: ex - 0.7, xmax: ex + 0.7, zmin: ez - 0.7, zmax: ez + 0.7 });
       applyCamera(camera);
       setPrompt((ta().elevator || {}).panelHint || "E — floor buttons (look up / 2nd press = yours)");
       return;

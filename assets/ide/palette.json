@@ -1,0 +1,21 @@
+{
+  "activity_bg": "#333333",
+  "sidebar_bg": "#252526",
+  "tab_bg": "#2d2d2d",
+  "tab_active": "#1e1e1e",
+  "editor_bg": "#1e1e1e",
+  "gutter": "#858585",
+  "fg": "#d4d4d4",
+  "fg_dim": "#808080",
+  "accent": "#007acc",
+  "accent_alt": "#68217a",
+  "selection": "#264f78",
+  "line_hl": "#2a2d2e",
+  "string": "#ce9178",
+  "keyword": "#569cd6",
+  "comment": "#6a9955",
+  "win95_face": "#c0c0c0",
+  "win95_title": "#000080",
+  "win95_title_text": "#ffffff",
+  "desktop_teal": "#008080"
+}
