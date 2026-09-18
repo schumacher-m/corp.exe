@@ -142,6 +142,8 @@ Plaza → lobby → elevator kits + prop GLBs: see **`TOWER_HOOKS.md`** (empties
 
 **Readable grim (not void):** plaza slab / tower facade / door surround / lobby floors+walls use textured albedos avg ~100–140 (olive/concrete) with bright VCs — never flat near-black Lambert. Textures: `floor.png`, `plaza_concrete.png`, `tower_facade.png`, `lobby_wall.png`. Dev owns plaza light rig on top.
 
+**CORP-TOWER-03.2:** Guard clear behind desk (`security_guard` yaw to aisle); waist-high `prop_turnstile` at `badge_reader` on elev path; wall reader retired.
+
 **CORP-TOWER-03.1 hotfix:** poster/panel local +Z into room + empty yaw; Guard behind desk (`security_guard`); neighbor_bay ≤1.95×2.35 aisle-clear.
 
 **CORP-TOWER-03 landmarks:** Guard NPC behind desk, large wall HR poster (`hr_poster.png`), yellow wet-floor A-frame + shiny puddle, lobby floor/wall variants (`lobby_floor_b` / `lobby_wall_b`). Soft DROP parked.

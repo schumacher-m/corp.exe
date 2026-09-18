@@ -57,5 +57,6 @@ Empties: keep names; add `security_guard` only if needed.
 
 - Soft DROP polish  
 - Changing beat counts  
-- Plaza exterior redesign  
+- Plaza exterior redesign
 
+**Follow-up:** Guard face + turnstile gate → `specs/16-lobby-turnstile-guard.md`

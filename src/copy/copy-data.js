@@ -3354,7 +3354,7 @@ export default {
   },
   "towerArrival": {
     "badge": {
-      "prompt": "Scan badge",
+      "prompt": "E -- Badge the turnstile",
       "failOnce": "Badge rejected. Try again (the reader is moody).",
       "success": "Access granted. Dignity optional."
     },

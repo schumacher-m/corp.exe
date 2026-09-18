@@ -18,6 +18,17 @@ Playtest FAIL on tower10 → kits + empty yaw:
 
 Dev: copy empty **world quaternion** on wall props; prefer `security_guard` empty for Guard. Soft DROP parked.
 
+## CORP-TOWER-03.2 — Guard + turnstile (2026-09-18)
+
+See **`specs/16-lobby-turnstile-guard.md`**. Real-world lobby grammar: Guard behind desk facing approach; badge beat = waist-high **turnstile** on path to elevator. Keep `badge_reader` empty name. Counts locked. Soft DROP parked.
+
+| Asset | Role |
+|-------|------|
+| `prop_security_guard.glb` | Behind desk, facing aisle/player |
+| `prop_turnstile.glb` | Badge gate before elevator |
+| empty `security_guard` | Guard attach (not desk XYZ) |
+| empty `badge_reader` | Turnstile attach / interact |
+
 ## CORP-TOWER-03 — Lobby landmarks (2026-09-18)
 
 See **`specs/14-lobby-landmarks.md`**. ✅ **kits shipped** — Guard NPC, large HR poster, yellow A-frame + puddle, `lobby_floor_b`/`lobby_wall_b`. Lobby empty `wet_floor` at `[-2,0,2.5]` floor Y. Other empties unchanged; badge/2-of-3 locked. Soft DROP parked.

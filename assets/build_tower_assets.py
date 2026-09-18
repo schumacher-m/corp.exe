@@ -253,10 +253,11 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
 
     empties = [
         {"name": "lobby_spawn", "translation": [0.0, 0.0, 5.5]},
-        {"name": "badge_reader", "translation": [-5.6, 1.25, 4.0]},
+        {"name": "badge_reader", "translation": [0.0, 0.0, -3.8], "rotation": [0.0, 0.0, 0.0, 1.0]},
+        {"name": "turnstile", "translation": [0.0, 0.0, -3.8], "rotation": [0.0, 0.0, 0.0, 1.0]},
         {"name": "coffee_machine", "translation": [-5.2, 0.0, -2.5]},
         {"name": "security_desk", "translation": [2.5, 0.0, 1.5]},
-        {"name": "security_guard", "translation": [3.05, 0.0, 1.5]},
+        {"name": "security_guard", "translation": [3.55, 0.0, 1.5], "rotation": [0.0, -0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "hr_poster", "translation": [-5.7, 1.6, 0.5], "rotation": [0.0, 0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "wet_floor", "translation": [-2.0, 0.0, 2.5]},
         {"name": "elevator_call", "translation": [1.4, 1.3, -6.4]},
@@ -351,12 +352,8 @@ def build_elevator_car(tex: dict[str, Path]) -> tuple[int, list[dict]]:
 
 
 def build_prop_badge_reader(tex: dict[str, Path]) -> int:
-    """Small wall reader box."""
-    parts = []
-    parts.append(box_mesh(0.22, 0.32, 0.1, 0.0, 0.16, 0.0, VC_PROP))
-    parts.append(box_mesh(0.14, 0.1, 0.04, 0.0, 0.2, 0.06, VC_DOOR))
-    parts.append(box_mesh(0.06, 0.06, 0.03, 0.0, 0.08, 0.06, SICK))  # LED
-    parts.append(box_mesh(0.18, 0.04, 0.02, 0.0, 0.28, 0.05, INK))
+    """DEPRECATED visual — use prop_turnstile @ badge_reader. Tiny stub kept for fallback."""
+    parts = [box_mesh(0.05, 0.05, 0.05, 0.0, 0.02, 0.0, (0.5, 0.5, 0.5))]
     pos, uv, col, idx = merge_meshes(parts)
     return write_glb(
         MOD / "prop_badge_reader.glb",
@@ -467,33 +464,29 @@ def build_prop_elevator_panel(tex: dict[str, Path]) -> int:
 
 
 def build_prop_security_guard(tex: dict[str, Path]) -> int:
-    """Tall Guard silhouette BEHIND desk, facing aisle (−X).
-    Mesh baked +0.55 X from origin so place on security_desk without burying.
-    Prefer empty security_guard if present.
+    """Tall Guard — origin at feet. Place via security_guard empty (behind desk).
+    Local +Z = facing direction (empty yaw aims +Z at aisle / player).
+    No baked desk offset — empty pose owns placement.
     """
-    # Offset: behind desk away from aisle
-    ox = 0.55
     GUARD = (0.42, 0.45, 0.52)
     SKIN = (0.78, 0.65, 0.54)
     parts = []
-    # Standing taller (not buried in desk)
-    # Legs
-    parts.append(box_mesh(0.14, 0.7, 0.14, ox - 0.1, 0.35, 0.05, GUARD))
-    parts.append(box_mesh(0.14, 0.7, 0.14, ox + 0.1, 0.35, 0.05, GUARD))
-    # Torso
-    parts.append(box_mesh(0.42, 0.65, 0.28, ox, 1.05, 0.05, GUARD))
+    # Legs (feet at y=0)
+    parts.append(box_mesh(0.14, 0.7, 0.14, -0.1, 0.35, 0.05, GUARD))
+    parts.append(box_mesh(0.14, 0.7, 0.14, 0.1, 0.35, 0.05, GUARD))
+    # Torso (above desk height ~1.15)
+    parts.append(box_mesh(0.42, 0.65, 0.28, 0.0, 1.05, 0.05, GUARD))
     # Head
-    parts.append(box_mesh(0.28, 0.3, 0.28, ox, 1.55, 0.05, SKIN))
-    # Cap + brim toward aisle (−X)
-    parts.append(box_mesh(0.32, 0.1, 0.32, ox, 1.75, 0.05, GUARD))
-    parts.append(box_mesh(0.14, 0.06, 0.34, ox - 0.2, 1.7, 0.05, VC_METAL))
-    # Arms crossed / on desk edge
-    parts.append(box_mesh(0.5, 0.12, 0.12, ox - 0.15, 1.15, 0.05, GUARD))
-    # Stare eyes toward −X
-    parts.append(box_mesh(0.05, 0.05, 0.05, ox - 0.15, 1.58, 0.0, (0.95, 0.92, 0.7)))
-    parts.append(box_mesh(0.05, 0.05, 0.05, ox - 0.15, 1.58, 0.1, (0.95, 0.92, 0.7)))
-    # Shoulder radio stub
-    parts.append(box_mesh(0.08, 0.12, 0.08, ox + 0.22, 1.3, 0.05, VC_METAL))
+    parts.append(box_mesh(0.28, 0.3, 0.28, 0.0, 1.55, 0.05, SKIN))
+    # Cap + brim toward +Z (face)
+    parts.append(box_mesh(0.32, 0.1, 0.32, 0.0, 1.75, 0.05, GUARD))
+    parts.append(box_mesh(0.34, 0.06, 0.14, 0.0, 1.7, 0.2, VC_METAL))
+    # Arms
+    parts.append(box_mesh(0.55, 0.12, 0.12, 0.0, 1.15, 0.08, GUARD))
+    # Eyes on +Z face
+    parts.append(box_mesh(0.05, 0.05, 0.04, -0.07, 1.58, 0.2, (0.95, 0.92, 0.7)))
+    parts.append(box_mesh(0.05, 0.05, 0.04, 0.07, 1.58, 0.2, (0.95, 0.92, 0.7)))
+    parts.append(box_mesh(0.08, 0.12, 0.08, 0.22, 1.3, 0.05, VC_METAL))
     pos, uv, col, idx = merge_meshes(parts)
     return write_glb(
         MOD / "prop_security_guard.glb",
@@ -543,6 +536,43 @@ def build_prop_wet_floor(tex: dict[str, Path]) -> int:
 
 
 
+def build_prop_turnstile(tex: dict[str, Path]) -> int:
+    """Waist-high corporate turnstile + card nub. Local +Z = approach direction.
+    Arms span ±X blocking aisle until badge.
+    """
+    METAL = (0.55, 0.55, 0.58)
+    METAL_DK = (0.35, 0.35, 0.38)
+    YEL = (0.9, 0.75, 0.2)
+    parts = []
+    # Side posts
+    parts.append(box_mesh(0.12, 1.05, 0.12, -0.55, 0.52, 0.0, METAL))
+    parts.append(box_mesh(0.12, 1.05, 0.12, 0.55, 0.52, 0.0, METAL))
+    # Top bar
+    parts.append(box_mesh(1.2, 0.08, 0.1, 0.0, 1.05, 0.0, METAL_DK))
+    # Tripod / barrier arms (horizontal, block +Z approach)
+    parts.append(box_mesh(0.9, 0.06, 0.06, 0.0, 0.75, 0.0, METAL))
+    parts.append(box_mesh(0.06, 0.06, 0.45, 0.0, 0.75, 0.2, METAL))  # arm toward approach
+    parts.append(box_mesh(0.06, 0.06, 0.35, 0.0, 0.75, -0.15, METAL))
+    # Base plates
+    parts.append(box_mesh(0.28, 0.04, 0.28, -0.55, 0.02, 0.0, METAL_DK))
+    parts.append(box_mesh(0.28, 0.04, 0.28, 0.55, 0.02, 0.0, METAL_DK))
+    # Card reader nub on right post (approach side)
+    parts.append(box_mesh(0.14, 0.22, 0.1, 0.55, 0.85, 0.12, METAL_DK))
+    parts.append(box_mesh(0.08, 0.1, 0.04, 0.55, 0.88, 0.18, YEL))  # LED / slot
+    parts.append(box_mesh(0.06, 0.04, 0.03, 0.55, 0.78, 0.18, (0.3, 0.85, 0.4)))  # green ready
+    pos, uv, col, idx = merge_meshes(parts)
+    return write_glb(
+        MOD / "prop_turnstile.glb",
+        pos,
+        uv,
+        col,
+        idx,
+        tex["tower_facade"],
+        "prop_turnstile",
+    )
+
+
+
 def update_manifest(
     counts: dict[str, int],
     anchors: dict[str, dict[str, list[float]]],
@@ -572,7 +602,7 @@ def update_manifest(
 def main() -> None:
     MOD.mkdir(parents=True, exist_ok=True)
     TEX.mkdir(parents=True, exist_ok=True)
-    print("CORP-TOWER-03 landmark kits…")
+    print("CORP-TOWER-03.2 turnstile + Guard kits…")
 
     tex = write_tower_textures()
 
@@ -591,6 +621,7 @@ def main() -> None:
     t_guard = build_prop_security_guard(tex)
     t_poster = build_prop_hr_poster(tex)
     t_wet = build_prop_wet_floor(tex)
+    t_turn = build_prop_turnstile(tex)
     t_panel = build_prop_elevator_panel(tex)
 
     counts = {
@@ -603,6 +634,7 @@ def main() -> None:
         "assets/models/prop_security_guard.glb": t_guard,
         "assets/models/prop_hr_poster.glb": t_poster,
         "assets/models/prop_wet_floor.glb": t_wet,
+        "assets/models/prop_turnstile.glb": t_turn,
         "assets/models/prop_elevator_panel.glb": t_panel,
     }
     anchors = {

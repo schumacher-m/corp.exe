@@ -442,16 +442,16 @@ export function createTower(opts) {
     }
 
     const propMap = [
-      ["prop_badge_reader", "badge_reader", lobby],
+      ["prop_turnstile", "badge_reader", lobby],
       ["prop_coffee", "coffee_machine", lobby],
       ["prop_security_desk", "security_desk", lobby],
-      ["prop_security_guard", "security_desk", lobby],
+      ["prop_security_guard", "security_guard", lobby],
       ["prop_hr_poster", "hr_poster", lobby],
       ["prop_wet_floor", "wet_floor", lobby],
       ["prop_elevator_panel", "elevator_panel", elevator],
     ];
-    const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk", "prop_security_guard", "prop_wet_floor"]);
-    const WALL_PROPS = new Set(["prop_hr_poster", "prop_elevator_panel", "prop_badge_reader"]);
+    const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk", "prop_security_guard", "prop_wet_floor", "prop_turnstile"]);
+    const WALL_PROPS = new Set(["prop_hr_poster", "prop_elevator_panel"]);
     const WALL_Y_MAX = 1.55;
     const WALL_Y_MIN = 0.35;
     const _hookPos = new THREE.Vector3();
@@ -461,10 +461,18 @@ export function createTower(opts) {
 
     function attachAtHook(sc, hookName, parent, prop) {
       let name = hookName;
-      if (prop === "prop_security_guard" && hooks.security_guard) name = "security_guard";
       if (prop === "prop_elevator_panel") {
         if (hooks.elevator_panel) name = "elevator_panel";
         else if (hooks.btn_floor_player) name = "btn_floor_player";
+      }
+      /* CORP-TOWER-03.2 — Guard ONLY on security_guard; fallback behind desk AABB */
+      if (prop === "prop_security_guard") {
+        if (hooks.security_guard) name = "security_guard";
+        else if (hooks.security_desk) name = "security_desk";
+        else {
+          parent.add(sc);
+          return;
+        }
       }
       const h = hooks[name];
       if (!h) {
@@ -486,33 +494,32 @@ export function createTower(opts) {
       sc.position.copy(_hookPos);
       sc.quaternion.copy(_localQuat);
 
-      /* CORP-TOWER-03.1 — if empty has no rotation, face wall props into the room */
       const ident = Math.abs(_localQuat.x) + Math.abs(_localQuat.y) + Math.abs(_localQuat.z) < 1e-4;
       if (ident && WALL_PROPS.has(prop)) {
-        if (prop === "prop_hr_poster" || prop === "prop_badge_reader") {
-          /* left/right wall: face toward lobby center X=0 */
+        if (prop === "prop_hr_poster") {
           const faceX = -Math.sign(sc.position.x || -1);
           sc.rotation.set(0, faceX > 0 ? -Math.PI / 2 : Math.PI / 2, 0);
         } else if (prop === "prop_elevator_panel") {
-          /* car wall: face toward car center */
           sc.lookAt(0, sc.position.y, 0);
-          sc.rotateY(Math.PI); /* lookAt aims -Z; want +Z into car */
+          sc.rotateY(Math.PI);
         }
       }
+      if (ident && prop === "prop_turnstile") {
+        sc.rotation.set(0, 0, 0);
+      }
 
-      /* Guard: never identical to desk — offset behind + yaw to aisle */
       if (prop === "prop_security_guard" && name === "security_desk") {
-        sc.position.x += 0.15;
-        sc.position.z -= 0.55;
+        sc.position.x += 1.05;
         sc.position.y = 0;
-        const toAisleX = 0 - sc.position.x;
-        const toAisleZ = 4.0 - sc.position.z;
-        sc.rotation.set(0, Math.atan2(toAisleX, toAisleZ), 0);
+        const toApproachX = 0 - sc.position.x;
+        const toApproachZ = 5.5 - sc.position.z;
+        sc.rotation.set(0, Math.atan2(toApproachX, toApproachZ), 0);
       }
 
       parent.add(sc);
     }
 
+    let turnstileOk = false;
     for (const [prop, hookName, parent] of propMap) {
       try {
         const sc = await loadModel(pathFor(prop));
@@ -520,7 +527,23 @@ export function createTower(opts) {
         attachAtHook(sc, hookName, parent, prop);
         if (forceNearest) forceNearest(sc);
         nearestTowerMaps(sc);
+        if (prop === "prop_turnstile") turnstileOk = true;
         console.info("[tower] prop", prop, "OK");
+      } catch (e) {
+        if (prop === "prop_turnstile") {
+          console.warn("[tower] turnstile missing — fallback badge_reader", e && e.message ? e.message : e);
+        }
+      }
+    }
+    if (!turnstileOk) {
+      try {
+        const sc = await loadModel(pathFor("prop_badge_reader"));
+        sc.name = "prop_badge_reader";
+        WALL_PROPS.add("prop_badge_reader");
+        attachAtHook(sc, "badge_reader", lobby, "prop_badge_reader");
+        if (forceNearest) forceNearest(sc);
+        nearestTowerMaps(sc);
+        console.info("[tower] prop prop_badge_reader OK (fallback)");
       } catch (_) {}
     }
 
@@ -532,10 +555,12 @@ export function createTower(opts) {
     }
 
     // Phase B1: keep interact empties out of ceiling for nearHook
-    for (const name of ["badge_reader", "hr_poster", "elevator_call", "lobby_sync_chip"]) {
+    for (const name of ["hr_poster", "elevator_call", "lobby_sync_chip"]) {
       const h = hooks[name];
       if (h) h.position.y = THREE.MathUtils.clamp(h.position.y, 0.35, 1.55);
     }
+    /* badge_reader / turnstile sits at floor Y — do not lift */
+
     for (const name of ["coffee_machine", "security_desk", "wet_floor"]) {
       const h = hooks[name];
       if (h) h.position.y = Math.min(h.position.y, 0.15);
@@ -770,7 +795,7 @@ export function createTower(opts) {
   const ENTRANCE_MAGNET_R = 9.0;
   /* CORP-TOWER-03 — slight beat-radius bump; counts locked */
   const BEAT_NEAR_R = 2.35;
-  const BADGE_NEAR_R = 2.35;
+  const BADGE_NEAR_R = 2.7;
   const SECURITY_NEAR_R = 2.65;
 
   function plazaDoorPrompt() {

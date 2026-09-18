@@ -25,6 +25,7 @@
     "assets/models/prop_security_guard.glb",
     "assets/models/prop_stickies.glb",
     "assets/models/prop_ticket.glb",
+    "assets/models/prop_turnstile.glb",
     "assets/models/prop_wet_floor.glb",
     "assets/models/screen_quad.glb",
     "assets/models/slack_panel.glb",
@@ -141,9 +142,14 @@
         5.5
       ],
       "badge_reader": [
-        -5.6,
-        1.25,
-        4.0
+        0.0,
+        0.0,
+        -3.8
+      ],
+      "turnstile": [
+        0.0,
+        0.0,
+        -3.8
       ],
       "coffee_machine": [
         -5.2,
@@ -156,7 +162,7 @@
         1.5
       ],
       "security_guard": [
-        3.05,
+        3.55,
         0.0,
         1.5
       ],
@@ -245,7 +251,7 @@
     "assets/models/mouse.glb": 60,
     "assets/models/neighbor_bay.glb": 110,
     "assets/models/neighbor_crt.glb": 50,
-    "assets/models/prop_badge_reader.glb": 48,
+    "assets/models/prop_badge_reader.glb": 12,
     "assets/models/prop_coffee.glb": 72,
     "assets/models/prop_dead_plant.glb": 48,
     "assets/models/prop_elevator_panel.glb": 72,
@@ -255,6 +261,7 @@
     "assets/models/prop_security_guard.glb": 120,
     "assets/models/prop_stickies.glb": 36,
     "assets/models/prop_ticket.glb": 12,
+    "assets/models/prop_turnstile.glb": 132,
     "assets/models/prop_wet_floor.glb": 120,
     "assets/models/screen_quad.glb": 12,
     "assets/models/slack_panel.glb": 48,
