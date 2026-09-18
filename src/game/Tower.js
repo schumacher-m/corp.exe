@@ -147,6 +147,11 @@ export function createTower(opts) {
 
   let offered = [];
   let badgeDone = false;
+  let doorOpenT = 0; /* 0 closed … 1 open */
+  let doorOpening = false;
+  let doorL = null;
+  let doorR = null;
+  let doorBlocker = null;
   let badgeFailedOnce = false;
   let beatsDone = Object.create(null);
   let elevatorUnlocked = false;
@@ -569,6 +574,49 @@ export function createTower(opts) {
       } catch (_) {}
     }
 
+
+    /* CORP-TOWER-03.3 — elev door leaves + lobby-visible copies + blocker */
+    async function loadDoorLeaf(propName, hookName) {
+      const sc = await loadModel(pathFor(propName));
+      sc.name = propName;
+      /* Lobby elev bank (car empties are at origin — place jamb at elevator_call) */
+      const bank = hooks.elevator_call
+        ? (() => {
+            const wp = new THREE.Vector3();
+            hooks.elevator_call.getWorldPosition(wp);
+            lobby.worldToLocal(wp);
+            return wp;
+          })()
+        : new THREE.Vector3(1.4, 1.3, -6.4);
+      const isL = /_L$/.test(hookName) || propName.includes("_L");
+      sc.position.set(bank.x + (isL ? -0.32 : 0.32), 1.05, bank.z + 0.15);
+      sc.rotation.set(0, 0, 0);
+      sc.userData.closedX = sc.position.x;
+      lobby.add(sc);
+      if (forceNearest) forceNearest(sc);
+      nearestTowerMaps(sc);
+      return sc;
+    }
+    try {
+      doorL = await loadDoorLeaf("prop_elev_door_L", "elevator_door_L");
+      doorR = await loadDoorLeaf("prop_elev_door_R", "elevator_door_R");
+      console.info("[tower] elev doors OK");
+    } catch (e) {
+      console.warn("[tower] elev doors soft-fail", e && e.message ? e.message : e);
+      doorL = boxMesh(0.55, 2.1, 0.08, 0x4a4840, 0);
+      doorR = boxMesh(0.55, 2.1, 0.08, 0x4a4840, 0);
+      doorL.position.set(1.08, 1.05, -6.35);
+      doorR.position.set(1.72, 1.05, -6.35);
+      doorL.userData.closedX = doorL.position.x;
+      doorR.userData.closedX = doorR.position.x;
+      lobby.add(doorL, doorR);
+    }
+    doorBlocker = boxMesh(1.4, 2.2, 0.2, 0x2a2820, 0.05);
+    doorBlocker.name = "ElevDoorBlocker";
+    doorBlocker.position.set(1.4, 1.1, -6.2);
+    doorBlocker.visible = true;
+    lobby.add(doorBlocker);
+
     ensureExtraLobbyHooks();
     if (!hooks.elevator_panel && hooks.btn_floor_player) {
       const e = empty("elevator_panel", 0.78, 1.25, -0.2);
@@ -693,6 +741,9 @@ export function createTower(opts) {
     floorHanded = false;
     badgeDone = false;
     badgeFailedOnce = false;
+    doorOpenT = 0;
+    doorOpening = false;
+    setDoorsClosedPose();
     beatsDone = Object.create(null);
     elevatorUnlocked = false;
     wrongFloorHit = false;
@@ -774,6 +825,39 @@ export function createTower(opts) {
     else setPrompt("WASD · find Cubicle 4-B · E to sit");
   }
 
+
+  const DOOR_OPEN_SEC = 0.85;
+  const DOOR_SLIDE = 0.55;
+
+  function startDoorOpen() {
+    if (doorOpening || doorOpenT >= 1) return;
+    doorOpening = true;
+    try {
+      if (audio.playSfx) audio.playSfx("elevatorWhoosh", { volume: 0.35 });
+    } catch (_) {}
+  }
+
+  function setDoorsClosedPose() {
+    if (doorL) doorL.position.x = (doorL.userData.closedX != null ? doorL.userData.closedX : doorL.position.x);
+    if (doorR) doorR.position.x = (doorR.userData.closedX != null ? doorR.userData.closedX : doorR.position.x);
+    if (doorBlocker) doorBlocker.visible = true;
+  }
+
+  function updateElevDoors(dt) {
+    if (!doorOpening && doorOpenT <= 0) return;
+    if (doorOpening) {
+      doorOpenT = Math.min(1, doorOpenT + dt / DOOR_OPEN_SEC);
+      if (doorOpenT >= 1) doorOpening = false;
+    }
+    if (doorL && doorL.userData.closedX != null) {
+      doorL.position.x = doorL.userData.closedX - DOOR_SLIDE * doorOpenT;
+    }
+    if (doorR && doorR.userData.closedX != null) {
+      doorR.position.x = doorR.userData.closedX + DOOR_SLIDE * doorOpenT;
+    }
+    if (doorBlocker) doorBlocker.visible = doorOpenT < 0.85;
+  }
+
   function doBadge() {
     if (badgeDone) {
       toast((ta().badge || {}).success || "Already badged.", true);
@@ -789,6 +873,7 @@ export function createTower(opts) {
           badgeDone = true;
           if (audio.playSfx) audio.playSfx("badgeBeep", { volume: 0.55 });
           toast((ta().badge || {}).success || "Access granted.", true);
+          startDoorOpen();
           refreshElevatorLock();
           setPrompt(checklistHud());
         }
@@ -798,6 +883,7 @@ export function createTower(opts) {
     badgeDone = true;
     if (audio.playSfx) audio.playSfx("badgeBeep", { volume: 0.55 });
     toast((ta().badge || {}).success || "Access granted.", true);
+    startDoorOpen();
     refreshElevatorLock();
     setPrompt(checklistHud());
   }
@@ -875,7 +961,9 @@ export function createTower(opts) {
         }
       }
       if (nearHook("elevator_call", BEAT_NEAR_R)) {
-        if (!elevatorUnlocked) {
+        if (!badgeDone || doorOpenT < 0.85) {
+          toast(badgeDone ? "Wait for the doors." : "Badge the turnstile first.");
+        } else if (!elevatorUnlocked) {
           toast((ta().checklist || {}).elevatorLocked || "Elevator locked. Badge + 2 beats first.");
         } else {
           enterElevator();
@@ -948,7 +1036,12 @@ export function createTower(opts) {
     }
 
     if (G.phase === "lobby") {
+      updateElevDoors(dt);
       updateFpMove(dt, { xmin: -7.5, xmax: 7.5, zmin: -7, zmax: 7 });
+      /* Pre-badge: solid door blocker — keep player out of elev threshold */
+      if (doorBlocker && doorBlocker.visible && player.pos.z < -5.6) {
+        player.pos.z = Math.max(player.pos.z, -5.55);
+      }
       applyCamera(camera);
 
       if (offered.includes("security") && !beatsDone.security && nearHook("security_desk", SECURITY_NEAR_R)) {
@@ -999,6 +1092,7 @@ export function createTower(opts) {
           if (!badgeDone) {
             badgeDone = true;
             toast("HR marked you present.", true);
+            startDoorOpen();
             refreshElevatorLock();
           } else {
             const missing = offered.find(function (id) {
@@ -1015,6 +1109,7 @@ export function createTower(opts) {
     }
 
     if (G.phase === "elevator") {
+      updateElevDoors(dt);
       updateFpMove(dt, { xmin: -0.7, xmax: 0.7, zmin: -0.7, zmax: 0.7 });
       applyCamera(camera);
       setPrompt((ta().elevator || {}).panelHint || "E — floor buttons (look up / 2nd press = yours)");

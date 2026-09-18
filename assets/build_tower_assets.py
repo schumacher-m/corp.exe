@@ -303,40 +303,42 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
 
 
 def build_elevator_car(tex: dict[str, Path]) -> tuple[int, list[dict]]:
-    """Small car interior + button / door empties."""
+    """Brutalist car interior. Door leaves are separate props on elevator_door_L/R.
+    Closed: leaves flush in jamb. Open: Dev slides L −X / R +X (~0.55m).
+    """
     parts = []
-    # Floor / ceiling
     parts.append(box_mesh(1.6, 0.08, 1.8, 0.0, 0.04, 0.0, VC_WHITE))
     parts.append(box_mesh(1.6, 0.08, 1.8, 0.0, 2.36, 0.0, VC_WALL))
-    # Walls (-Z back, ±X); +Z is door opening
     parts.append(box_mesh(1.6, 2.4, 0.08, 0.0, 1.2, -0.9, VC_WALL))
     parts.append(box_mesh(0.08, 2.4, 1.8, -0.8, 1.2, 0.0, VC_WALL))
     parts.append(box_mesh(0.08, 2.4, 1.8, 0.8, 1.2, 0.0, VC_WALL))
-    # Door jambs (+Z) — heavier brutalist frame
+    # Door jambs (+Z) — no solid closed slab (leaves are props)
     parts.append(box_mesh(0.28, 2.3, 0.12, -0.72, 1.15, 0.9, VC_DOOR))
     parts.append(box_mesh(0.28, 2.3, 0.12, 0.72, 1.15, 0.9, VC_DOOR))
     parts.append(box_mesh(1.6, 0.22, 0.12, 0.0, 2.25, 0.9, VC_DOOR))
-    # Closed door slab
-    parts.append(box_mesh(1.15, 2.0, 0.08, 0.0, 1.05, 0.88, VC_DOOR))
-    # Concrete bumper rail
-    parts.append(box_mesh(1.5, 0.12, 0.08, 0.0, 0.35, -0.82, VC_FACADE))
-    # Handrail
+    # Threshold sill
+    parts.append(box_mesh(1.2, 0.06, 0.15, 0.0, 0.05, 0.88, VC_FACADE))
     parts.append(box_mesh(1.4, 0.04, 0.04, 0.0, 0.95, -0.82, VC_METAL))
-    # Button panel plate on +X wall
+    parts.append(box_mesh(1.5, 0.12, 0.08, 0.0, 0.35, -0.82, VC_FACADE))
     parts.append(box_mesh(0.06, 0.55, 0.28, 0.74, 1.25, -0.2, VC_PROP))
     for y, c in ((1.45, BLOOD), (1.25, SICK), (1.05, AMBER)):
         parts.append(box_mesh(0.04, 0.08, 0.08, 0.72, y, -0.2, c))
 
+    s = 0.7071067811865475
+    quat_neg = [0.0, -s, 0.0, s]
     empties = [
         {"name": "elevator_interior", "translation": [0.0, 0.0, 0.0]},
         {"name": "btn_floor_player", "translation": [0.7, 1.25, -0.2]},
         {"name": "btn_floor_wrong_1", "translation": [0.7, 1.45, -0.2]},
         {"name": "btn_floor_wrong_2", "translation": [0.7, 1.05, -0.2]},
+        # Pivot cue (center) — keep for legacy
         {"name": "elevator_door", "translation": [0.0, 1.05, 0.9]},
-        {"name": "elevator_panel", "translation": [0.78, 1.25, -0.2], "rotation": [0.0, -0.7071067811865475, 0.0, 0.7071067811865476]},
+        # Sliding leaves — closed pose; open: L.x -= 0.55, R.x += 0.55
+        {"name": "elevator_door_L", "translation": [-0.32, 1.05, 0.88]},
+        {"name": "elevator_door_R", "translation": [0.32, 1.05, 0.88]},
+        {"name": "elevator_panel", "translation": [0.78, 1.25, -0.2], "rotation": quat_neg},
     ]
     pos, uv, col, idx = merge_meshes(parts)
-    # Use lobby_wall / plaza_concrete — plastic.png avg~79 is too dark for car shell
     car_tex = tex.get("lobby_wall") or tex["plaza_concrete"]
     tris = write_glb(
         MOD / "elevator_car.glb",
@@ -464,34 +466,31 @@ def build_prop_elevator_panel(tex: dict[str, Path]) -> int:
 
 
 def build_prop_security_guard(tex: dict[str, Path]) -> int:
-    """Tall readable Guard — origin at feet. Chunkier silhouette for desk-behind read.
-    Local +Z = face (empty yaw aims at aisle). Head/shoulders clear ~1.15m desk top.
+    """Human-scale Guard ~1.8m standing. Origin at feet. Local +Z = face.
+    Head/shoulders clear desk (~1.15); lobby ceiling ~2.7 so clear headroom.
     """
     GUARD = (0.38, 0.42, 0.52)
     GUARD_DK = (0.28, 0.30, 0.38)
     SKIN = (0.82, 0.68, 0.56)
     parts = []
-    # Wider stance legs
-    parts.append(box_mesh(0.18, 0.85, 0.18, -0.14, 0.42, 0.0, GUARD_DK))
-    parts.append(box_mesh(0.18, 0.85, 0.18, 0.14, 0.42, 0.0, GUARD_DK))
-    # Tall torso — shoulders well above desk (~1.15)
-    parts.append(box_mesh(0.55, 0.75, 0.32, 0.0, 1.25, 0.0, GUARD))
-    # Broad shoulders / epaulets
-    parts.append(box_mesh(0.7, 0.14, 0.28, 0.0, 1.55, 0.0, GUARD_DK))
-    # Head large
-    parts.append(box_mesh(0.34, 0.36, 0.34, 0.0, 1.9, 0.02, SKIN))
-    # Cap + brim toward +Z
-    parts.append(box_mesh(0.4, 0.14, 0.4, 0.0, 2.15, 0.02, GUARD_DK))
-    parts.append(box_mesh(0.42, 0.08, 0.18, 0.0, 2.08, 0.22, (0.7, 0.7, 0.72)))
-    # Arms akimbo / visible
-    parts.append(box_mesh(0.16, 0.5, 0.16, -0.4, 1.3, 0.05, GUARD))
-    parts.append(box_mesh(0.16, 0.5, 0.16, 0.4, 1.3, 0.05, GUARD))
-    # Eyes bright on +Z
-    parts.append(box_mesh(0.07, 0.06, 0.05, -0.09, 1.95, 0.2, (1.0, 0.95, 0.75)))
-    parts.append(box_mesh(0.07, 0.06, 0.05, 0.09, 1.95, 0.2, (1.0, 0.95, 0.75)))
-    # Radio + badge plate (silhouette cue)
-    parts.append(box_mesh(0.1, 0.16, 0.1, 0.38, 1.55, 0.05, (0.75, 0.75, 0.78)))
-    parts.append(box_mesh(0.12, 0.1, 0.04, 0.0, 1.4, 0.18, (0.85, 0.75, 0.3)))
+    # Legs → hip ~0.9
+    parts.append(box_mesh(0.16, 0.72, 0.16, -0.12, 0.36, 0.0, GUARD_DK))
+    parts.append(box_mesh(0.16, 0.72, 0.16, 0.12, 0.36, 0.0, GUARD_DK))
+    # Torso hips→shoulders ~0.9–1.45
+    parts.append(box_mesh(0.48, 0.58, 0.28, 0.0, 1.15, 0.0, GUARD))
+    parts.append(box_mesh(0.58, 0.12, 0.26, 0.0, 1.42, 0.0, GUARD_DK))  # shoulders
+    # Head top ~1.75, cap ~1.85
+    parts.append(box_mesh(0.28, 0.28, 0.28, 0.0, 1.62, 0.02, SKIN))
+    parts.append(box_mesh(0.32, 0.1, 0.32, 0.0, 1.82, 0.02, GUARD_DK))
+    parts.append(box_mesh(0.34, 0.06, 0.14, 0.0, 1.76, 0.18, (0.7, 0.7, 0.72)))
+    # Arms
+    parts.append(box_mesh(0.14, 0.42, 0.14, -0.34, 1.2, 0.04, GUARD))
+    parts.append(box_mesh(0.14, 0.42, 0.14, 0.34, 1.2, 0.04, GUARD))
+    # Eyes + radio + badge
+    parts.append(box_mesh(0.06, 0.05, 0.04, -0.07, 1.66, 0.16, (1.0, 0.95, 0.75)))
+    parts.append(box_mesh(0.06, 0.05, 0.04, 0.07, 1.66, 0.16, (1.0, 0.95, 0.75)))
+    parts.append(box_mesh(0.08, 0.12, 0.08, 0.32, 1.4, 0.04, (0.75, 0.75, 0.78)))
+    parts.append(box_mesh(0.1, 0.08, 0.03, 0.0, 1.28, 0.15, (0.85, 0.75, 0.3)))
     pos, uv, col, idx = merge_meshes(parts)
     return write_glb(
         MOD / "prop_security_guard.glb",
@@ -578,6 +577,41 @@ def build_prop_turnstile(tex: dict[str, Path]) -> int:
 
 
 
+def build_prop_elev_door_leaf(tex: dict[str, Path], side: str) -> int:
+    """Single elev door leaf ~0.62×2.1. Origin center. Local +Z = out of car.
+    Attach to elevator_door_L / _R; slide ±X to open.
+    """
+    METAL = (0.55, 0.55, 0.58)
+    METAL_DK = (0.4, 0.4, 0.42)
+    parts = []
+    parts.append(box_mesh(0.62, 2.1, 0.06, 0.0, 0.0, 0.0, METAL))
+    # Window slit
+    parts.append(box_mesh(0.18, 0.55, 0.04, 0.0, 0.35, 0.02, (0.55, 0.65, 0.7)))
+    # Handle toward center of opening
+    hx = 0.22 if side == "L" else -0.22
+    parts.append(box_mesh(0.06, 0.28, 0.05, hx, 0.0, 0.04, METAL_DK))
+    pos, uv, col, idx = merge_meshes(parts)
+    name = f"prop_elev_door_{side}"
+    return write_glb(
+        MOD / f"{name}.glb",
+        pos,
+        uv,
+        col,
+        idx,
+        tex["tower_facade"],
+        name,
+    )
+
+
+def build_prop_elev_door_L(tex: dict[str, Path]) -> int:
+    return build_prop_elev_door_leaf(tex, "L")
+
+
+def build_prop_elev_door_R(tex: dict[str, Path]) -> int:
+    return build_prop_elev_door_leaf(tex, "R")
+
+
+
 def update_manifest(
     counts: dict[str, int],
     anchors: dict[str, dict[str, list[float]]],
@@ -607,7 +641,7 @@ def update_manifest(
 def main() -> None:
     MOD.mkdir(parents=True, exist_ok=True)
     TEX.mkdir(parents=True, exist_ok=True)
-    print("CORP-TOWER-03.2 turnstile + Guard kits…")
+    print("CORP-TOWER-03.3 elev doors + Guard scale…")
 
     tex = write_tower_textures()
 
@@ -627,6 +661,8 @@ def main() -> None:
     t_poster = build_prop_hr_poster(tex)
     t_wet = build_prop_wet_floor(tex)
     t_turn = build_prop_turnstile(tex)
+    t_door_L = build_prop_elev_door_L(tex)
+    t_door_R = build_prop_elev_door_R(tex)
     t_panel = build_prop_elevator_panel(tex)
 
     counts = {
@@ -640,6 +676,8 @@ def main() -> None:
         "assets/models/prop_hr_poster.glb": t_poster,
         "assets/models/prop_wet_floor.glb": t_wet,
         "assets/models/prop_turnstile.glb": t_turn,
+        "assets/models/prop_elev_door_L.glb": t_door_L,
+        "assets/models/prop_elev_door_R.glb": t_door_R,
         "assets/models/prop_elevator_panel.glb": t_panel,
     }
     anchors = {

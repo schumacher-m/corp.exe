@@ -18,6 +18,8 @@
     "assets/models/prop_badge_reader.glb",
     "assets/models/prop_coffee.glb",
     "assets/models/prop_dead_plant.glb",
+    "assets/models/prop_elev_door_L.glb",
+    "assets/models/prop_elev_door_R.glb",
     "assets/models/prop_elevator_panel.glb",
     "assets/models/prop_hr_poster.glb",
     "assets/models/prop_mug.glb",
@@ -102,6 +104,16 @@
         0.0,
         1.05,
         0.9
+      ],
+      "elevator_door_L": [
+        -0.32,
+        1.05,
+        0.88
+      ],
+      "elevator_door_R": [
+        0.32,
+        1.05,
+        0.88
       ],
       "elevator_panel": [
         0.78,
@@ -254,6 +266,8 @@
     "assets/models/prop_badge_reader.glb": 12,
     "assets/models/prop_coffee.glb": 72,
     "assets/models/prop_dead_plant.glb": 48,
+    "assets/models/prop_elev_door_L.glb": 36,
+    "assets/models/prop_elev_door_R.glb": 36,
     "assets/models/prop_elevator_panel.glb": 72,
     "assets/models/prop_hr_poster.glb": 120,
     "assets/models/prop_mug.glb": 36,

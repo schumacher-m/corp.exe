@@ -157,3 +157,7 @@ Photoreal materials, mipmapped textures, orbit-smooth cinematic camera, rounded 
 ## Preview
 
 Open `assets/preview/index.html` (Three.js CDN + GLTFLoader) to eyeball models. Not the game — Dev owns `index.html` game loop.
+
+## Lobby scale ref (CORP-TOWER-03.3)
+
+Player eye ~1.6m; adult NPC standing 1.75–1.85m; door leaf ~2.1m; ceiling ~2.7m.

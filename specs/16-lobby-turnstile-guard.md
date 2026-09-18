@@ -108,3 +108,5 @@ After tip: Guard readable behind desk + staring; turnstile obvious gate before e
 | Game Designer | Re-feel after tip |
 | Tester | Smoke Guard + turnstile + path |
 | CoS | Spec + lint-gate tip |
+
+**Follow-up:** Elev doors on badge + Guard scale → `specs/17-elev-doors-guard-scale.md`

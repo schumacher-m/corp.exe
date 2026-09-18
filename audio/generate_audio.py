@@ -1376,6 +1376,25 @@ def amb_floor():
 # Main
 # ---------------------------------------------------------------------------
 
+
+def sfx_elevator_whoosh():
+    """Soft elev door open whoosh — air slide + faint track rumble (~0.75s)."""
+    n = int(0.75 * SR)
+    t = np.arange(n) / SR
+    nz = noise(n)
+    env = (np.sin(np.pi * np.clip(t / 0.75, 0, 1)) ** 0.85) * np.exp(-t * 1.8)
+    whoosh = one_pole_lp(one_pole_hp(nz, 400, SR), 2800, SR) * env * 0.45
+    rumble = (np.sin(2 * np.pi * 55 * t) * 0.08 + np.sin(2 * np.pi * 110 * t) * 0.04)
+    rumble *= env * np.linspace(1.0, 0.3, n)
+    out = whoosh + rumble
+    ck = int(0.025 * SR)
+    click = one_pole_hp(noise(ck), 2000, SR) * np.linspace(1, 0, ck) * 0.12
+    out[:ck] += click
+    out = bitcrush(out, bits=11, rate_div=2)
+    return normalize(fade_edges(out, 8), peak_db=-9.0)
+
+
+
 def main():
     TMP.mkdir(parents=True, exist_ok=True)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -1456,6 +1475,7 @@ def main():
         ("sfx-badge-beep.wav", sfx_badge_beep),
         ("sfx-badge-deny.wav", sfx_badge_deny),
         ("sfx-elevator-ding.wav", sfx_elevator_ding),
+        ("sfx-elevator-whoosh.wav", sfx_elevator_whoosh),
     ]
     for name, fn in tower_wav:
         print(f"  {name}...")

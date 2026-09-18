@@ -199,6 +199,7 @@ Daily plaza → lobby → elevator → floor set piece before existing walk/sit/
 | `audio/amb-lobby.ogg` | `lobbyAmb` | **lobby** — HVAC + people murmur (**no real words**) | Yes (`playLoop`) | 0.28–0.36 |
 | `audio/amb-elevator.ogg` | `elevatorAmb` | **elevator** — while in car | Yes (`playLoop`) | 0.3–0.4 |
 | `audio/sfx-elevator-ding.wav` | `elevatorDing` | Elevator arrive / doors | No | 0.5–0.6 |
+| `audio/sfx-elevator-whoosh.wav` | `elevatorWhoosh` | Elev door open (badge success) — soft slide | No | 0.3–0.4 |
 | `audio/amb-floor.ogg` | `floorAmb` | **floor** — open-plan fluorescent/HVAC to cubicle | Yes (`playLoop`) | 0.28–0.36 |
 
 ### Phase handoff

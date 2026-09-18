@@ -59,6 +59,7 @@ const FILES = {
   lobbyAmb: "amb-lobby.ogg",
   elevatorAmb: "amb-elevator.ogg",
   elevatorDing: "sfx-elevator-ding.wav",
+  elevatorWhoosh: "sfx-elevator-whoosh.wav",
   floorAmb: "amb-floor.ogg",
 };
 

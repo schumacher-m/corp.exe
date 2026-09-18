@@ -18,6 +18,10 @@ Playtest FAIL on tower10 → kits + empty yaw:
 
 Dev: copy empty **world quaternion** on wall props; prefer `security_guard` empty for Guard. Soft DROP parked.
 
+## CORP-TOWER-03.3 — Elev doors + Guard scale (2026-09-18)
+
+See **`specs/17-elev-doors-guard-scale.md`**. Doors **open on badge success** (blocking until then). Guard standing **~1.75–1.85m**. Scale ref: player eye ~1.6m; adult NPC 1.75–1.85m; door leaf ~2.1m; ceiling ~2.7m. Counts locked. Soft DROP parked.
+
 ## CORP-TOWER-03.2 — Guard + turnstile (2026-09-18)
 
 See **`specs/16-lobby-turnstile-guard.md`**. Real-world lobby grammar: Guard behind desk facing approach; badge beat = waist-high **turnstile** on path to elevator. Keep `badge_reader` empty name. Counts locked. Soft DROP parked.
