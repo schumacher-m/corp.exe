@@ -94,3 +94,5 @@ After tip: re-feel lobby — landmarks readable at a glance; stare / poster / we
 | Tester | Smoke landmarks + full path to desk |
 | Audio | Stems as-is unless asked |
 | CoS | Spec + lint-gate tip |
+
+**Hotfix:** orientation + Guard visibility + farm aisle → `specs/15-lobby-farm-hotfix.md`

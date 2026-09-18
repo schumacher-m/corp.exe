@@ -451,26 +451,69 @@ export function createTower(opts) {
       ["prop_elevator_panel", "btn_floor_player", elevator],
     ];
     const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk", "prop_security_guard", "prop_wet_floor"]);
+    const WALL_PROPS = new Set(["prop_hr_poster", "prop_elevator_panel", "prop_badge_reader"]);
     const WALL_Y_MAX = 1.55;
     const WALL_Y_MIN = 0.35;
+    const _hookPos = new THREE.Vector3();
+    const _hookQuat = new THREE.Quaternion();
+    const _parentQuat = new THREE.Quaternion();
+    const _localQuat = new THREE.Quaternion();
+
+    function attachAtHook(sc, hookName, parent, prop) {
+      let name = hookName;
+      if (prop === "prop_security_guard" && hooks.security_guard) name = "security_guard";
+      const h = hooks[name];
+      if (!h) {
+        parent.add(sc);
+        return;
+      }
+      h.getWorldPosition(_hookPos);
+      h.getWorldQuaternion(_hookQuat);
+      parent.worldToLocal(_hookPos);
+      parent.getWorldQuaternion(_parentQuat);
+      _localQuat.copy(_parentQuat).invert().multiply(_hookQuat);
+
+      if (FLOOR_PROPS.has(prop)) {
+        _hookPos.y = 0;
+      } else if (WALL_PROPS.has(prop)) {
+        _hookPos.y = THREE.MathUtils.clamp(_hookPos.y, WALL_Y_MIN, WALL_Y_MAX);
+      }
+
+      sc.position.copy(_hookPos);
+      sc.quaternion.copy(_localQuat);
+
+      /* CORP-TOWER-03.1 — if empty has no rotation, face wall props into the room */
+      const ident = Math.abs(_localQuat.x) + Math.abs(_localQuat.y) + Math.abs(_localQuat.z) < 1e-4;
+      if (ident && WALL_PROPS.has(prop)) {
+        if (prop === "prop_hr_poster" || prop === "prop_badge_reader") {
+          /* left/right wall: face toward lobby center X=0 */
+          const faceX = -Math.sign(sc.position.x || -1);
+          sc.rotation.set(0, faceX > 0 ? -Math.PI / 2 : Math.PI / 2, 0);
+        } else if (prop === "prop_elevator_panel") {
+          /* car wall: face toward car center */
+          sc.lookAt(0, sc.position.y, 0);
+          sc.rotateY(Math.PI); /* lookAt aims -Z; want +Z into car */
+        }
+      }
+
+      /* Guard: never identical to desk — offset behind + yaw to aisle */
+      if (prop === "prop_security_guard" && name === "security_desk") {
+        sc.position.x += 0.15;
+        sc.position.z -= 0.55;
+        sc.position.y = 0;
+        const toAisleX = 0 - sc.position.x;
+        const toAisleZ = 4.0 - sc.position.z;
+        sc.rotation.set(0, Math.atan2(toAisleX, toAisleZ), 0);
+      }
+
+      parent.add(sc);
+    }
+
     for (const [prop, hookName, parent] of propMap) {
       try {
         const sc = await loadModel(pathFor(prop));
         sc.name = prop;
-        const h = hooks[hookName];
-        if (h) {
-          const wp = new THREE.Vector3();
-          h.getWorldPosition(wp);
-          parent.worldToLocal(wp);
-          /* Phase B1: floor-clamp — no ceiling-stuck props */
-          if (FLOOR_PROPS.has(prop)) {
-            wp.y = 0;
-          } else {
-            wp.y = THREE.MathUtils.clamp(wp.y, WALL_Y_MIN, WALL_Y_MAX);
-          }
-          sc.position.copy(wp);
-        }
-        parent.add(sc);
+        attachAtHook(sc, hookName, parent, prop);
         if (forceNearest) forceNearest(sc);
         nearestTowerMaps(sc);
         console.info("[tower] prop", prop, "OK");
