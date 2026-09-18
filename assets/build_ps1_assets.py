@@ -341,12 +341,13 @@ def write_glb(
         children = []
         for en in empty_nodes:
             children.append(len(nodes))
-            nodes.append(
-                {
+            node = {
                     "name": en["name"],
                     "translation": list(en["translation"]),
                 }
-            )
+            if "rotation" in en:
+                node["rotation"] = list(en["rotation"])  # glTF quat xyzw
+            nodes.append(node)
         root_node["children"] = children
 
     gltf = {
@@ -557,12 +558,13 @@ def write_glb_multi(
         children = []
         for en in empty_nodes:
             children.append(len(nodes))
-            nodes.append(
-                {
+            node = {
                     "name": en["name"],
                     "translation": list(en["translation"]),
                 }
-            )
+            if "rotation" in en:
+                node["rotation"] = list(en["rotation"])  # glTF quat xyzw
+            nodes.append(node)
         root_node["children"] = children
 
     gltf = {

@@ -256,7 +256,8 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
         {"name": "badge_reader", "translation": [-5.6, 1.25, 4.0]},
         {"name": "coffee_machine", "translation": [-5.2, 0.0, -2.5]},
         {"name": "security_desk", "translation": [2.5, 0.0, 1.5]},
-        {"name": "hr_poster", "translation": [-5.7, 1.6, 0.5]},
+        {"name": "security_guard", "translation": [3.05, 0.0, 1.5]},
+        {"name": "hr_poster", "translation": [-5.7, 1.6, 0.5], "rotation": [0.0, 0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "wet_floor", "translation": [-2.0, 0.0, 2.5]},
         {"name": "elevator_call", "translation": [1.4, 1.3, -6.4]},
     ]
@@ -331,6 +332,7 @@ def build_elevator_car(tex: dict[str, Path]) -> tuple[int, list[dict]]:
         {"name": "btn_floor_wrong_1", "translation": [0.7, 1.45, -0.2]},
         {"name": "btn_floor_wrong_2", "translation": [0.7, 1.05, -0.2]},
         {"name": "elevator_door", "translation": [0.0, 1.05, 0.9]},
+        {"name": "elevator_panel", "translation": [0.78, 1.25, -0.2], "rotation": [0.0, -0.7071067811865475, 0.0, 0.7071067811865476]},
     ]
     pos, uv, col, idx = merge_meshes(parts)
     # Use lobby_wall / plaza_concrete — plastic.png avg~79 is too dark for car shell
@@ -414,21 +416,21 @@ def build_prop_security_desk(tex: dict[str, Path]) -> int:
 
 
 def build_prop_hr_poster(tex: dict[str, Path]) -> int:
-    """Large wall-readable HR poster (mount at hr_poster empty)."""
+    """Large wall HR poster. Local +Z = into room (readable face).
+    Mount with empty yaw so +Z = wall normal into lobby.
+    """
     parts = []
-    # Thick board — readable silhouette on wall
-    parts.append(box_mesh(1.4, 1.8, 0.08, 0.0, 0.0, 0.0, PAPER))
-    # Frame
-    parts.append(box_mesh(1.5, 0.08, 0.1, 0.0, 0.9, 0.02, VC_METAL))
-    parts.append(box_mesh(1.5, 0.08, 0.1, 0.0, -0.9, 0.02, VC_METAL))
-    parts.append(box_mesh(0.08, 1.8, 0.1, -0.72, 0.0, 0.02, VC_METAL))
-    parts.append(box_mesh(0.08, 1.8, 0.1, 0.72, 0.0, 0.02, VC_METAL))
-    # Header bar + body blocks (values) — also in texture
-    parts.append(box_mesh(1.2, 0.28, 0.04, 0.0, 0.65, 0.06, TEAL))
-    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, 0.3, 0.06, INK))
-    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, 0.05, 0.06, INK))
-    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, -0.2, 0.06, INK))
-    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, -0.45, 0.06, INK))
+    # Board in XY, thin +Z face
+    parts.append(box_mesh(1.4, 1.8, 0.06, 0.0, 0.0, 0.0, PAPER))
+    parts.append(box_mesh(1.5, 0.08, 0.08, 0.0, 0.9, 0.02, VC_METAL))
+    parts.append(box_mesh(1.5, 0.08, 0.08, 0.0, -0.9, 0.02, VC_METAL))
+    parts.append(box_mesh(0.08, 1.8, 0.08, -0.72, 0.0, 0.02, VC_METAL))
+    parts.append(box_mesh(0.08, 1.8, 0.08, 0.72, 0.0, 0.02, VC_METAL))
+    parts.append(box_mesh(1.2, 0.28, 0.04, 0.0, 0.65, 0.05, TEAL))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, 0.3, 0.05, INK))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, 0.05, 0.05, INK))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, -0.2, 0.05, INK))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, -0.45, 0.05, INK))
     pos, uv, col, idx = merge_meshes(parts)
     tex_path = tex.get("hr_poster") or _tex("paper") or tex["plaza_concrete"]
     return write_glb(
@@ -443,15 +445,15 @@ def build_prop_hr_poster(tex: dict[str, Path]) -> int:
 
 
 def build_prop_elevator_panel(tex: dict[str, Path]) -> int:
-    """Button panel plate (call / floor)."""
+    """Flat panel; local +Z = into car (readable buttons). Flush on wall."""
     parts = []
-    parts.append(box_mesh(0.18, 0.5, 0.06, 0.0, 0.25, 0.0, VC_PROP))
-    parts.append(box_mesh(0.14, 0.44, 0.02, 0.0, 0.25, 0.035, VC_DOOR))
-    # Up / down / floor buttons
-    parts.append(box_mesh(0.08, 0.08, 0.03, 0.0, 0.4, 0.05, SICK))
-    parts.append(box_mesh(0.08, 0.08, 0.03, 0.0, 0.28, 0.05, AMBER))
-    parts.append(box_mesh(0.08, 0.08, 0.03, 0.0, 0.16, 0.05, VC_METAL))
-    parts.append(box_mesh(0.06, 0.04, 0.02, 0.0, 0.06, 0.05, BLOOD))  # alarm
+    # Plate in XY, thin Z — sits flush when +Z faces into car
+    parts.append(box_mesh(0.22, 0.55, 0.04, 0.0, 0.0, 0.0, VC_PROP))
+    parts.append(box_mesh(0.18, 0.5, 0.02, 0.0, 0.0, 0.025, VC_DOOR))
+    parts.append(box_mesh(0.1, 0.1, 0.04, 0.0, 0.15, 0.04, SICK))
+    parts.append(box_mesh(0.1, 0.1, 0.04, 0.0, 0.0, 0.04, AMBER))
+    parts.append(box_mesh(0.1, 0.1, 0.04, 0.0, -0.15, 0.04, VC_METAL))
+    parts.append(box_mesh(0.08, 0.05, 0.03, 0.0, -0.22, 0.04, BLOOD))
     pos, uv, col, idx = merge_meshes(parts)
     return write_glb(
         MOD / "prop_elevator_panel.glb",
@@ -465,33 +467,33 @@ def build_prop_elevator_panel(tex: dict[str, Path]) -> int:
 
 
 def build_prop_security_guard(tex: dict[str, Path]) -> int:
-    """Low-poly Guard NPC behind desk — facing -X toward lobby aisle."""
+    """Tall Guard silhouette BEHIND desk, facing aisle (−X).
+    Mesh baked +0.55 X from origin so place on security_desk without burying.
+    Prefer empty security_guard if present.
+    """
+    # Offset: behind desk away from aisle
+    ox = 0.55
+    GUARD = (0.42, 0.45, 0.52)
+    SKIN = (0.78, 0.65, 0.54)
     parts = []
-    # Chair stub
-    parts.append(box_mesh(0.45, 0.08, 0.45, 0.0, 0.45, 0.15, VC_DOOR))
-    parts.append(box_mesh(0.08, 0.45, 0.08, -0.15, 0.22, 0.0, VC_DOOR))
-    parts.append(box_mesh(0.08, 0.45, 0.08, 0.15, 0.22, 0.0, VC_DOOR))
-    parts.append(box_mesh(0.08, 0.45, 0.08, -0.15, 0.22, 0.3, VC_DOOR))
-    parts.append(box_mesh(0.08, 0.45, 0.08, 0.15, 0.22, 0.3, VC_DOOR))
-    # Seated torso (grim uniform — dark blue-gray via VC)
-    GUARD = (0.45, 0.48, 0.55)
-    SKIN = (0.75, 0.62, 0.52)
-    parts.append(box_mesh(0.4, 0.55, 0.28, 0.0, 0.85, 0.1, GUARD))  # torso
-    parts.append(box_mesh(0.28, 0.28, 0.28, 0.0, 1.25, 0.1, SKIN))  # head
-    # Cap
-    parts.append(box_mesh(0.32, 0.08, 0.32, 0.0, 1.42, 0.1, GUARD))
-    parts.append(box_mesh(0.34, 0.06, 0.12, 0.0, 1.38, -0.05, VC_METAL))  # brim toward aisle (-Z? face -X)
-    # Face toward -X (aisle): brim on -X
-    parts.append(box_mesh(0.12, 0.06, 0.34, -0.18, 1.38, 0.1, VC_METAL))
-    # Arms on desk
-    parts.append(box_mesh(0.55, 0.1, 0.12, -0.35, 1.02, 0.1, GUARD))
-    parts.append(box_mesh(0.12, 0.1, 0.35, -0.55, 1.02, 0.0, GUARD))
-    # Legs under desk
-    parts.append(box_mesh(0.14, 0.4, 0.14, -0.1, 0.35, 0.15, GUARD))
-    parts.append(box_mesh(0.14, 0.4, 0.14, 0.1, 0.35, 0.15, GUARD))
-    # Stare eyes (tiny emissive-ish bright)
-    parts.append(box_mesh(0.05, 0.04, 0.04, -0.15, 1.28, 0.05, (0.95, 0.9, 0.7)))
-    parts.append(box_mesh(0.05, 0.04, 0.04, -0.15, 1.28, 0.15, (0.95, 0.9, 0.7)))
+    # Standing taller (not buried in desk)
+    # Legs
+    parts.append(box_mesh(0.14, 0.7, 0.14, ox - 0.1, 0.35, 0.05, GUARD))
+    parts.append(box_mesh(0.14, 0.7, 0.14, ox + 0.1, 0.35, 0.05, GUARD))
+    # Torso
+    parts.append(box_mesh(0.42, 0.65, 0.28, ox, 1.05, 0.05, GUARD))
+    # Head
+    parts.append(box_mesh(0.28, 0.3, 0.28, ox, 1.55, 0.05, SKIN))
+    # Cap + brim toward aisle (−X)
+    parts.append(box_mesh(0.32, 0.1, 0.32, ox, 1.75, 0.05, GUARD))
+    parts.append(box_mesh(0.14, 0.06, 0.34, ox - 0.2, 1.7, 0.05, VC_METAL))
+    # Arms crossed / on desk edge
+    parts.append(box_mesh(0.5, 0.12, 0.12, ox - 0.15, 1.15, 0.05, GUARD))
+    # Stare eyes toward −X
+    parts.append(box_mesh(0.05, 0.05, 0.05, ox - 0.15, 1.58, 0.0, (0.95, 0.92, 0.7)))
+    parts.append(box_mesh(0.05, 0.05, 0.05, ox - 0.15, 1.58, 0.1, (0.95, 0.92, 0.7)))
+    # Shoulder radio stub
+    parts.append(box_mesh(0.08, 0.12, 0.08, ox + 0.22, 1.3, 0.05, VC_METAL))
     pos, uv, col, idx = merge_meshes(parts)
     return write_glb(
         MOD / "prop_security_guard.glb",

@@ -448,7 +448,7 @@ export function createTower(opts) {
       ["prop_security_guard", "security_desk", lobby],
       ["prop_hr_poster", "hr_poster", lobby],
       ["prop_wet_floor", "wet_floor", lobby],
-      ["prop_elevator_panel", "btn_floor_player", elevator],
+      ["prop_elevator_panel", "elevator_panel", elevator],
     ];
     const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk", "prop_security_guard", "prop_wet_floor"]);
     const WALL_PROPS = new Set(["prop_hr_poster", "prop_elevator_panel", "prop_badge_reader"]);
@@ -462,6 +462,10 @@ export function createTower(opts) {
     function attachAtHook(sc, hookName, parent, prop) {
       let name = hookName;
       if (prop === "prop_security_guard" && hooks.security_guard) name = "security_guard";
+      if (prop === "prop_elevator_panel") {
+        if (hooks.elevator_panel) name = "elevator_panel";
+        else if (hooks.btn_floor_player) name = "btn_floor_player";
+      }
       const h = hooks[name];
       if (!h) {
         parent.add(sc);
@@ -521,6 +525,11 @@ export function createTower(opts) {
     }
 
     ensureExtraLobbyHooks();
+    if (!hooks.elevator_panel && hooks.btn_floor_player) {
+      const e = empty("elevator_panel", 0.78, 1.25, -0.2);
+      elevator.add(e);
+      hooks.elevator_panel = e;
+    }
 
     // Phase B1: keep interact empties out of ceiling for nearHook
     for (const name of ["badge_reader", "hr_poster", "elevator_call", "lobby_sync_chip"]) {

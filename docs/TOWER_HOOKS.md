@@ -4,6 +4,20 @@ Spec: `specs/12-tower-arrival.md`. Art: PS1 same as farm (`docs/VISUAL.md`, `doc
 **Floor after elevator = brighter aisle-grid farm** (reuse FARM locks — do not invent a second office).
 
 
+
+## CORP-TOWER-03.1 hotfix (2026-09-18)
+
+Playtest FAIL on tower10 → kits + empty yaw:
+
+| Fix | Detail |
+|-----|--------|
+| `prop_hr_poster` | Local **+Z = into room**; empty `hr_poster` has yaw (+90° Y) so +Z → +X into lobby |
+| `prop_elevator_panel` | Flat plate, local **+Z into car**; empty `elevator_panel` on car (+X wall, −90° Y) |
+| `prop_security_guard` | Tall standing silhouette; mesh baked **+0.55 X** behind desk; new empty `security_guard` at `[3.05,0,1.5]` |
+| `neighbor_bay.glb` | Footprint **1.95×2.35** (≤ pitch−0.2) — no `iz=+1` / `ix=±5` spill |
+
+Dev: copy empty **world quaternion** on wall props; prefer `security_guard` empty for Guard. Soft DROP parked.
+
 ## CORP-TOWER-03 — Lobby landmarks (2026-09-18)
 
 See **`specs/14-lobby-landmarks.md`**. ✅ **kits shipped** — Guard NPC, large HR poster, yellow A-frame + puddle, `lobby_floor_b`/`lobby_wall_b`. Lobby empty `wet_floor` at `[-2,0,2.5]` floor Y. Other empties unchanged; badge/2-of-3 locked. Soft DROP parked.
@@ -90,6 +104,7 @@ Soft DROP parked.
 | `badge_reader` | E / click | **Always required** badge |
 | `coffee_machine` | E | Daily pool |
 | `security_desk` | Hold / wait bar | Daily pool |
+| `security_guard` | Guard NPC attach (prefer over desk XYZ) | — |
 | `hr_poster` | E → dismiss | Daily pool |
 | `wet_floor` | E | Daily pool (cone+puddle) |
 | `lobby_sync_chip` | Optional UI chip | Daily pool (alt) |

@@ -720,8 +720,6 @@ async function loadOffice() {
       // Floor lock aisles: player home; entire iz=+1 E–W; ix=±5 N–S. Do NOT clear all ix===0.
       if (ix === 0 && iz === 0) continue;
       if (iz === 1) continue;
-      /* CORP-TOWER-03.1 interim: clear one more row until bay footprint shrinks */
-      if (iz === 2) continue;
       if (ix === 5 || ix === -5) continue;
       const x = ix * PITCH_X;
       const z = iz * PITCH_Z;
@@ -750,8 +748,7 @@ async function loadOffice() {
       bay.add(makeFarmWorker(ix, iz));
       workerCount++;
       bay.position.set(x, 0, z);
-      /* shrink footprint so meshes don't spill into aisles (art fix preferred later) */
-      bay.scale.set(0.88, 1, 0.88);
+      /* Designer bay 1.95×2.35 — no extra shrink */
       farm.add(bay);
       neighborCount++;
     }

@@ -149,15 +149,15 @@ def build_neighbor_crt(tex_path: Path) -> tuple[int, list[float]]:
 
 
 def build_neighbor_bay(tex_path: Path) -> tuple[int, list[float]]:
-    """LOW-tri PS1 bay ~2.1m wide × 2.4m deep with chunky CRT. Whole bay ≤120 tris."""
+    """LOW-tri PS1 bay ≤1.95×2.35 (pitch−0.2 clear aisles) + chunky CRT. ≤120 tris."""
     parts = []
-    # Floor slab 2.1 × 2.4
-    parts.append(box_mesh(2.1, 0.06, 2.4, 0.0, 0.03, 0.0, FLOOR_VC))
+    # Floor slab ≤ pitch−0.2 (≤2.0 × 2.4) — no aisle spill (CORP-TOWER-03.1)
+    parts.append(box_mesh(1.95, 0.06, 2.35, 0.0, 0.03, 0.0, FLOOR_VC))
     # Back wall
-    parts.append(box_mesh(2.1, 1.8, 0.06, 0.0, 0.9, -1.17, WALL_VC))
-    # Left + right half-height partitions
-    parts.append(box_mesh(0.05, 1.0, 1.9, -1.025, 0.5, -0.15, WALL_VC))
-    parts.append(box_mesh(0.05, 1.0, 1.9, 1.025, 0.5, -0.15, WALL_VC))
+    parts.append(box_mesh(1.95, 1.8, 0.06, 0.0, 0.9, -1.145, WALL_VC))
+    # Left + right half-height partitions (inset so footprint ≤1.95)
+    parts.append(box_mesh(0.05, 1.0, 1.85, -0.95, 0.5, -0.15, WALL_VC))
+    parts.append(box_mesh(0.05, 1.0, 1.85, 0.95, 0.5, -0.15, WALL_VC))
     # Thin desk top
     parts.append(box_mesh(1.5, 0.04, 0.65, 0.0, 0.74, -0.35, DESK_VC))
     # Chunky CRT sitting on desk (desk y=0.74, CRT toward back z≈-0.55)

@@ -13,7 +13,7 @@ Do **not** keep the old 3-bay layout (`±6.2m`). That reads as an empty warehous
 | Columns | **−10 … +10** (21) | Skip player cell `(0,0)` for neighbor instances |
 | Rows | **−8 … +4** (13) | ≈ **270** neighbor bays before skip; aim **≥200** on screen/fog |
 | Player cell | `(0, 0)` | Full `cubicle.glb` + `desk_set` + Win95 CRT (unchanged) |
-| Neighbor bay | `assets/models/neighbor_bay.glb` | Walls + desk + **chunky PS1 CRT** (~110 tris); empty `screen_face` |
+| Neighbor bay | `assets/models/neighbor_bay.glb` | Walls + desk + **chunky PS1 CRT**; footprint **≤1.95×2.35** (pitch−0.2, CORP-TOWER-03.1 — no aisle spill); empty `screen_face` |
 | Neighbor CRT | `assets/models/neighbor_crt.glb` | Standalone chunky CRT (~50 tris) if you instance screens separately |
 | Optional glow quad | `assets/models/crt_glow.glb` / `textures/crt_glow.png` | If you instance screen faces alone |
 | Seated worker | `assets/models/worker_seated.glb` (+ `_b` variant) | Blocky sit-pose clerk; fidget empties |
