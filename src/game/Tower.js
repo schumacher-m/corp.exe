@@ -1007,7 +1007,8 @@ export function createTower(opts) {
   }
 
   /* Entrance volume: graybox door ~2.4 wide @ z=-4.4; keep forgiving for GLB/approach. */
-  const ENTRANCE_ENTER_R = 5.5;
+  /* CORP-FARM-04.1 — prompt ⇒ E always works (was dead ring 5.5–8.0) */
+  const ENTRANCE_ENTER_R = 8.0;
   const ENTRANCE_PROMPT_R = 8.0;
   const ENTRANCE_MAGNET_R = 9.0;
   /* CORP-TOWER-03 — slight beat-radius bump; counts locked */
@@ -1156,6 +1157,13 @@ export function createTower(opts) {
       const plazaBounds = { xmin: -11, xmax: 11, zmin: -10.5, zmax: 9 };
       updateFpMove(dt, plazaBounds);
       softMagnetEntrance(dt, plazaBounds);
+      /* Auto-enter when walking into enter volume (same range as E prompt) */
+      if (interactCooldown <= 0 && nearHook("tower_entrance", ENTRANCE_ENTER_R)) {
+        interactCooldown = 0.35;
+        enterLobby();
+        applyCamera(camera);
+        return;
+      }
       applyCamera(camera);
       setPrompt(
         nearHook("tower_entrance", ENTRANCE_PROMPT_R)
