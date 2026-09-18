@@ -508,9 +508,31 @@ export function createTower(opts) {
         sc.rotation.set(0, 0, 0);
       }
 
-      if (prop === "prop_security_guard" && name === "security_desk") {
-        sc.position.x += 1.05;
-        sc.position.y = 0;
+      /* CORP-TOWER-03.2 Guard FAIL: clear desk AABB + yaw to approach */
+      if (prop === "prop_security_guard") {
+        sc.position.y = Math.max(sc.position.y, 0) + 0.18;
+        let deskX = 2.5;
+        let deskZ = 1.5;
+        if (hooks.security_desk) {
+          const dp = new THREE.Vector3();
+          hooks.security_desk.getWorldPosition(dp);
+          parent.worldToLocal(dp);
+          deskX = dp.x;
+          deskZ = dp.z;
+        }
+        let dx = sc.position.x - deskX;
+        let dz = sc.position.z - deskZ;
+        let dist = Math.hypot(dx, dz);
+        if (dist < 0.2) {
+          dx = 1.2;
+          dz = -0.15;
+          dist = Math.hypot(dx, dz);
+        }
+        if (dist < 1.25) {
+          const s = 1.35 / dist;
+          sc.position.x = deskX + dx * s;
+          sc.position.z = deskZ + dz * s;
+        }
         const toApproachX = 0 - sc.position.x;
         const toApproachZ = 5.5 - sc.position.z;
         sc.rotation.set(0, Math.atan2(toApproachX, toApproachZ), 0);

@@ -257,7 +257,7 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
         {"name": "turnstile", "translation": [0.0, 0.0, -3.8], "rotation": [0.0, 0.0, 0.0, 1.0]},
         {"name": "coffee_machine", "translation": [-5.2, 0.0, -2.5]},
         {"name": "security_desk", "translation": [2.5, 0.0, 1.5]},
-        {"name": "security_guard", "translation": [3.55, 0.0, 1.5], "rotation": [0.0, -0.7071067811865475, 0.0, 0.7071067811865476]},
+        {"name": "security_guard", "translation": [3.95, 0.0, 1.35], "rotation": [0.0, -0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "hr_poster", "translation": [-5.7, 1.6, 0.5], "rotation": [0.0, 0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "wet_floor", "translation": [-2.0, 0.0, 2.5]},
         {"name": "elevator_call", "translation": [1.4, 1.3, -6.4]},
@@ -464,29 +464,34 @@ def build_prop_elevator_panel(tex: dict[str, Path]) -> int:
 
 
 def build_prop_security_guard(tex: dict[str, Path]) -> int:
-    """Tall Guard — origin at feet. Place via security_guard empty (behind desk).
-    Local +Z = facing direction (empty yaw aims +Z at aisle / player).
-    No baked desk offset — empty pose owns placement.
+    """Tall readable Guard — origin at feet. Chunkier silhouette for desk-behind read.
+    Local +Z = face (empty yaw aims at aisle). Head/shoulders clear ~1.15m desk top.
     """
-    GUARD = (0.42, 0.45, 0.52)
-    SKIN = (0.78, 0.65, 0.54)
+    GUARD = (0.38, 0.42, 0.52)
+    GUARD_DK = (0.28, 0.30, 0.38)
+    SKIN = (0.82, 0.68, 0.56)
     parts = []
-    # Legs (feet at y=0)
-    parts.append(box_mesh(0.14, 0.7, 0.14, -0.1, 0.35, 0.05, GUARD))
-    parts.append(box_mesh(0.14, 0.7, 0.14, 0.1, 0.35, 0.05, GUARD))
-    # Torso (above desk height ~1.15)
-    parts.append(box_mesh(0.42, 0.65, 0.28, 0.0, 1.05, 0.05, GUARD))
-    # Head
-    parts.append(box_mesh(0.28, 0.3, 0.28, 0.0, 1.55, 0.05, SKIN))
-    # Cap + brim toward +Z (face)
-    parts.append(box_mesh(0.32, 0.1, 0.32, 0.0, 1.75, 0.05, GUARD))
-    parts.append(box_mesh(0.34, 0.06, 0.14, 0.0, 1.7, 0.2, VC_METAL))
-    # Arms
-    parts.append(box_mesh(0.55, 0.12, 0.12, 0.0, 1.15, 0.08, GUARD))
-    # Eyes on +Z face
-    parts.append(box_mesh(0.05, 0.05, 0.04, -0.07, 1.58, 0.2, (0.95, 0.92, 0.7)))
-    parts.append(box_mesh(0.05, 0.05, 0.04, 0.07, 1.58, 0.2, (0.95, 0.92, 0.7)))
-    parts.append(box_mesh(0.08, 0.12, 0.08, 0.22, 1.3, 0.05, VC_METAL))
+    # Wider stance legs
+    parts.append(box_mesh(0.18, 0.85, 0.18, -0.14, 0.42, 0.0, GUARD_DK))
+    parts.append(box_mesh(0.18, 0.85, 0.18, 0.14, 0.42, 0.0, GUARD_DK))
+    # Tall torso — shoulders well above desk (~1.15)
+    parts.append(box_mesh(0.55, 0.75, 0.32, 0.0, 1.25, 0.0, GUARD))
+    # Broad shoulders / epaulets
+    parts.append(box_mesh(0.7, 0.14, 0.28, 0.0, 1.55, 0.0, GUARD_DK))
+    # Head large
+    parts.append(box_mesh(0.34, 0.36, 0.34, 0.0, 1.9, 0.02, SKIN))
+    # Cap + brim toward +Z
+    parts.append(box_mesh(0.4, 0.14, 0.4, 0.0, 2.15, 0.02, GUARD_DK))
+    parts.append(box_mesh(0.42, 0.08, 0.18, 0.0, 2.08, 0.22, (0.7, 0.7, 0.72)))
+    # Arms akimbo / visible
+    parts.append(box_mesh(0.16, 0.5, 0.16, -0.4, 1.3, 0.05, GUARD))
+    parts.append(box_mesh(0.16, 0.5, 0.16, 0.4, 1.3, 0.05, GUARD))
+    # Eyes bright on +Z
+    parts.append(box_mesh(0.07, 0.06, 0.05, -0.09, 1.95, 0.2, (1.0, 0.95, 0.75)))
+    parts.append(box_mesh(0.07, 0.06, 0.05, 0.09, 1.95, 0.2, (1.0, 0.95, 0.75)))
+    # Radio + badge plate (silhouette cue)
+    parts.append(box_mesh(0.1, 0.16, 0.1, 0.38, 1.55, 0.05, (0.75, 0.75, 0.78)))
+    parts.append(box_mesh(0.12, 0.1, 0.04, 0.0, 1.4, 0.18, (0.85, 0.75, 0.3)))
     pos, uv, col, idx = merge_meshes(parts)
     return write_glb(
         MOD / "prop_security_guard.glb",
