@@ -68,6 +68,7 @@ Do **not** change win/fail, Sanity, or ticket close rules.
 - [ ] `semi` / `comment` / `dropdb` all use shared chrome  
 - [ ] Minigames still completable; no logic regressions  
 - [ ] No trademarked VS Code / Microsoft logos  
+- [ ] Fit (CORP-IDE-01.1): footer controls not clipped — see `specs/19-ide-chrome-fit.md`  
 
 ## Soft DROP
 

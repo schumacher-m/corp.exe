@@ -303,7 +303,7 @@ export function setupAfter_activePrScript(d) {
   d.wins = {
     tickets: { id: "tickets", title: "Tracker", x: 8, y: 12, w: 190, h: 168, open: true },
     slack: { id: "slack", title: d.teamsCopy.windowTitle || "Sync -- Corporate Chat", x: 165, y: 14, w: 145, h: 120, open: true },
-    ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 240, h: 160, open: false },
+    ide: { id: "ide", title: "IDE - fog.js", x: 40, y: 28, w: 300, h: 200, open: false },
     pr: { id: "pr", title: "PR #884 - Kyle", x: 30, y: 20, w: 260, h: 175, open: false },
     standup: { id: "standup", title: "Daily Standup", x: 50, y: 40, w: 220, h: 130, open: true },
     meters: { id: "meters", title: "Resource Monitor", x: 200, y: 150, w: 110, h: 55, open: true },

@@ -214,61 +214,83 @@ export function installIdeApp(d) {
     sick: "#7aaa9a",
   };
 
-  /** Shared VS Code parody chrome. Returns editor rect (content hitbox region). */
+  /** Shared VS Code parody chrome. Returns editor rect (content hitbox region).
+   *  Adaptive: reserve ~160px editor for controls; collapse sidebar then thin activity.
+   *  opts.reserveFoot: footer band above status (excluded from ed.h). */
   d.drawIdeChrome = function drawIdeChrome(x, y, w, h, opts) {
     const P = d.IDE_P;
     const o = opts || {};
-    const actW = 26;
-    // Leave >=90px for editor so minigames stay playable on default 240-wide IDE
-    const sideW = Math.min(78, Math.max(56, w - actW - 90));
+    const MIN_ED_W = 160; // ACCEPT(70)+SUBMIT(68)+pad ≈154
+    const preferAct = 26;
+    const preferSide = 78;
     const tabH = 16;
     const statusH = 18;
     const gutterW = 14;
+    const reserveFoot = Math.max(0, o.reserveFoot | 0);
+
+    // Prefer full chrome; shrink/collapse sidebar first, then thin activity.
+    let actW = preferAct;
+    let sideW = preferSide;
+    const room = Math.max(0, w - MIN_ED_W);
+    if (actW + sideW > room) {
+      sideW = Math.max(0, room - actW);
+      if (sideW > 0 && sideW < 40) sideW = 0; // too thin to read as Explorer
+    }
+    if (actW + sideW > room) {
+      actW = Math.max(0, room - sideW);
+      if (actW > 0 && actW < 16) actW = 0; // cannot fit glyphs
+    }
 
     d.ctx.fillStyle = P.editor_bg;
     d.ctx.fillRect(x, y, w, h);
 
-    // Activity bar
-    d.ctx.fillStyle = P.activity_bg;
-    d.ctx.fillRect(x, y, actW, h - statusH);
-    const glyphs = [
-      d.imgs?.ideExplorer16,
-      d.imgs?.ideSearch16,
-      d.imgs?.ideScm16,
-      d.imgs?.ideExt16,
-    ];
-    let gy = y + 6;
-    for (let gi = 0; gi < glyphs.length; gi++) {
-      const im = glyphs[gi];
-      const gx = x + ((actW - 16) >> 1);
-      if (!d.drawImgOr(im, gx, gy, 16, 16, null)) {
-        // Tiny unbranded placeholder rects if assets not ready
-        d.ctx.fillStyle = gi === 0 ? "#c8c4b0" : P.fg_dim;
-        d.ctx.fillRect(gx + 3, gy + 3, 10, 10);
+    // Activity bar (collapsed → actW 0)
+    if (actW > 0) {
+      d.ctx.fillStyle = P.activity_bg;
+      d.ctx.fillRect(x, y, actW, h - statusH);
+      if (actW >= 16) {
+        const glyphs = [
+          d.imgs?.ideExplorer16,
+          d.imgs?.ideSearch16,
+          d.imgs?.ideScm16,
+          d.imgs?.ideExt16,
+        ];
+        let gy = y + 6;
+        for (let gi = 0; gi < glyphs.length; gi++) {
+          const im = glyphs[gi];
+          const gx = x + ((actW - 16) >> 1);
+          if (!d.drawImgOr(im, gx, gy, 16, 16, null)) {
+            d.ctx.fillStyle = gi === 0 ? "#c8c4b0" : P.fg_dim;
+            d.ctx.fillRect(gx + 3, gy + 3, 10, 10);
+          }
+          gy += 22;
+        }
       }
-      gy += 22;
     }
 
-    // Side bar + Explorer stub art
-    d.ctx.fillStyle = P.sidebar_bg;
-    d.ctx.fillRect(x + actW, y, sideW, h - statusH);
-    const stub = d.imgs?.ideExplorerStub;
-    const stubH = Math.min(64, h - statusH - 4);
-    const stubW = Math.min(80, sideW - 2);
-    if (!d.drawImgOr(stub, x + actW + 1, y + 2, stubW, stubH, null)) {
-      d.ctx.font = "6px Tahoma, sans-serif";
-      d.ctx.fillStyle = P.fg_dim;
-      d.ctx.fillText("EXPLORER", x + actW + 4, y + 10);
-      d.ctx.fillStyle = P.fg;
-      d.ctx.fillText("> src", x + actW + 4, y + 22);
-      d.ctx.fillText("  ticket.js", x + actW + 4, y + 32);
-      d.ctx.fillText("  query.sql", x + actW + 4, y + 42);
+    // Side bar + Explorer stub art (collapsed → sideW 0)
+    if (sideW > 0) {
+      d.ctx.fillStyle = P.sidebar_bg;
+      d.ctx.fillRect(x + actW, y, sideW, h - statusH);
+      const stub = d.imgs?.ideExplorerStub;
+      const stubH = Math.min(64, h - statusH - 4);
+      const stubW = Math.min(80, Math.max(0, sideW - 2));
+      if (!d.drawImgOr(stub, x + actW + 1, y + 2, stubW, stubH, null)) {
+        d.ctx.font = "6px Tahoma, sans-serif";
+        d.ctx.fillStyle = P.fg_dim;
+        d.ctx.fillText("EXPLORER", x + actW + 4, y + 10);
+        d.ctx.fillStyle = P.fg;
+        d.ctx.fillText("> src", x + actW + 4, y + 22);
+        d.ctx.fillText("  ticket.js", x + actW + 4, y + 32);
+        d.ctx.fillText("  query.sql", x + actW + 4, y + 42);
+      }
     }
 
     const edX = x + actW + sideW;
     const edW = Math.max(40, w - actW - sideW);
     const edY = y + tabH;
-    const edH = Math.max(24, h - tabH - statusH);
+    // Content height excludes reserved footer so status/tabs never steal button strip
+    const edH = Math.max(16, h - tabH - statusH - reserveFoot);
 
     // Tab bar
     d.ctx.fillStyle = P.tab_bg;
@@ -276,7 +298,6 @@ export function installIdeApp(d) {
     const activeTab = o.tab || "ticket.js";
     const inactiveTab = o.inactiveTab || null;
     d.ctx.font = "7px Tahoma, sans-serif";
-    // Active tab
     const tabLabW = Math.min(72, Math.max(48, activeTab.length * 5 + 12));
     d.ctx.fillStyle = P.tab_active;
     d.ctx.fillRect(edX, y, tabLabW, tabH);
@@ -289,7 +310,7 @@ export function installIdeApp(d) {
       d.ctx.fillText(String(inactiveTab).slice(0, 12), edX + tabLabW + 8, y + 11);
     }
 
-    // Editor fill (explicit)
+    // Editor content fill (footer band painted by ideEditorFooter)
     d.ctx.fillStyle = P.editor_bg;
     d.ctx.fillRect(edX, edY, edW, edH);
 
@@ -304,18 +325,31 @@ export function installIdeApp(d) {
     const status = `Ln ${ln}, Col ${col}   ${lang}   UTF-8   corp`;
     d.ctx.fillText(status.slice(0, Math.max(8, Math.floor(w / 5))), x + 6, y + h - 6);
 
-    const ed = { x: edX, y: edY, w: edW, h: edH, gutterW, actW, sideW, tabH, statusH };
+    const ed = {
+      x: edX,
+      y: edY,
+      w: edW,
+      h: edH,
+      gutterW,
+      actW,
+      sideW,
+      tabH,
+      statusH,
+      reserveFoot,
+    };
     d.state._ideEditor = ed;
     return ed;
   };
 
-  /** Footer strip inside editor (buttons/hints) — keeps hitboxes off activity/sidebar. */
+  /** Footer strip in reserved band above status (hitboxes stay in editor column). */
   d.ideEditorFooter = function ideEditorFooter(ed, footH) {
-    const fh = footH == null ? 24 : footH;
-    const fy = ed.y + ed.h - fh;
+    const fh = footH == null ? ed.reserveFoot || 24 : footH;
+    // When chrome reserved a band, footer sits below content; else steal from ed.h
+    const fy = ed.reserveFoot ? ed.y + ed.h : ed.y + ed.h - fh;
+    const contentH = ed.reserveFoot ? ed.h : Math.max(0, ed.h - fh);
     d.ctx.fillStyle = "#252526";
     d.ctx.fillRect(ed.x, fy, ed.w, fh);
-    return { x: ed.x, y: fy, w: ed.w, h: fh, contentH: ed.h - fh };
+    return { x: ed.x, y: fy, w: ed.w, h: fh, contentH };
   };
 
   d.drawIde = function drawIde(x, y, w, h) {
@@ -339,17 +373,24 @@ export function installIdeApp(d) {
       inactive = null;
     }
 
+    let reserveFoot = 0;
+    if (d.state.phase === "comment") reserveFoot = 28;
+    else if (d.state.phase === "semi") reserveFoot = 24;
+    else if (d.state.stub && ["rename", "lint", "merge", "logspam"].includes(d.state.phase))
+      reserveFoot = 24;
+
     const ed = d.drawIdeChrome(x, y, w, h, {
       tab,
       inactiveTab: inactive,
       ln,
       col: 1,
       lang,
+      reserveFoot,
     });
 
     if (d.state.phase === "semi") {
       d.ensureSemi();
-      const foot = d.ideEditorFooter(ed, 24);
+      const foot = d.ideEditorFooter(ed, reserveFoot);
       const gw = ed.gutterW;
       d.ctx.font = "7px 'Courier New', monospace";
       let yy = ed.y + 8;
@@ -404,7 +445,7 @@ export function installIdeApp(d) {
       } else d.state._submitBtn = null;
     } else if (d.state.phase === "comment") {
       d.ensureComment();
-      const foot = d.ideEditorFooter(ed, 24);
+      const foot = d.ideEditorFooter(ed, reserveFoot);
       const gw = ed.gutterW;
       d.ctx.font = "7px 'Courier New', monospace";
       let yy = ed.y + 8;
@@ -456,18 +497,19 @@ export function installIdeApp(d) {
     d.state._cmtBtn = null;
 
     const P = d.IDE_P;
+    const chipH = 16;
+    const runH = 16;
+    const resultH = 14;
+    const chromeH = chipH + runH + resultH + 10; // ~56 chips+Run+result
     const ed = d.drawIdeChrome(x, y, w, h, {
       tab: "query.sql",
       inactiveTab: "ticket.js",
       ln: 1,
       col: Math.max(1, (d.state.sqlBuffer || "").length + 1),
       lang: "SQL",
+      reserveFoot: chromeH,
     });
 
-    const chipH = 16;
-    const runH = 16;
-    const resultH = 14;
-    const chromeH = chipH + runH + resultH + 10;
     const foot = d.ideEditorFooter(ed, chromeH);
     const bufH = foot.contentH;
 
@@ -533,16 +575,17 @@ export function installIdeApp(d) {
     const P = d.IDE_P;
     // Chrome already drawn by drawIde; reuse stored editor rect
     let ed = d.state._ideEditor;
-    if (!ed || ed.w < 20) {
+    if (!ed || ed.w < 20 || !ed.reserveFoot) {
       ed = d.drawIdeChrome(x, y, w, h, {
         tab: "ticket.js",
         inactiveTab: "query.sql",
         ln: 1,
         col: 1,
         lang: "JavaScript",
+        reserveFoot: 24,
       });
     }
-    const foot = d.ideEditorFooter(ed, 24);
+    const foot = d.ideEditorFooter(ed, ed.reserveFoot || 24);
     let yy = ed.y + 8;
     d.ctx.font = "7px 'Courier New', monospace";
     if (st.kind === "rename") {
