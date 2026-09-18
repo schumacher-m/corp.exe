@@ -168,6 +168,36 @@ Corporate AI assistant chrome — original purple blob (antenna/bobble), **not**
 - Optional CSS paste: `assets/jimbo/jimbo.css`
 - Accents: `#783CBC` / `#A064DC` / optional active title `#503090` (else navy `#000080`)
 
+## IDE client — CORP-IDE-01 (2026-09-18)
+
+Outer frame stays classic Win95 (beige face, `#000080` title, min/max/close). **Client area** is a VS Code parody. Spec: `specs/18-ide-vscode-chrome.md`. No VS Code / Microsoft trademarks — use “Helix Code” / `corp` / generic glyphs.
+
+### Assets (`assets/ide/`)
+
+| File | Role |
+|------|------|
+| `palette.json` / `palette.png` | Locked hex swatches |
+| `activity_explorer_16/32.png` | Activity bar — folder |
+| `activity_search_16/32.png` | Activity bar — search |
+| `activity_scm_16/32.png` | Activity bar — branch |
+| `activity_ext_16/32.png` | Activity bar — blocks (not MS logo) |
+| `explorer_stub.png` | Fake Explorer tree reference |
+| `ide_vscode_mock_320.png` | CRT-size layout mock (~320×200) |
+
+### Client layout (inside Win95 client)
+
+| Region | Spec |
+|--------|------|
+| Activity bar | 24–28px · `#333333` · glyphs above |
+| Side bar | 72–90px · `#252526` · Explorer stub (`src/`, `ticket.js`) — non-interactive OK |
+| Tab bar | `#2d2d2d` · active tab `#1e1e1e` |
+| Editor | `#1e1e1e` · gutter `#858585` · Consolas/Courier · keywords `#569cd6` / strings `#ce9178` / comments `#6a9955` |
+| Status bar | ~18px · `#007acc` · `Ln/Col` · lang · `UTF-8` · `corp` |
+
+### Modes (skin only)
+
+`semi` / `comment` / `dropdb` share this chrome. Hit targets stay in the **editor** region only. SQL Run can be a small VS-style primary in the editor chrome. Soft DROP parked.
+
 ## Anti-patterns
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.
@@ -314,11 +344,11 @@ Spec: `specs/11-drop-database.md`. Reuse the existing IDE window family — **no
 | Spec | Value |
 |------|-------|
 | Window title | `IDE — Query` (or Writer’s line) |
-| Client | Sunken white/black code pane + face-gray chrome |
-| Query buffer | Monospace (`Consolas` / `Courier New` / `monospace`), dark text on white or inverse green-on-black OK if it stays chunky Win95 |
-| Chip row | Raised bevel face buttons: `DROP` · `DATABASE` · `corp` · `;` — same `.w95-btn` bevel as other chrome |
-| Run | Raised `Run` button (bold); pressed = sunken |
-| Result pane | Narrow sunken strip under buffer: empty-set / `DROP DATABASE` / `0 relations` one-liners |
+| Client | Shared VS Code parody chrome (CORP-IDE-01) inside Win95 frame — see **IDE client** above |
+| Query buffer | Dark editor `#1e1e1e`, monospace, keyword tint; caret blink in editor region only |
+| Chip row | Compact dark chips in editor footer (`DROP` · `DATABASE` · `corp` · `;`) |
+| Run | Small VS-style primary (`#007acc`) in editor chrome |
+| Result pane | Narrow strip under chips/Run inside editor footer |
 | Classes | `.w95-ide` `.w95-ide-sql` `.w95-ide-chips` `.w95-ide-run` `.w95-ide-result` |
 
 Jimbo autofill uses existing Ask Jimbo toast path — no special chrome.
@@ -327,6 +357,3 @@ Jimbo autofill uses existing Ask Jimbo toast path — no special chrome.
 
 Fluent / Aero glass, rounded SaaS panels, flat Material buttons, bloom on the desktop, or rendering Win95 full-screen instead of on the CRT face.
 
-## IDE client — CORP-IDE-01 (2026-09-18)
-
-Outer frame stays classic Win95. **Client area** is a VS Code parody (dark activity bar, sidebar, tabs, `#1e1e1e` editor, status bar). Spec: `specs/18-ide-vscode-chrome.md`. No VS Code / Microsoft trademarks.

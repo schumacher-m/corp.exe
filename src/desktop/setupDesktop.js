@@ -77,6 +77,11 @@ export function setupAfter_tStr(d) {
     tr16: d.loadImg("assets/icons/tracker_16.png"),
     tr32: d.loadImg("assets/icons/tracker_32.png"),
     tr48: d.loadImg("assets/icons/tracker_48.png"),
+    ideExplorer16: d.loadImg("assets/ide/activity_explorer_16.png"),
+    ideSearch16: d.loadImg("assets/ide/activity_search_16.png"),
+    ideScm16: d.loadImg("assets/ide/activity_scm_16.png"),
+    ideExt16: d.loadImg("assets/ide/activity_ext_16.png"),
+    ideExplorerStub: d.loadImg("assets/ide/explorer_stub.png"),
   };
 
 }
