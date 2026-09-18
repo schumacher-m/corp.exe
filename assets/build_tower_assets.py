@@ -56,6 +56,8 @@ def _tex(name: str) -> Path | None:
 
 def write_tower_textures() -> dict[str, Path]:
     """64×64 Bayer/checker olive-gray/concrete grim — NOT washed white, NOT near-black."""
+    import numpy as np
+    from PIL import Image, ImageDraw
     out: dict[str, Path] = {}
 
     # Plaza concrete — checker similar to floor (avg ~100–140)
@@ -85,8 +87,43 @@ def write_tower_textures() -> dict[str, Path]:
         )
     out["floor"] = floor
 
+    # Lobby variants — seams/scuffs + cooler wall (TOWER-03)
+    out["lobby_floor_b"] = save_tex(
+        "lobby_floor_b",
+        checker(64, 64, (128, 122, 104), (108, 100, 86), 4),  # finer seams
+    )
+    # scuff overlay
+    sc = np.array(Image.open(out["lobby_floor_b"]).convert("RGB"), dtype=np.uint8, copy=True)
+    rng = np.random.default_rng(42)
+    for _ in range(80):
+        x, y = int(rng.integers(0, 64)), int(rng.integers(0, 64))
+        sc[y, x] = np.clip(sc[y, x].astype(int) - rng.integers(15, 35), 40, 255)
+    Image.fromarray(sc).save(out["lobby_floor_b"])
+
+    out["lobby_wall_b"] = save_tex(
+        "lobby_wall_b",
+        dither_fill(64, 64, (112, 118, 120), (98, 104, 108)),  # cooler fluo tint
+    )
+
+    # HR poster readable plate
+    poster = Image.new("RGB", (64, 64), (150, 145, 125))
+    d = ImageDraw.Draw(poster)
+    d.rectangle([2, 2, 61, 14], fill=(40, 110, 120))  # teal header
+    for i, y in enumerate((20, 28, 36, 44, 52)):
+        d.rectangle([6, y, 58, y + 4], fill=(70, 68, 60) if i % 2 == 0 else (90, 88, 78))
+    out["hr_poster"] = save_tex("hr_poster", poster)
+
+    # Wet floor yellow + puddle
+    yel = checker(32, 32, (220, 190, 40), (200, 160, 30), 4)
+    out["wet_cone"] = save_tex("wet_cone", yel)
+    pud = Image.new("RGB", (32, 32), (90, 110, 130))
+    pd = ImageDraw.Draw(pud)
+    pd.ellipse([4, 6, 28, 26], fill=(120, 150, 170), outline=(160, 190, 210))
+    pd.ellipse([10, 10, 18, 16], fill=(180, 200, 220))  # highlight
+    out["wet_puddle"] = save_tex("wet_puddle", pud)
+
     # Assert ground albedos (refuse ship if avg < 100)
-    for key in ("floor", "plaza_concrete", "lobby_wall", "tower_facade"):
+    for key in ("floor", "plaza_concrete", "lobby_wall", "tower_facade", "lobby_floor_b", "lobby_wall_b", "hr_poster"):
         avg = assert_readable_albedo(out[key], min_avg=100.0, label=f"{key}.png")
         print(f"  albedo {key}.png avg={avg:.1f}")
 
@@ -220,6 +257,7 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
         {"name": "coffee_machine", "translation": [-5.2, 0.0, -2.5]},
         {"name": "security_desk", "translation": [2.5, 0.0, 1.5]},
         {"name": "hr_poster", "translation": [-5.7, 1.6, 0.5]},
+        {"name": "wet_floor", "translation": [-2.0, 0.0, 2.5]},
         {"name": "elevator_call", "translation": [1.4, 1.3, -6.4]},
     ]
 
@@ -236,7 +274,7 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
                 "uv": fl_uv,
                 "col": fl_col,
                 "idx": fl_idx,
-                "texture": tex["floor"],
+                "texture": tex.get("lobby_floor_b") or tex["floor"],
                 "mat": "lobby_floor",
             },
             {
@@ -244,7 +282,7 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
                 "uv": w_uv,
                 "col": w_col,
                 "idx": w_idx,
-                "texture": tex["lobby_wall"],
+                "texture": tex.get("lobby_wall_b") or tex["lobby_wall"],
                 "mat": "lobby_wall",
             },
             {
@@ -376,25 +414,30 @@ def build_prop_security_desk(tex: dict[str, Path]) -> int:
 
 
 def build_prop_hr_poster(tex: dict[str, Path]) -> int:
-    """Flat poster on stand."""
+    """Large wall-readable HR poster (mount at hr_poster empty)."""
     parts = []
-    # Stand base + pole
-    parts.append(box_mesh(0.4, 0.06, 0.3, 0.0, 0.03, 0.0, VC_DOOR))
-    parts.append(box_mesh(0.05, 1.4, 0.05, 0.0, 0.73, 0.0, VC_PROP))
-    # Poster board
-    parts.append(box_mesh(0.7, 0.95, 0.04, 0.0, 1.5, 0.0, PAPER))
-    # Crude header bar + body blocks
-    parts.append(box_mesh(0.6, 0.12, 0.03, 0.0, 1.85, 0.03, TEAL))
-    parts.append(box_mesh(0.55, 0.5, 0.02, 0.0, 1.4, 0.03, INK))
+    # Thick board — readable silhouette on wall
+    parts.append(box_mesh(1.4, 1.8, 0.08, 0.0, 0.0, 0.0, PAPER))
+    # Frame
+    parts.append(box_mesh(1.5, 0.08, 0.1, 0.0, 0.9, 0.02, VC_METAL))
+    parts.append(box_mesh(1.5, 0.08, 0.1, 0.0, -0.9, 0.02, VC_METAL))
+    parts.append(box_mesh(0.08, 1.8, 0.1, -0.72, 0.0, 0.02, VC_METAL))
+    parts.append(box_mesh(0.08, 1.8, 0.1, 0.72, 0.0, 0.02, VC_METAL))
+    # Header bar + body blocks (values) — also in texture
+    parts.append(box_mesh(1.2, 0.28, 0.04, 0.0, 0.65, 0.06, TEAL))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, 0.3, 0.06, INK))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, 0.05, 0.06, INK))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, -0.2, 0.06, INK))
+    parts.append(box_mesh(1.15, 0.12, 0.03, 0.0, -0.45, 0.06, INK))
     pos, uv, col, idx = merge_meshes(parts)
-    paper = _tex("paper") or tex["plaza_concrete"]
+    tex_path = tex.get("hr_poster") or _tex("paper") or tex["plaza_concrete"]
     return write_glb(
         MOD / "prop_hr_poster.glb",
         pos,
         uv,
         col,
         idx,
-        paper,
+        tex_path,
         "prop_hr_poster",
     )
 
@@ -419,6 +462,83 @@ def build_prop_elevator_panel(tex: dict[str, Path]) -> int:
         tex["tower_facade"],
         "prop_elevator_panel",
     )
+
+
+def build_prop_security_guard(tex: dict[str, Path]) -> int:
+    """Low-poly Guard NPC behind desk — facing -X toward lobby aisle."""
+    parts = []
+    # Chair stub
+    parts.append(box_mesh(0.45, 0.08, 0.45, 0.0, 0.45, 0.15, VC_DOOR))
+    parts.append(box_mesh(0.08, 0.45, 0.08, -0.15, 0.22, 0.0, VC_DOOR))
+    parts.append(box_mesh(0.08, 0.45, 0.08, 0.15, 0.22, 0.0, VC_DOOR))
+    parts.append(box_mesh(0.08, 0.45, 0.08, -0.15, 0.22, 0.3, VC_DOOR))
+    parts.append(box_mesh(0.08, 0.45, 0.08, 0.15, 0.22, 0.3, VC_DOOR))
+    # Seated torso (grim uniform — dark blue-gray via VC)
+    GUARD = (0.45, 0.48, 0.55)
+    SKIN = (0.75, 0.62, 0.52)
+    parts.append(box_mesh(0.4, 0.55, 0.28, 0.0, 0.85, 0.1, GUARD))  # torso
+    parts.append(box_mesh(0.28, 0.28, 0.28, 0.0, 1.25, 0.1, SKIN))  # head
+    # Cap
+    parts.append(box_mesh(0.32, 0.08, 0.32, 0.0, 1.42, 0.1, GUARD))
+    parts.append(box_mesh(0.34, 0.06, 0.12, 0.0, 1.38, -0.05, VC_METAL))  # brim toward aisle (-Z? face -X)
+    # Face toward -X (aisle): brim on -X
+    parts.append(box_mesh(0.12, 0.06, 0.34, -0.18, 1.38, 0.1, VC_METAL))
+    # Arms on desk
+    parts.append(box_mesh(0.55, 0.1, 0.12, -0.35, 1.02, 0.1, GUARD))
+    parts.append(box_mesh(0.12, 0.1, 0.35, -0.55, 1.02, 0.0, GUARD))
+    # Legs under desk
+    parts.append(box_mesh(0.14, 0.4, 0.14, -0.1, 0.35, 0.15, GUARD))
+    parts.append(box_mesh(0.14, 0.4, 0.14, 0.1, 0.35, 0.15, GUARD))
+    # Stare eyes (tiny emissive-ish bright)
+    parts.append(box_mesh(0.05, 0.04, 0.04, -0.15, 1.28, 0.05, (0.95, 0.9, 0.7)))
+    parts.append(box_mesh(0.05, 0.04, 0.04, -0.15, 1.28, 0.15, (0.95, 0.9, 0.7)))
+    pos, uv, col, idx = merge_meshes(parts)
+    return write_glb(
+        MOD / "prop_security_guard.glb",
+        pos,
+        uv,
+        col,
+        idx,
+        tex["tower_facade"],
+        "prop_security_guard",
+    )
+
+
+def build_prop_wet_floor(tex: dict[str, Path]) -> int:
+    """Yellow A-frame wet-floor cone + shiny puddle (floor Y)."""
+    YEL = (0.95, 0.82, 0.25)
+    YEL_DK = (0.75, 0.6, 0.15)
+    PUD = (0.55, 0.7, 0.8)
+    PUD_HI = (0.75, 0.88, 0.95)
+    parts = []
+    # A-frame: two panels leaning
+    parts.append(box_mesh(0.55, 0.7, 0.06, 0.0, 0.4, -0.12, YEL))
+    parts.append(box_mesh(0.55, 0.7, 0.06, 0.0, 0.4, 0.12, YEL))
+    # Top hinge bar
+    parts.append(box_mesh(0.5, 0.06, 0.2, 0.0, 0.75, 0.0, YEL_DK))
+    # Caution stripe blocks
+    parts.append(box_mesh(0.4, 0.12, 0.04, 0.0, 0.5, -0.16, YEL_DK))
+    parts.append(box_mesh(0.4, 0.12, 0.04, 0.0, 0.5, 0.16, YEL_DK))
+    # Feet
+    parts.append(box_mesh(0.5, 0.04, 0.08, 0.0, 0.02, -0.28, YEL_DK))
+    parts.append(box_mesh(0.5, 0.04, 0.08, 0.0, 0.02, 0.28, YEL_DK))
+    # Shiny puddle (flat ellipse approx via thin boxes)
+    parts.append(box_mesh(1.2, 0.02, 0.9, 0.15, 0.01, 0.0, PUD))
+    parts.append(box_mesh(0.7, 0.025, 0.5, 0.25, 0.015, 0.05, PUD_HI))
+    parts.append(box_mesh(0.25, 0.03, 0.15, 0.35, 0.02, -0.1, (0.9, 0.95, 1.0)))
+    pos, uv, col, idx = merge_meshes(parts)
+    # Prefer wet_cone; puddle tint via VC
+    tex_path = tex.get("wet_cone") or tex["plaza_concrete"]
+    return write_glb(
+        MOD / "prop_wet_floor.glb",
+        pos,
+        uv,
+        col,
+        idx,
+        tex_path,
+        "prop_wet_floor",
+    )
+
 
 
 def update_manifest(
@@ -450,7 +570,7 @@ def update_manifest(
 def main() -> None:
     MOD.mkdir(parents=True, exist_ok=True)
     TEX.mkdir(parents=True, exist_ok=True)
-    print("CORP-TOWER-02 Phase A kits (brutalist)…")
+    print("CORP-TOWER-03 landmark kits…")
 
     tex = write_tower_textures()
 
@@ -466,7 +586,9 @@ def main() -> None:
     t_badge = build_prop_badge_reader(tex)
     t_coffee = build_prop_coffee(tex)
     t_desk = build_prop_security_desk(tex)
+    t_guard = build_prop_security_guard(tex)
     t_poster = build_prop_hr_poster(tex)
+    t_wet = build_prop_wet_floor(tex)
     t_panel = build_prop_elevator_panel(tex)
 
     counts = {
@@ -476,7 +598,9 @@ def main() -> None:
         "assets/models/prop_badge_reader.glb": t_badge,
         "assets/models/prop_coffee.glb": t_coffee,
         "assets/models/prop_security_desk.glb": t_desk,
+        "assets/models/prop_security_guard.glb": t_guard,
         "assets/models/prop_hr_poster.glb": t_poster,
+        "assets/models/prop_wet_floor.glb": t_wet,
         "assets/models/prop_elevator_panel.glb": t_panel,
     }
     anchors = {
@@ -494,7 +618,7 @@ def main() -> None:
 
     print("triangle counts:", json.dumps(counts, indent=2))
     for name, t in counts.items():
-        budget = 900 if "tower_plaza" in name else (500 if "tower_" in name or "elevator_car" in name else 80)
+        budget = 900 if "tower_plaza" in name else (500 if "tower_" in name or "elevator_car" in name else (200 if "prop_" in name else 80))
         if t > budget:
             print(f"WARNING: {name} {t} > {budget} tris")
     print("done")

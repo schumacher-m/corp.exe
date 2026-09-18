@@ -3375,13 +3375,13 @@ export default {
       "security": {
         "id": "security",
         "label": "Security stare",
-        "prompt": "Hold eye contact",
+        "prompt": "E -- Hold the stare",
         "toast": "Security approved your face. Barely."
       },
       "hrPoster": {
         "id": "hrPoster",
         "label": "HR poster",
-        "prompt": "Read mandatory poster",
+        "prompt": "E -- Read the poster",
         "toast": "You read the poster. Values unchanged."
       },
       "syncPing": {
@@ -3409,6 +3409,20 @@ export default {
       "enterPrompt": "E -- Enter lobby",
       "toast": "Welcome to the building. Leave is not a feature.",
       "doorPrompt": "E -- Enter lobby"
+    },
+    "landmarks": {
+      "guard": {
+        "prompt": "E -- Hold the stare",
+        "toast": "Security stared back. You blinked first (spiritually)."
+      },
+      "hrPoster": {
+        "prompt": "E -- Read the poster",
+        "toast": "HR poster absorbed. Values still optional."
+      },
+      "wetFloor": {
+        "prompt": "E -- Acknowledge hazard",
+        "toast": "Wet floor noted. Dignity not covered by policy."
+      }
     }
   }
 };

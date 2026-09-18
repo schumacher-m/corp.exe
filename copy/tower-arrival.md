@@ -3,6 +3,7 @@
 Spec: `specs/12-tower-arrival.md`. Bake key: `towerArrival`.
 ASCII. Sync / Mail / Tracker / Jimbo. Bleak corp morning. No ableist jokes.
 Badge always required; 2-of-3 lobby beats; wrong floor = toast only.
+Landmark prompts: Guard / HR poster / wet-floor (counts locked).
 
 ```json
 {
@@ -28,13 +29,13 @@ Badge always required; 2-of-3 lobby beats; wrong floor = toast only.
     "security": {
       "id": "security",
       "label": "Security stare",
-      "prompt": "Hold eye contact",
+      "prompt": "E -- Hold the stare",
       "toast": "Security approved your face. Barely."
     },
     "hrPoster": {
       "id": "hrPoster",
       "label": "HR poster",
-      "prompt": "Read mandatory poster",
+      "prompt": "E -- Read the poster",
       "toast": "You read the poster. Values unchanged."
     },
     "syncPing": {
@@ -62,6 +63,20 @@ Badge always required; 2-of-3 lobby beats; wrong floor = toast only.
     "enterPrompt": "E -- Enter lobby",
     "toast": "Welcome to the building. Leave is not a feature.",
     "doorPrompt": "E -- Enter lobby"
+  },
+  "landmarks": {
+    "guard": {
+      "prompt": "E -- Hold the stare",
+      "toast": "Security stared back. You blinked first (spiritually)."
+    },
+    "hrPoster": {
+      "prompt": "E -- Read the poster",
+      "toast": "HR poster absorbed. Values still optional."
+    },
+    "wetFloor": {
+      "prompt": "E -- Acknowledge hazard",
+      "toast": "Wet floor noted. Dignity not covered by policy."
+    }
   }
 }
 ```

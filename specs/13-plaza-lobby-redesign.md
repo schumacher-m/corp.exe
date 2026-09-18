@@ -4,6 +4,7 @@
 **Parent:** `specs/12-tower-arrival.md` (phases / badge+2-of-3 / empties stay)  
 **Art direction:** **Brutalist concrete — Silent Hill office mass** (not glass skyscraper, not stubby park)  
 **Ship order (Michael):** **1) Redesign kits + wire → tip Pages** → **2) Bugfix pass** on that tip  
+**Follow-up:** Lobby landmarks / affordances → `specs/14-lobby-landmarks.md`
 
 ---
 

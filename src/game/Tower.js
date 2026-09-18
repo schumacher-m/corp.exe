@@ -5,7 +5,8 @@
  * GLB empties: plaza_spawn, tower_entrance,
  *   lobby_spawn, badge_reader, coffee_machine, security_desk, hr_poster, elevator_call,
  *   elevator_interior, btn_floor_player, btn_floor_wrong_1/2, elevator_door.
- * Extra (code): lobby_sync_chip, wet_floor.
+ * Extra: lobby_sync_chip; wet_floor empty on lobby GLB (fallback in code).
+ * CORP-TOWER-03: prop_security_guard, prop_wet_floor, prop_hr_poster landmarks.
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -30,10 +31,10 @@ const BEAT_SANITY = {
 
 const FALLBACK_TOAST = {
   coffee: "Sludge dispensed. Leadership calls it fuel.",
-  security: "You blinked second. Cleared.",
-  hr_poster: "Values absorbed. None retained.",
+  security: "Security stared back. You blinked first (spiritually).",
+  hr_poster: "HR poster absorbed. Values still optional.",
   sync_ping: "Lobby Sync answered. Meeting still happening.",
-  wet_floor: "Liability noted. Floor still wet.",
+  wet_floor: "Wet floor noted. Dignity not covered by policy.",
 };
 
 const FALLBACK_LABEL = {
@@ -308,7 +309,7 @@ export function createTower(opts) {
       hr_poster: [-5.7, 1.6, 0.5],
       elevator_call: [1.4, 1.3, -6.4],
       lobby_sync_chip: [0.5, 1.4, 2.0],
-      wet_floor: [3.5, 0.35, -1.5],
+      wet_floor: [-2.0, 0, 2.5],
     };
     grayLobby.add(boxMesh(0.5, 1.2, 0.3, 0x555248, 0.9).translateX(-5.6).translateZ(4));
     grayLobby.add(boxMesh(0.7, 1.4, 0.6, 0x4a4038, 0).translateX(-5.2).translateZ(-2.5));
@@ -380,15 +381,9 @@ export function createTower(opts) {
       hooks.lobby_sync_chip = e;
     }
     if (!hooks.wet_floor) {
-      const e = empty("wet_floor", 3.5, 0.35, -1.5);
+      const e = empty("wet_floor", -2.0, 0, 2.5);
       lobby.add(e);
       hooks.wet_floor = e;
-      const cone = new THREE.Mesh(
-        new THREE.ConeGeometry(0.25, 0.7, 6),
-        new THREE.MeshLambertMaterial({ color: 0xc87820, flatShading: true })
-      );
-      cone.position.copy(e.position);
-      lobby.add(cone);
     }
   }
 
@@ -450,10 +445,12 @@ export function createTower(opts) {
       ["prop_badge_reader", "badge_reader", lobby],
       ["prop_coffee", "coffee_machine", lobby],
       ["prop_security_desk", "security_desk", lobby],
+      ["prop_security_guard", "security_desk", lobby],
       ["prop_hr_poster", "hr_poster", lobby],
+      ["prop_wet_floor", "wet_floor", lobby],
       ["prop_elevator_panel", "btn_floor_player", elevator],
     ];
-    const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk"]);
+    const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk", "prop_security_guard", "prop_wet_floor"]);
     const WALL_Y_MAX = 1.55;
     const WALL_Y_MIN = 0.35;
     for (const [prop, hookName, parent] of propMap) {
@@ -499,7 +496,12 @@ export function createTower(opts) {
   function beatCopy(id) {
     const writerKey = WRITER_BEAT_KEYS[id];
     const beats = ta().beats || {};
-    return beats[writerKey] || beats[id] || {};
+    const fromBeats = beats[writerKey] || beats[id] || {};
+    const lm = ta().landmarks || {};
+    const lmKey = { security: "guard", hr_poster: "hrPoster", wet_floor: "wetFloor" }[id];
+    const fromLm = lmKey ? lm[lmKey] || {} : {};
+    /* Landmark prompts/toasts win when present (CORP-TOWER-03). */
+    return Object.assign({}, fromBeats, fromLm);
   }
 
   function checklistMet() {
@@ -714,6 +716,10 @@ export function createTower(opts) {
   const ENTRANCE_ENTER_R = 5.5;
   const ENTRANCE_PROMPT_R = 8.0;
   const ENTRANCE_MAGNET_R = 9.0;
+  /* CORP-TOWER-03 — slight beat-radius bump; counts locked */
+  const BEAT_NEAR_R = 2.35;
+  const BADGE_NEAR_R = 2.35;
+  const SECURITY_NEAR_R = 2.65;
 
   function plazaDoorPrompt() {
     const pl = ta().plaza || {};
@@ -748,14 +754,14 @@ export function createTower(opts) {
     interactCooldown = 0.35;
 
     if (G.phase === "lobby") {
-      if (nearHook("badge_reader", 1.9)) {
+      if (nearHook("badge_reader", BADGE_NEAR_R)) {
         doBadge();
         return;
       }
       for (const id of offered) {
         if (beatsDone[id] || id === "security") continue;
         const hookName = BEAT_HOOK[id];
-        if (hookName && nearHook(hookName, 1.9)) {
+        if (hookName && nearHook(hookName, BEAT_NEAR_R)) {
           completeBeat(id);
           setPrompt(checklistHud());
           return;
@@ -769,7 +775,7 @@ export function createTower(opts) {
           return;
         }
       }
-      if (nearHook("elevator_call", 1.9)) {
+      if (nearHook("elevator_call", BEAT_NEAR_R)) {
         if (!elevatorUnlocked) {
           toast((ta().checklist || {}).elevatorLocked || "Elevator locked. Badge + 2 beats first.");
         } else {
@@ -846,7 +852,7 @@ export function createTower(opts) {
       updateFpMove(dt, { xmin: -7.5, xmax: 7.5, zmin: -7, zmax: 7 });
       applyCamera(camera);
 
-      if (offered.includes("security") && !beatsDone.security && nearHook("security_desk", 2.2)) {
+      if (offered.includes("security") && !beatsDone.security && nearHook("security_desk", SECURITY_NEAR_R)) {
         const holding = !!(G.keys["e"] || G.keys[" "] || G.keys["enter"] || G.keys["space"]);
         if (holding) {
           securityHold += dt;
@@ -863,9 +869,9 @@ export function createTower(opts) {
         }
       } else {
         let prompt = checklistHud();
-        if (!badgeDone && nearHook("badge_reader", 1.9)) {
+        if (!badgeDone && nearHook("badge_reader", BADGE_NEAR_R)) {
           prompt = (ta().badge || {}).prompt || "E — Scan badge";
-        } else if (nearHook("elevator_call", 1.9)) {
+        } else if (nearHook("elevator_call", BEAT_NEAR_R)) {
           prompt = elevatorUnlocked
             ? (ta().elevator || {}).prompt || "E — Call elevator"
             : (ta().checklist || {}).elevatorLocked || "Elevator locked";
@@ -873,7 +879,7 @@ export function createTower(opts) {
           for (const id of offered) {
             if (beatsDone[id] || id === "security") continue;
             const hookName = BEAT_HOOK[id];
-            if (hookName && nearHook(hookName, 1.9)) {
+            if (hookName && nearHook(hookName, BEAT_NEAR_R)) {
               prompt = beatCopy(id).prompt || "E — " + FALLBACK_LABEL[id];
               break;
             }
@@ -883,9 +889,9 @@ export function createTower(opts) {
       }
 
       const nearStuck =
-        (!badgeDone && nearHook("badge_reader", 1.9)) ||
+        (!badgeDone && nearHook("badge_reader", BADGE_NEAR_R)) ||
         offered.some(function (id) {
-          return !beatsDone[id] && BEAT_HOOK[id] && nearHook(BEAT_HOOK[id], id === "security" ? 2.2 : 1.9);
+          return !beatsDone[id] && BEAT_HOOK[id] && nearHook(BEAT_HOOK[id], id === "security" ? SECURITY_NEAR_R : BEAT_NEAR_R);
         });
       if (nearStuck && !checklistMet()) {
         stuckTimer += dt;

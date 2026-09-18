@@ -4,6 +4,17 @@ Spec: `specs/12-tower-arrival.md`. Art: PS1 same as farm (`docs/VISUAL.md`, `doc
 **Floor after elevator = brighter aisle-grid farm** (reuse FARM locks — do not invent a second office).
 
 
+## CORP-TOWER-03 — Lobby landmarks (2026-09-18)
+
+See **`specs/14-lobby-landmarks.md`**. ✅ **kits shipped** — Guard NPC, large HR poster, yellow A-frame + puddle, `lobby_floor_b`/`lobby_wall_b`. Lobby empty `wet_floor` at `[-2,0,2.5]` floor Y. Other empties unchanged; badge/2-of-3 locked. Soft DROP parked.
+
+| Asset | Role |
+|-------|------|
+| `prop_security_guard.glb` (or desk kit update) | Staring Guard NPC |
+| `prop_hr_poster.glb` | Larger readable poster |
+| `prop_wet_floor.glb` | Yellow cone + shiny puddle |
+| Lobby floor/wall texture variants | Slab/wall variety |
+
 ## CORP-TOWER-02 — Brutalist redesign (2026-09-18)
 
 See **`specs/13-plaza-lobby-redesign.md`**. Empties unchanged. Ship **redesign kits first**, then **bugfix** (ceiling props / nav / farm-pause perf). Soft DROP still parked.
@@ -19,7 +30,9 @@ See **`specs/13-plaza-lobby-redesign.md`**. Empties unchanged. Ship **redesign k
 | `assets/models/prop_badge_reader.glb` | Lobby badge scan | ✅ shipped |
 | `assets/models/prop_coffee.glb` | Coffee machine beat | ✅ shipped |
 | `assets/models/prop_security_desk.glb` | Security stare beat | ✅ shipped |
-| `assets/models/prop_hr_poster.glb` | HR poster beat | ✅ shipped |
+| `assets/models/prop_hr_poster.glb` | HR poster beat | ✅ CORP-TOWER-03 large readable |
+| `assets/models/prop_security_guard.glb` | Staring Guard NPC behind desk | ✅ CORP-TOWER-03 |
+| `assets/models/prop_wet_floor.glb` | Yellow A-frame + shiny puddle | ✅ CORP-TOWER-03 |
 | `assets/models/prop_elevator_panel.glb` | Call/floor buttons (or empties on car) | ✅ shipped |
 
 Graybox PS1 kits landed via `assets/build_tower_assets.py` (imports helpers from `build_ps1_assets.py`). Empties below are embedded as named nodes — Dev can wire phases.
@@ -34,6 +47,9 @@ Plaza→tower walk must read silhouettes / grounds / walls. **Not** flat near-bl
 | `plaza_concrete.png` | `assets/textures/plaza_concrete.png` | Plaza curb / concrete accents | ~100–140 |
 | `tower_facade.png` | `assets/textures/tower_facade.png` | Tower mass + door surround | ~100–140 |
 | `lobby_wall.png` | `assets/textures/lobby_wall.png` | Lobby walls / elev interior | ~100–140 |
+| `lobby_floor_b.png` | `assets/textures/lobby_floor_b.png` | Lobby slab seams/scuffs (TOWER-03) | ~100–140 |
+| `lobby_wall_b.png` | `assets/textures/lobby_wall_b.png` | Cooler fluo wall tint (TOWER-03) | ~100–140 |
+| `hr_poster.png` | `assets/textures/hr_poster.png` | Readable HR values plate | ~100–140 |
 
 - Kits use **bright vertex colors** (~0.85–1.0) × these albedos so multiply stays readable.
 - Regenerator: `assets/build_tower_assets.py` (`write_tower_textures` + `assert_readable_albedo` refuse avg < 100).
@@ -75,6 +91,7 @@ Soft DROP parked.
 | `coffee_machine` | E | Daily pool |
 | `security_desk` | Hold / wait bar | Daily pool |
 | `hr_poster` | E → dismiss | Daily pool |
+| `wet_floor` | E | Daily pool (cone+puddle) |
 | `lobby_sync_chip` | Optional UI chip | Daily pool (alt) |
 | `elevator_call` | E when checklist met | Unlock car |
 
