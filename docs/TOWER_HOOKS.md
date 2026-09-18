@@ -22,6 +22,13 @@ Dev: copy empty **world quaternion** on wall props; prefer `security_guard` empt
 
 See **`specs/17-elev-doors-guard-scale.md`**. Doors **open on badge success** (blocking until then). Guard standing **~1.75–1.85m**. Scale ref: player eye ~1.6m; adult NPC 1.75–1.85m; door leaf ~2.1m; ceiling ~2.7m. Counts locked. Soft DROP parked.
 
+### Elev door attach (tower16 fix)
+
+- **Primary empties on `tower_lobby`:** `elevator_door_L` / `elevator_door_R` / `elevator_door` at z≈−6.4 flush in jamb (open aperture — no grey filler plug).
+- Leaves: `prop_elev_door_L/R`. **Open slide = local ±X** (L −0.55, R +0.55). Closed seals opening.
+- Car also has L/R empties for interior; prefer lobby hooks for lobby-facing doors.
+
+
 ## CORP-TOWER-03.2 — Guard + turnstile (2026-09-18)
 
 See **`specs/16-lobby-turnstile-guard.md`**. Real-world lobby grammar: Guard behind desk facing approach; badge beat = waist-high **turnstile** on path to elevator. Keep `badge_reader` empty name. Counts locked. Soft DROP parked.

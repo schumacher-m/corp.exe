@@ -236,10 +236,14 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
     walls.append(box_mesh(3.2, 2.5, 0.5, 0.0, 1.25, 6.7, VC_FACADE))
     walls.append(box_mesh(0.4, 2.5, 0.8, -1.8, 1.25, 6.5, VC_FACADE))
     walls.append(box_mesh(0.4, 2.5, 0.8, 1.8, 1.25, 6.5, VC_FACADE))
-    # Elevator bank recess (-Z) — heavy lintel
-    walls.append(box_mesh(3.0, 0.5, 0.6, 0.0, 2.3, -6.55, VC_FACADE))
-    walls.append(box_mesh(2.4, 2.4, 0.5, 0.0, 1.2, -6.65, VC_FACADE))
-    walls.append(box_mesh(1.5, 2.1, 0.12, 0.0, 1.05, -6.35, VC_DOOR))
+    # Elevator bank (-Z) — OPEN aperture (no grey filler wall). Jamb + lintel only.
+    # Opening ~1.4 wide × 2.15 tall; leaves seal flush via elevator_door_L/R.
+    walls.append(box_mesh(3.0, 0.45, 0.5, 0.0, 2.35, -6.55, VC_FACADE))  # lintel
+    walls.append(box_mesh(0.45, 2.2, 0.5, -0.95, 1.1, -6.55, VC_FACADE))  # L jamb
+    walls.append(box_mesh(0.45, 2.2, 0.5, 0.95, 1.1, -6.55, VC_FACADE))  # R jamb
+    # Side returns into recess (frame depth, not plugging opening)
+    walls.append(box_mesh(0.12, 2.2, 0.35, -0.72, 1.1, -6.85, VC_FACADE))
+    walls.append(box_mesh(0.12, 2.2, 0.35, 0.72, 1.1, -6.85, VC_FACADE))
     # Security desk landmark (near empty) — heavy concrete
     walls.append(box_mesh(2.8, 1.15, 0.9, 2.5, 0.55, 1.5, VC_DESK))
     walls.append(box_mesh(2.8, 0.12, 1.0, 2.5, 1.15, 1.5, VC_DESK))
@@ -260,6 +264,9 @@ def build_tower_lobby(tex: dict[str, Path]) -> tuple[int, list[dict]]:
         {"name": "security_guard", "translation": [3.95, 0.0, 1.35], "rotation": [0.0, -0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "hr_poster", "translation": [-5.7, 1.6, 0.5], "rotation": [0.0, 0.7071067811865475, 0.0, 0.7071067811865476]},
         {"name": "wet_floor", "translation": [-2.0, 0.0, 2.5]},
+        {"name": "elevator_door_L", "translation": [-0.35, 1.05, -6.4]},
+        {"name": "elevator_door_R", "translation": [0.35, 1.05, -6.4]},
+        {"name": "elevator_door", "translation": [0.0, 1.05, -6.4]},
         {"name": "elevator_call", "translation": [1.4, 1.3, -6.4]},
     ]
 
@@ -333,7 +340,7 @@ def build_elevator_car(tex: dict[str, Path]) -> tuple[int, list[dict]]:
         {"name": "btn_floor_wrong_2", "translation": [0.7, 1.05, -0.2]},
         # Pivot cue (center) — keep for legacy
         {"name": "elevator_door", "translation": [0.0, 1.05, 0.9]},
-        # Sliding leaves — closed pose; open: L.x -= 0.55, R.x += 0.55
+        # Car-side leaf hooks (optional). Primary attach = lobby elevator_door_L/R.
         {"name": "elevator_door_L", "translation": [-0.32, 1.05, 0.88]},
         {"name": "elevator_door_R", "translation": [0.32, 1.05, 0.88]},
         {"name": "elevator_panel", "translation": [0.78, 1.25, -0.2], "rotation": quat_neg},
@@ -579,7 +586,9 @@ def build_prop_turnstile(tex: dict[str, Path]) -> int:
 
 def build_prop_elev_door_leaf(tex: dict[str, Path], side: str) -> int:
     """Single elev door leaf ~0.62×2.1. Origin center. Local +Z = out of car.
-    Attach to elevator_door_L / _R; slide ±X to open.
+    Attach to lobby empties elevator_door_L / _R (flush in jamb, z≈-6.4).
+    Closed: seals aperture. Open: slide along local +X — L leaf −0.55 X, R leaf +0.55 X.
+    Do NOT place beside entrance; kill any grey filler in lobby elev bank.
     """
     METAL = (0.55, 0.55, 0.58)
     METAL_DK = (0.4, 0.4, 0.42)

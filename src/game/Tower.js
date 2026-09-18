@@ -313,6 +313,9 @@ export function createTower(opts) {
       security_desk: [2.5, 0, 1.5],
       hr_poster: [-5.7, 1.6, 0.5],
       elevator_call: [1.4, 1.3, -6.4],
+      elevator_door: [0.0, 1.05, -6.4],
+      elevator_door_L: [-0.35, 1.05, -6.4],
+      elevator_door_R: [0.35, 1.05, -6.4],
       lobby_sync_chip: [0.5, 1.4, 2.0],
       wet_floor: [-2.0, 0, 2.5],
     };
@@ -326,7 +329,9 @@ export function createTower(opts) {
     );
     cone.position.set(3.5, 0.35, -1.5);
     grayLobby.add(cone);
-    grayLobby.add(boxMesh(2.4, 2.6, 0.2, 0x2a2820, 0.1).translateX(1.4).translateZ(-6.5));
+    /* jamb only — no grey plug in elev aperture (CORP-TOWER-03.3.1) */
+    grayLobby.add(boxMesh(0.35, 2.4, 0.2, 0x2a2820, 0.1).translateX(-0.95).translateZ(-6.5));
+    grayLobby.add(boxMesh(0.35, 2.4, 0.2, 0x2a2820, 0.1).translateX(0.95).translateZ(-6.5));
     for (const [n, p] of Object.entries(places)) {
       const e = empty(n, p[0], p[1], p[2]);
       grayLobby.add(e);
@@ -575,22 +580,38 @@ export function createTower(opts) {
     }
 
 
-    /* CORP-TOWER-03.3 — elev door leaves + lobby-visible copies + blocker */
+    /* CORP-TOWER-03.3.1 — flush L/R leaves to lobby jamb empties (not elevator_call) */
+    function findNamedOn(root, name) {
+      let found = null;
+      root.traverse((o) => {
+        if (o.name === name) found = o;
+      });
+      return found;
+    }
     async function loadDoorLeaf(propName, hookName) {
       const sc = await loadModel(pathFor(propName));
       sc.name = propName;
-      /* Lobby elev bank (car empties are at origin — place jamb at elevator_call) */
-      const bank = hooks.elevator_call
-        ? (() => {
-            const wp = new THREE.Vector3();
-            hooks.elevator_call.getWorldPosition(wp);
-            lobby.worldToLocal(wp);
-            return wp;
-          })()
-        : new THREE.Vector3(1.4, 1.3, -6.4);
+      /* Prefer lobby jamb empty — car collectNamed overwrites hooks.elevator_door_* */
+      const h =
+        findNamedOn(lobby, hookName) ||
+        findNamedOn(grayLobby, hookName) ||
+        hooks[hookName];
       const isL = /_L$/.test(hookName) || propName.includes("_L");
-      sc.position.set(bank.x + (isL ? -0.32 : 0.32), 1.05, bank.z + 0.15);
-      sc.rotation.set(0, 0, 0);
+      const fallback = new THREE.Vector3(isL ? -0.35 : 0.35, 1.05, -6.4);
+      if (h) {
+        const wp = new THREE.Vector3();
+        const wq = new THREE.Quaternion();
+        h.getWorldPosition(wp);
+        h.getWorldQuaternion(wq);
+        lobby.worldToLocal(wp);
+        const pq = new THREE.Quaternion();
+        lobby.getWorldQuaternion(pq);
+        sc.position.copy(wp);
+        sc.quaternion.copy(pq.clone().invert().multiply(wq));
+      } else {
+        sc.position.copy(fallback);
+        sc.rotation.set(0, 0, 0);
+      }
       sc.userData.closedX = sc.position.x;
       lobby.add(sc);
       if (forceNearest) forceNearest(sc);
@@ -600,21 +621,35 @@ export function createTower(opts) {
     try {
       doorL = await loadDoorLeaf("prop_elev_door_L", "elevator_door_L");
       doorR = await loadDoorLeaf("prop_elev_door_R", "elevator_door_R");
-      console.info("[tower] elev doors OK");
+      console.info("[tower] elev doors OK (lobby jamb)");
     } catch (e) {
       console.warn("[tower] elev doors soft-fail", e && e.message ? e.message : e);
       doorL = boxMesh(0.55, 2.1, 0.08, 0x4a4840, 0);
       doorR = boxMesh(0.55, 2.1, 0.08, 0x4a4840, 0);
-      doorL.position.set(1.08, 1.05, -6.35);
-      doorR.position.set(1.72, 1.05, -6.35);
+      doorL.position.set(-0.35, 1.05, -6.4);
+      doorR.position.set(0.35, 1.05, -6.4);
       doorL.userData.closedX = doorL.position.x;
       doorR.userData.closedX = doorR.position.x;
       lobby.add(doorL, doorR);
     }
-    doorBlocker = boxMesh(1.4, 2.2, 0.2, 0x2a2820, 0.05);
+    /* Invisible collider only — never a grey slab in the jamb hole */
+    doorBlocker = boxMesh(1.2, 2.2, 0.18, 0x2a2820, 0);
     doorBlocker.name = "ElevDoorBlocker";
-    doorBlocker.position.set(1.4, 1.1, -6.2);
-    doorBlocker.visible = true;
+    const jambMid = findNamedOn(lobby, "elevator_door") || findNamedOn(grayLobby, "elevator_door");
+    if (jambMid) {
+      const wp = new THREE.Vector3();
+      jambMid.getWorldPosition(wp);
+      lobby.worldToLocal(wp);
+      doorBlocker.position.set(wp.x, 1.1, wp.z + 0.15);
+    } else {
+      doorBlocker.position.set(0, 1.1, -6.25);
+    }
+    doorBlocker.visible = false;
+    if (doorBlocker.material) {
+      doorBlocker.material.transparent = true;
+      doorBlocker.material.opacity = 0;
+      doorBlocker.material.depthWrite = false;
+    }
     lobby.add(doorBlocker);
 
     ensureExtraLobbyHooks();
@@ -837,10 +872,14 @@ export function createTower(opts) {
     } catch (_) {}
   }
 
+  function doorsBlocking() {
+    return doorOpenT < 0.85;
+  }
+
   function setDoorsClosedPose() {
     if (doorL) doorL.position.x = (doorL.userData.closedX != null ? doorL.userData.closedX : doorL.position.x);
     if (doorR) doorR.position.x = (doorR.userData.closedX != null ? doorR.userData.closedX : doorR.position.x);
-    if (doorBlocker) doorBlocker.visible = true;
+    /* blocker stays invisible — collision uses doorsBlocking() */
   }
 
   function updateElevDoors(dt) {
@@ -855,7 +894,6 @@ export function createTower(opts) {
     if (doorR && doorR.userData.closedX != null) {
       doorR.position.x = doorR.userData.closedX + DOOR_SLIDE * doorOpenT;
     }
-    if (doorBlocker) doorBlocker.visible = doorOpenT < 0.85;
   }
 
   function doBadge() {
@@ -1037,10 +1075,24 @@ export function createTower(opts) {
 
     if (G.phase === "lobby") {
       updateElevDoors(dt);
-      updateFpMove(dt, { xmin: -7.5, xmax: 7.5, zmin: -7, zmax: 7 });
-      /* Pre-badge: solid door blocker — keep player out of elev threshold */
-      if (doorBlocker && doorBlocker.visible && player.pos.z < -5.6) {
-        player.pos.z = Math.max(player.pos.z, -5.55);
+      /* Open doors: deepen z so player can walk into the car aperture */
+      const lobbyZmin = doorsBlocking() ? -5.7 : -7.6;
+      updateFpMove(dt, { xmin: -7.5, xmax: 7.5, zmin: lobbyZmin, zmax: 7 });
+      /* Invisible collider while closed/opening — never a grey slab */
+      if (doorsBlocking() && player.pos.z < -5.6) {
+        const dx = Math.abs(player.pos.x - (doorBlocker ? doorBlocker.position.x : 0));
+        if (dx < 0.85) player.pos.z = Math.max(player.pos.z, -5.55);
+      }
+      /* Walk-into-car when open enough + checklist met (E-call stays shortcut) */
+      if (
+        !doorsBlocking() &&
+        elevatorUnlocked &&
+        player.pos.z < -6.45 &&
+        Math.abs(player.pos.x - (doorBlocker ? doorBlocker.position.x : 0)) < 0.9
+      ) {
+        enterElevator();
+        applyCamera(camera);
+        return;
       }
       applyCamera(camera);
 
@@ -1063,10 +1115,14 @@ export function createTower(opts) {
         let prompt = checklistHud();
         if (!badgeDone && nearHook("badge_reader", BADGE_NEAR_R)) {
           prompt = (ta().badge || {}).prompt || "E — Scan badge";
-        } else if (nearHook("elevator_call", BEAT_NEAR_R)) {
-          prompt = elevatorUnlocked
-            ? (ta().elevator || {}).prompt || "E — Call elevator"
-            : (ta().checklist || {}).elevatorLocked || "Elevator locked";
+        } else if (nearHook("elevator_call", BEAT_NEAR_R) || (!doorsBlocking() && elevatorUnlocked && player.pos.z < -5.2)) {
+          if (!elevatorUnlocked) {
+            prompt = (ta().checklist || {}).elevatorLocked || "Elevator locked";
+          } else if (doorsBlocking()) {
+            prompt = "Wait for the doors.";
+          } else {
+            prompt = (ta().elevator || {}).prompt || "Walk in · or E — Call elevator";
+          }
         } else {
           for (const id of offered) {
             if (beatsDone[id] || id === "security") continue;
