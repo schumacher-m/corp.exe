@@ -134,6 +134,7 @@ export function createTower(opts) {
     copy,
     forceNearest,
     onEnterWalk,
+    setFarmCommutePaused,
   } = opts;
 
   const root = new THREE.Group();
@@ -168,18 +169,14 @@ export function createTower(opts) {
   towerKey.userData.baseI = 1.75;
   towerKey.position.set(3, 14, 6);
   towerLightRoot.add(towerKey);
+  /* Phase B: ≤6 PointLights active in tower commute */
   const towerFluoSpots = [
-    [0, 3.6, 7.2, 0xc8d0d8, 1.35, 16],
-    [0, 3.2, -1.5, 0xb8c4d0, 1.25, 14],
-    [-5, 3.4, 2, 0xb0bcc8, 0.95, 12],
-    [5, 3.4, 2, 0xb0bcc8, 0.95, 12],
-    [0, 3.0, -12, 0xa8b0b8, 1.1, 18],
-    /* lobby cooler banks (still lit while plaza — harmless; lobby phase same root) */
-    [-4, 2.8, 3, 0xc0d0e0, 1.05, 11],
-    [3, 2.8, 1, 0xc0d0e0, 1.0, 11],
-    [1.4, 2.6, -5, 0xb8c8d8, 0.9, 9],
-    /* elevator car */
-    [0, 2.2, 0, 0xd0d4c8, 1.2, 6],
+    [0, 3.6, 7.2, 0xc8d0d8, 1.45, 18],
+    [0, 3.2, -2.0, 0xb8c4d0, 1.35, 16],
+    [-4.5, 3.0, 2.5, 0xb0bcc8, 1.1, 13],
+    [4.5, 3.0, 2.5, 0xb0bcc8, 1.1, 13],
+    [0, 2.9, -11, 0xa8b0b8, 1.2, 18],
+    [0, 2.4, 0, 0xc8d0d8, 1.15, 10],
   ];
   for (const [x, y, z, col, inten, dist] of towerFluoSpots) {
     const fl = new THREE.PointLight(col, 0, dist);
@@ -217,6 +214,7 @@ export function createTower(opts) {
         o.intensity = on ? o.userData.baseI : 0;
       }
     });
+    if (typeof setFarmCommutePaused === "function") setFarmCommutePaused(!!on);
   }
 
   function nearestTowerMaps(root) {
@@ -455,6 +453,9 @@ export function createTower(opts) {
       ["prop_hr_poster", "hr_poster", lobby],
       ["prop_elevator_panel", "btn_floor_player", elevator],
     ];
+    const FLOOR_PROPS = new Set(["prop_coffee", "prop_security_desk"]);
+    const WALL_Y_MAX = 1.55;
+    const WALL_Y_MIN = 0.35;
     for (const [prop, hookName, parent] of propMap) {
       try {
         const sc = await loadModel(pathFor(prop));
@@ -464,6 +465,12 @@ export function createTower(opts) {
           const wp = new THREE.Vector3();
           h.getWorldPosition(wp);
           parent.worldToLocal(wp);
+          /* Phase B1: floor-clamp — no ceiling-stuck props */
+          if (FLOOR_PROPS.has(prop)) {
+            wp.y = 0;
+          } else {
+            wp.y = THREE.MathUtils.clamp(wp.y, WALL_Y_MIN, WALL_Y_MAX);
+          }
           sc.position.copy(wp);
         }
         parent.add(sc);
@@ -474,6 +481,16 @@ export function createTower(opts) {
     }
 
     ensureExtraLobbyHooks();
+
+    // Phase B1: keep interact empties out of ceiling for nearHook
+    for (const name of ["badge_reader", "hr_poster", "elevator_call", "lobby_sync_chip"]) {
+      const h = hooks[name];
+      if (h) h.position.y = THREE.MathUtils.clamp(h.position.y, 0.35, 1.55);
+    }
+    for (const name of ["coffee_machine", "security_desk", "wet_floor"]) {
+      const h = hooks[name];
+      if (h) h.position.y = Math.min(h.position.y, 0.15);
+    }
     ready = true;
   }
 
@@ -694,9 +711,9 @@ export function createTower(opts) {
   }
 
   /* Entrance volume: graybox door ~2.4 wide @ z=-4.4; keep forgiving for GLB/approach. */
-  const ENTRANCE_ENTER_R = 4.5;
-  const ENTRANCE_PROMPT_R = 6.5;
-  const ENTRANCE_MAGNET_R = 7.25;
+  const ENTRANCE_ENTER_R = 5.5;
+  const ENTRANCE_PROMPT_R = 8.0;
+  const ENTRANCE_MAGNET_R = 9.0;
 
   function plazaDoorPrompt() {
     const pl = ta().plaza || {};
@@ -813,7 +830,7 @@ export function createTower(opts) {
     if (interactCooldown > 0) interactCooldown -= dt;
 
     if (G.phase === "plaza") {
-      const plazaBounds = { xmin: -10, xmax: 10, zmin: -8.5, zmax: 9 };
+      const plazaBounds = { xmin: -11, xmax: 11, zmin: -10.5, zmax: 9 };
       updateFpMove(dt, plazaBounds);
       softMagnetEntrance(dt, plazaBounds);
       applyCamera(camera);

@@ -157,13 +157,24 @@ scene.add(keyL);
 const fluo = new THREE.PointLight(0xf0ecd4, 1.4, 12);
 fluo.position.set(0, 2.4, -1);
 scene.add(fluo);
-/* Fluorescent banks along farm — #f0ecd4 ~0.85 */
+/* Fluorescent banks along farm — #f0ecd4 ~0.85; paused during tower commute (Phase B) */
+const farmFluoLights = [];
+fluo.userData.baseI = 1.4;
 for (let iz = -8; iz <= 4; iz += 2) {
   for (const ix of [-8, -4, 0, 4, 8]) {
     const fl = new THREE.PointLight(0xf0ecd4, 1.1, 10);
+    fl.userData.baseI = 1.1;
     fl.position.set(ix * 2.2, 2.45, iz * 2.6);
     scene.add(fl);
+    farmFluoLights.push(fl);
   }
+}
+function setFarmCommutePaused(paused) {
+  /* OfficeRoot already hidden in tower phases; kill farm PointLights so commute isn't lit by 35 banks. */
+  for (const fl of farmFluoLights) {
+    fl.intensity = paused ? 0 : fl.userData.baseI;
+  }
+  fluo.intensity = paused ? 0 : fluo.userData.baseI;
 }
 
 const OfficeRoot = new THREE.Group();
@@ -287,6 +298,7 @@ try {
     win95,
     copy,
     forceNearest,
+    setFarmCommutePaused,
     onEnterWalk: () => {
       // Clock still frozen until seated; start farm bed + walk bed only now
       try { audio.stopLoop("floorAmb"); } catch (_) {}
