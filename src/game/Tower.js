@@ -83,7 +83,12 @@ function shuffle(arr, rng) {
 function boxMesh(w, h, d, color, y = 0) {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, d),
-    new THREE.MeshLambertMaterial({ color, flatShading: true })
+    new THREE.MeshLambertMaterial({
+      color,
+      flatShading: true,
+      emissive: new THREE.Color(color).multiplyScalar(0.18),
+      emissiveIntensity: 0.35,
+    })
   );
   m.position.y = y + h / 2;
   return m;
@@ -150,6 +155,110 @@ export function createTower(opts) {
   let floorHanded = false;
   let ready = false;
 
+  /* Tower-phase look — farm fluo grid doesn't reach plaza spawn; don't dim farm pass. */
+  const FARM_FOG = { color: 0x5a5848, near: 18, far: 40, bg: 0x4a4840 };
+  const TOWER_FOG = { color: 0x3a4248, near: 26, far: 72, bg: 0x353a40 };
+  const towerLightRoot = new THREE.Group();
+  towerLightRoot.name = "TowerLights";
+  scene.add(towerLightRoot);
+  const towerAmb = new THREE.AmbientLight(0xa8b4c0, 0);
+  towerAmb.userData.baseI = 2.2;
+  towerLightRoot.add(towerAmb);
+  const towerKey = new THREE.DirectionalLight(0xd0d8e0, 0);
+  towerKey.userData.baseI = 1.6;
+  towerKey.position.set(3, 14, 6);
+  towerLightRoot.add(towerKey);
+  const towerFluoSpots = [
+    [0, 3.6, 7.2, 0xc8d0d8, 1.35, 16],
+    [0, 3.2, -1.5, 0xb8c4d0, 1.25, 14],
+    [-5, 3.4, 2, 0xb0bcc8, 0.95, 12],
+    [5, 3.4, 2, 0xb0bcc8, 0.95, 12],
+    [0, 3.0, -12, 0xa8b0b8, 1.1, 18],
+    /* lobby cooler banks (still lit while plaza — harmless; lobby phase same root) */
+    [-4, 2.8, 3, 0xc0d0e0, 1.05, 11],
+    [3, 2.8, 1, 0xc0d0e0, 1.0, 11],
+    [1.4, 2.6, -5, 0xb8c8d8, 0.9, 9],
+    /* elevator car */
+    [0, 2.2, 0, 0xd0d4c8, 1.2, 6],
+  ];
+  for (const [x, y, z, col, inten, dist] of towerFluoSpots) {
+    const fl = new THREE.PointLight(col, 0, dist);
+    fl.userData.baseI = inten;
+    fl.position.set(x, y, z);
+    towerLightRoot.add(fl);
+  }
+
+  function ensurePlazaDeck() {
+    if (plaza.getObjectByName("PlazaDeck")) return;
+    const deck = new THREE.Mesh(
+      new THREE.BoxGeometry(28, 0.08, 34),
+      new THREE.MeshLambertMaterial({
+        color: 0x7a7560,
+        flatShading: true,
+        emissive: 0x3a3830,
+        emissiveIntensity: 0.45,
+      })
+    );
+    deck.name = "PlazaDeck";
+    deck.position.set(0, -0.02, 0);
+    plaza.add(deck);
+  }
+
+  function setTowerLook(on) {
+    const fog = on ? TOWER_FOG : FARM_FOG;
+    if (scene.fog) {
+      scene.fog.color.setHex(fog.color);
+      scene.fog.near = fog.near;
+      scene.fog.far = fog.far;
+    }
+    if (scene.background && scene.background.isColor) scene.background.setHex(fog.bg);
+    towerLightRoot.traverse((o) => {
+      if (o.isLight && o.userData && o.userData.baseI != null) {
+        o.intensity = on ? o.userData.baseI : 0;
+      }
+    });
+  }
+
+  function brightenTowerMats(root) {
+    if (!root) return;
+    root.traverse((o) => {
+      if (!o.isMesh || !o.material) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const mat of mats) {
+        if (!mat) continue;
+        if (mat.map) {
+          mat.map.magFilter = THREE.NearestFilter;
+          mat.map.minFilter = THREE.NearestFilter;
+          mat.map.generateMipmaps = false;
+          mat.map.needsUpdate = true;
+        }
+        if (mat.color && mat.color.isColor) {
+          // lift near-black graybox / muddy GLB albedos so fluo reads
+          const c = mat.color;
+          const lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+          if (lum < 0.18) c.setRGB(Math.min(1, c.r + 0.28), Math.min(1, c.g + 0.26), Math.min(1, c.b + 0.22));
+          else if (lum < 0.32) c.offsetHSL(0, 0, 0.12);
+          else if (lum < 0.45) c.offsetHSL(0, 0, 0.05);
+        }
+        // Prefer lit mats in tower so ambient/fluo hit (Basic stays readable via color lift)
+        if (mat.isMeshBasicMaterial && mat.color) {
+          /* keep Basic but color already lifted */
+        } else if (mat.isMeshStandardMaterial) {
+          mat.metalness = Math.min(mat.metalness || 0, 0.05);
+          mat.roughness = Math.max(mat.roughness || 0.8, 0.85);
+        }
+        if ("emissive" in mat && mat.emissive && mat.emissive.isColor) {
+          const lum = 0.2126 * mat.color.r + 0.7152 * mat.color.g + 0.0722 * mat.color.b;
+          if (lum < 0.25 && mat.emissiveIntensity != null && mat.emissiveIntensity < 0.08) {
+            mat.emissive.setHex(0x2a3038);
+            mat.emissiveIntensity = 0.12;
+          }
+        }
+        mat.needsUpdate = true;
+      }
+    });
+  }
+
   const plaza = new THREE.Group();
   plaza.name = "Plaza";
   const lobby = new THREE.Group();
@@ -172,11 +281,12 @@ export function createTower(opts) {
   elevator.add(grayElev);
 
   function buildGrayPlaza() {
-    grayPlaza.add(boxMesh(24, 0.15, 30, 0x4a4840, -0.075));
-    const towerMass = boxMesh(10, 18, 6, 0x3a3830, 0);
+    /* Interim albedos — readable under tower lights; Designer textured kits replace later */
+    grayPlaza.add(boxMesh(24, 0.15, 30, 0x6e6a58, -0.075));
+    const towerMass = boxMesh(10, 18, 6, 0x58564c, 0);
     towerMass.position.set(0, 0, -14);
     grayPlaza.add(towerMass);
-    const door = boxMesh(2.4, 2.8, 0.15, 0x1a1814, 0.1);
+    const door = boxMesh(2.4, 2.8, 0.15, 0x3a3428, 0.1);
     door.position.set(0, 0, -4.2);
     grayPlaza.add(door);
     const spawn = empty("plaza_spawn", 0, 0, 7);
@@ -187,8 +297,8 @@ export function createTower(opts) {
   }
 
   function buildGrayLobby() {
-    grayLobby.add(boxMesh(16, 0.12, 14, 0x454238, -0.06));
-    grayLobby.add(boxMesh(16, 0.2, 14, 0x2e2c26, 3.5));
+    grayLobby.add(boxMesh(16, 0.12, 14, 0x5a5648, -0.06));
+    grayLobby.add(boxMesh(16, 0.2, 14, 0x3e3c34, 3.5));
     const places = {
       lobby_spawn: [0, 0, 5.5],
       badge_reader: [-5.6, 1.25, 4.0],
@@ -250,6 +360,9 @@ export function createTower(opts) {
   buildGrayPlaza();
   buildGrayLobby();
   buildGrayElevator();
+  brightenTowerMats(grayPlaza);
+  brightenTowerMats(grayLobby);
+  brightenTowerMats(grayElev);
 
   const loader = new GLTFLoader();
 
@@ -295,9 +408,12 @@ export function createTower(opts) {
     try {
       const sc = await loadModel(pathFor("tower_plaza"));
       sc.name = "tower_plaza";
-      grayPlaza.visible = false;
+      /* Keep grayPlaza under GLB — kit floor often doesn't cover plaza_spawn (z≈7); hiding = full black. */
+      grayPlaza.visible = true;
       plaza.add(sc);
       collectNamed(sc, hooks);
+      brightenTowerMats(sc);
+      brightenTowerMats(grayPlaza);
       console.info("[tower] tower_plaza OK");
     } catch (e) {
       console.warn("[tower] plaza GLB soft-fail", e && e.message ? e.message : e);
@@ -306,9 +422,10 @@ export function createTower(opts) {
     try {
       const sc = await loadModel(pathFor("tower_lobby"));
       sc.name = "tower_lobby";
-      grayLobby.visible = false;
+      grayLobby.visible = true;
       lobby.add(sc);
       collectNamed(sc, hooks);
+      brightenTowerMats(sc);
       console.info("[tower] tower_lobby OK");
     } catch (e) {
       console.warn("[tower] lobby GLB soft-fail", e && e.message ? e.message : e);
@@ -317,9 +434,10 @@ export function createTower(opts) {
     try {
       const sc = await loadModel(pathFor("elevator_car"));
       sc.name = "elevator_car";
-      grayElev.visible = false;
+      grayElev.visible = true;
       elevator.add(sc);
       collectNamed(sc, hooks);
+      brightenTowerMats(sc);
       console.info("[tower] elevator_car OK");
     } catch (e) {
       console.warn("[tower] elevator GLB soft-fail", e && e.message ? e.message : e);
@@ -462,8 +580,10 @@ export function createTower(opts) {
     const rng = mulberry32(daySeedInt() ^ 0x70ae);
     offered = shuffle(BEAT_POOL, rng).slice(0, 3);
 
-    placeAtHook("plaza_spawn", Math.PI);
+    ensurePlazaDeck();
+    placeAtHook("plaza_spawn", 0);
     G.phase = "plaza";
+    setTowerLook(true);
 
     try {
       if (audio.stopBgm) audio.stopBgm();
@@ -479,6 +599,7 @@ export function createTower(opts) {
     lobby.visible = true;
     if (officeRoot) officeRoot.visible = false;
     G.phase = "lobby";
+    setTowerLook(true);
     placeAtHook("lobby_spawn", Math.PI);
     stuckTimer = 0;
     stopTowerAmbs();
@@ -491,6 +612,7 @@ export function createTower(opts) {
     elevator.visible = true;
     if (officeRoot) officeRoot.visible = false;
     G.phase = "elevator";
+    setTowerLook(true);
     placeAtHook("elevator_interior", Math.PI);
     player.pos.x = 0;
     player.pos.z = 0;
@@ -521,6 +643,7 @@ export function createTower(opts) {
   function handoffToWalk() {
     if (floorHanded) return;
     floorHanded = true;
+    setTowerLook(false);
     G.phase = "walk";
     if (typeof onEnterWalk === "function") onEnterWalk();
     else setPrompt("WASD · find Cubicle 4-B · E to sit");
@@ -808,6 +931,7 @@ export function createTower(opts) {
   function hideForDeskSkip() {
     hideAllSets();
     stopTowerAmbs();
+    setTowerLook(false);
     if (officeRoot) officeRoot.visible = true;
   }
 

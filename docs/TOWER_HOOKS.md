@@ -7,9 +7,9 @@ Spec: `specs/12-tower-arrival.md`. Art: PS1 same as farm (`docs/VISUAL.md`, `doc
 
 | GLB | Role | Status |
 |-----|------|--------|
-| `assets/models/tower_plaza.glb` | Exterior plaza + tower massing | ✅ shipped (graybox) |
-| `assets/models/tower_lobby.glb` | Lobby shell | ✅ shipped (graybox) |
-| `assets/models/elevator_car.glb` | Elevator interior | ✅ shipped (graybox) |
+| `assets/models/tower_plaza.glb` | Exterior plaza + tower massing | ✅ shipped (readable grim) |
+| `assets/models/tower_lobby.glb` | Lobby shell | ✅ shipped (readable grim) |
+| `assets/models/elevator_car.glb` | Elevator interior | ✅ shipped (readable grim) |
 | `assets/models/office_floor.glb` | Optional corridor stub → farm; or skip and spawn farm at `elevator_exit` | ⏳ optional / skip OK |
 | `assets/models/prop_badge_reader.glb` | Lobby badge scan | ✅ shipped |
 | `assets/models/prop_coffee.glb` | Coffee machine beat | ✅ shipped |
@@ -18,6 +18,25 @@ Spec: `specs/12-tower-arrival.md`. Art: PS1 same as farm (`docs/VISUAL.md`, `doc
 | `assets/models/prop_elevator_panel.glb` | Call/floor buttons (or empties on car) | ✅ shipped |
 
 Graybox PS1 kits landed via `assets/build_tower_assets.py` (imports helpers from `build_ps1_assets.py`). Empties below are embedded as named nodes — Dev can wire phases.
+
+## Readable grim (P0 — not void)
+
+Plaza→tower walk must read silhouettes / grounds / walls. **Not** flat near-black Lambert.
+
+| Texture | Path | Role | Target avg RGB |
+|---------|------|------|----------------|
+| `floor.png` | `assets/textures/floor.png` | Plaza + lobby slabs (reuse farm) | ~100–140 (ship ~129) |
+| `plaza_concrete.png` | `assets/textures/plaza_concrete.png` | Plaza curb / concrete accents | ~100–140 |
+| `tower_facade.png` | `assets/textures/tower_facade.png` | Tower mass + door surround | ~100–140 |
+| `lobby_wall.png` | `assets/textures/lobby_wall.png` | Lobby walls / elev interior | ~100–140 |
+
+- Kits use **bright vertex colors** (~0.85–1.0) × these albedos so multiply stays readable.
+- Regenerator: `assets/build_tower_assets.py` (`write_tower_textures` + `assert_readable_albedo` refuse avg < 100).
+- **Dev:** add plaza light rig (ambient + key); art alone won’t fix a zero-light scene — but mats are no longer void.
+- Soft DROP toast polish still parked.
+
+Status: ✅ **readable-grim pass shipped** (empties unchanged).
+
 
 ## Phase empties / interact volumes
 

@@ -95,17 +95,22 @@ def checker(w: int, h: int, a: tuple[int, int, int], b: tuple[int, int, int], ce
 
 
 
-def assert_readable_floor(path: Path, min_avg: float = 100.0) -> None:
-    """Reject near-black / speckled floor mats (Tester FAIL was avg~(2,2,2))."""
-    import numpy as np
-    from PIL import Image
+def assert_readable_albedo(path: Path, min_avg: float = 100.0, label: str | None = None) -> float:
+    """Reject near-black / speckled albedos (Tester FAIL was avg~(2,2,2)). Returns avg RGB."""
     a = np.asarray(Image.open(path).convert("RGB"), dtype=np.float32)
     avg = float(a.mean())
     zeros = int((a.reshape(-1, 3) == 0).all(axis=1).sum())
+    name = label or path.name
     if avg < min_avg or zeros > a.shape[0] * a.shape[1] * 0.05:
         raise SystemExit(
-            f"floor.png unreadable avg={avg:.1f} zeros={zeros}/{a.shape[0]*a.shape[1]} — refuse ship"
+            f"{name} unreadable avg={avg:.1f} zeros={zeros}/{a.shape[0]*a.shape[1]} — refuse ship"
         )
+    return avg
+
+
+def assert_readable_floor(path: Path, min_avg: float = 100.0) -> None:
+    """Reject near-black / speckled floor mats (Tester FAIL was avg~(2,2,2))."""
+    assert_readable_albedo(path, min_avg=min_avg, label="floor.png")
 
 def save_tex(name: str, img: Image.Image) -> Path:
     path = TEX / f"{name}.png"
@@ -393,6 +398,219 @@ def write_glb(
     anc = f", anchors={anchors}" if anchors else ""
     print(f"  wrote {path.name}: {nvert} verts, {tris} tris, tex={texture_path.name if texture_path else 'none'}{anc}")
     return tris
+
+
+def write_glb_multi(
+    path: Path,
+    groups: list[dict],
+    name: str = "mesh",
+    empty_nodes: list[dict] | None = None,
+) -> int:
+    """Write GLB with multiple primitives / materials (multi-write).
+
+    groups: list of dicts with keys pos, uv, col, idx, and optional texture (Path), mat (str).
+    Vertex colors should be ~0.85–1.0 on textured surfaces so Lambert multiply stays readable.
+    Returns total triangle count.
+    """
+    if not groups:
+        raise ValueError("write_glb_multi requires at least one group")
+
+    padded: list[bytes] = []
+    offsets: list[int] = []
+    cursor = 0
+
+    def _add(blob: bytes) -> int:
+        nonlocal cursor
+        off = cursor
+        p = _align4(blob)
+        padded.append(p)
+        offsets.append(off)
+        cursor += len(p)
+        return off
+
+    accessors: list[dict] = []
+    buffer_views: list[dict] = []
+    materials: list[dict] = []
+    images: list[dict] = []
+    textures: list[dict] = []
+    primitives: list[dict] = []
+    tex_index: dict[str, int] = {}
+
+    for gi, g in enumerate(groups):
+        pos = g["pos"]
+        uv = g["uv"]
+        col = g["col"]
+        idx = g["idx"]
+        tex_path = g.get("texture")
+        mat_name = g.get("mat") or f"{name}_{gi}"
+
+        pos_b = _pack_f32(pos)
+        uv_b = _pack_f32(uv)
+        col_b = _pack_f32(col)
+        idx_b = _pack_u16(idx)
+
+        nvert = len(pos) // 3
+        nidx = len(idx)
+        xs, ys, zs = pos[0::3], pos[1::3], pos[2::3]
+        amin = [min(xs), min(ys), min(zs)] if xs else [0, 0, 0]
+        amax = [max(xs), max(ys), max(zs)] if xs else [0, 0, 0]
+
+        i_off = _add(idx_b)
+        p_off = _add(pos_b)
+        u_off = _add(uv_b)
+        c_off = _add(col_b)
+        bv0 = len(buffer_views)
+        buffer_views.extend(
+            [
+                {"buffer": 0, "byteOffset": i_off, "byteLength": len(idx_b), "target": 34963},
+                {"buffer": 0, "byteOffset": p_off, "byteLength": len(pos_b), "target": 34962},
+                {"buffer": 0, "byteOffset": u_off, "byteLength": len(uv_b), "target": 34962},
+                {"buffer": 0, "byteOffset": c_off, "byteLength": len(col_b), "target": 34962},
+            ]
+        )
+        ai = len(accessors)
+        accessors.extend(
+            [
+                {
+                    "bufferView": bv0,
+                    "componentType": 5123,
+                    "count": nidx,
+                    "type": "SCALAR",
+                    "max": [max(idx) if idx else 0],
+                    "min": [0],
+                },
+                {
+                    "bufferView": bv0 + 1,
+                    "componentType": 5126,
+                    "count": nvert,
+                    "type": "VEC3",
+                    "max": amax,
+                    "min": amin,
+                },
+                {
+                    "bufferView": bv0 + 2,
+                    "componentType": 5126,
+                    "count": nvert,
+                    "type": "VEC2",
+                },
+                {
+                    "bufferView": bv0 + 3,
+                    "componentType": 5126,
+                    "count": nvert,
+                    "type": "VEC3",
+                    "max": [1, 1, 1],
+                    "min": [0, 0, 0],
+                },
+            ]
+        )
+
+        mat: dict = {
+            "name": f"{mat_name}_mat",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [1, 1, 1, 1],
+                "metallicFactor": 0,
+                "roughnessFactor": 1,
+            },
+            "doubleSided": True,
+        }
+        if tex_path is not None:
+            tex_path = Path(tex_path)
+            key = str(tex_path.resolve()) if tex_path.exists() else str(tex_path)
+            if key not in tex_index and tex_path.exists():
+                img_b = tex_path.read_bytes()
+                img_off = _add(img_b)
+                bv_i = len(buffer_views)
+                buffer_views.append(
+                    {"buffer": 0, "byteOffset": img_off, "byteLength": len(img_b)}
+                )
+                img_i = len(images)
+                images.append(
+                    {"bufferView": bv_i, "mimeType": "image/png", "name": tex_path.stem}
+                )
+                textures.append({"source": img_i, "sampler": 0})
+                tex_index[key] = len(textures) - 1
+            if key in tex_index:
+                mat["pbrMetallicRoughness"]["baseColorTexture"] = {
+                    "index": tex_index[key]
+                }
+
+        mi = len(materials)
+        materials.append(mat)
+        primitives.append(
+            {
+                "attributes": {
+                    "POSITION": ai + 1,
+                    "TEXCOORD_0": ai + 2,
+                    "COLOR_0": ai + 3,
+                },
+                "indices": ai,
+                "material": mi,
+                "mode": 4,
+            }
+        )
+
+    blob = b"".join(padded)
+
+    root_node: dict = {"mesh": 0, "name": name}
+    nodes: list[dict] = [root_node]
+    if empty_nodes:
+        children = []
+        for en in empty_nodes:
+            children.append(len(nodes))
+            nodes.append(
+                {
+                    "name": en["name"],
+                    "translation": list(en["translation"]),
+                }
+            )
+        root_node["children"] = children
+
+    gltf = {
+        "asset": {"version": "2.0", "generator": "corp.exe-ps1-builder"},
+        "scene": 0,
+        "scenes": [{"nodes": [0]}],
+        "nodes": nodes,
+        "meshes": [{"name": name, "primitives": primitives}],
+        "materials": materials,
+        "accessors": accessors,
+        "bufferViews": buffer_views,
+        "buffers": [{"byteLength": len(blob)}],
+        "samplers": [
+            {
+                "magFilter": 9728,
+                "minFilter": 9728,
+                "wrapS": 10497,
+                "wrapT": 10497,
+            }
+        ],
+    }
+    if images:
+        gltf["images"] = images
+        gltf["textures"] = textures
+
+    json_b = json.dumps(gltf, separators=(",", ":")).encode("utf-8")
+    while len(json_b) % 4:
+        json_b += b" "
+
+    total = 12 + 8 + len(json_b) + 8 + len(blob)
+    header = struct.pack("<4sII", b"glTF", 2, total)
+    json_chunk = struct.pack("<I4s", len(json_b), b"JSON") + json_b
+    bin_chunk = struct.pack("<I4s", len(blob), b"BIN\x00") + blob
+    path.write_bytes(header + json_chunk + bin_chunk)
+
+    tris = sum(len(g["idx"]) // 3 for g in groups)
+    tex_names = []
+    for g in groups:
+        tp = g.get("texture")
+        tex_names.append(Path(tp).name if tp else "none")
+    anchors = [en["name"] for en in (empty_nodes or [])]
+    anc = f", anchors={anchors}" if anchors else ""
+    print(
+        f"  wrote {path.name}: {len(groups)} prims, {tris} tris, "
+        f"tex={tex_names}{anc}"
+    )
+    return tris
+
 
 
 def rgb01(name: str) -> tuple[float, float, float]:
