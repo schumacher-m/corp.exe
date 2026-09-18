@@ -5,7 +5,7 @@ const browser = await puppeteer.launch({
   args: ["--no-sandbox","--disable-dev-shm-usage","--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"],
 });
 const page = await browser.newPage();
-await page.goto("http://127.0.0.1:8766/?v=tower5d", { waitUntil: "domcontentloaded", timeout: 60000 });
+await page.goto("http://127.0.0.1:8766/?v=tower6", { waitUntil: "domcontentloaded", timeout: 60000 });
 for (let i=0;i<50;i++){ if(await page.$("#btn-clock-in")) break; await new Promise(r=>setTimeout(r,300)); }
 await page.click("#btn-clock-in");
 await new Promise(r=>setTimeout(r,4000));

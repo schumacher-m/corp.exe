@@ -162,10 +162,10 @@ export function createTower(opts) {
   towerLightRoot.name = "TowerLights";
   scene.add(towerLightRoot);
   const towerAmb = new THREE.AmbientLight(0xa8b4c0, 0);
-  towerAmb.userData.baseI = 2.2;
+  towerAmb.userData.baseI = 2.45;
   towerLightRoot.add(towerAmb);
   const towerKey = new THREE.DirectionalLight(0xd0d8e0, 0);
-  towerKey.userData.baseI = 1.6;
+  towerKey.userData.baseI = 1.75;
   towerKey.position.set(3, 14, 6);
   towerLightRoot.add(towerKey);
   const towerFluoSpots = [
@@ -193,14 +193,14 @@ export function createTower(opts) {
     const deck = new THREE.Mesh(
       new THREE.BoxGeometry(28, 0.08, 34),
       new THREE.MeshLambertMaterial({
-        color: 0x7a7560,
+        color: 0x6a6658,
         flatShading: true,
-        emissive: 0x3a3830,
-        emissiveIntensity: 0.45,
+        emissive: 0x2a2820,
+        emissiveIntensity: 0.25,
       })
     );
     deck.name = "PlazaDeck";
-    deck.position.set(0, -0.02, 0);
+    deck.position.set(0, -0.06, 0); /* under Designer floor slab */
     plaza.add(deck);
   }
 
@@ -219,40 +219,43 @@ export function createTower(opts) {
     });
   }
 
-  function brightenTowerMats(root) {
+  function nearestTowerMaps(root) {
     if (!root) return;
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const mat of mats) {
         if (!mat) continue;
-        if (mat.map) {
-          mat.map.magFilter = THREE.NearestFilter;
-          mat.map.minFilter = THREE.NearestFilter;
-          mat.map.generateMipmaps = false;
-          mat.map.needsUpdate = true;
+        for (const key of ["map", "emissiveMap", "roughnessMap", "metalnessMap", "normalMap"]) {
+          const tex = mat[key];
+          if (!tex) continue;
+          tex.magFilter = THREE.NearestFilter;
+          tex.minFilter = THREE.NearestFilter;
+          tex.generateMipmaps = false;
+          tex.needsUpdate = true;
         }
-        if (mat.color && mat.color.isColor) {
-          // lift near-black graybox / muddy GLB albedos so fluo reads
-          const c = mat.color;
-          const lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-          if (lum < 0.18) c.setRGB(Math.min(1, c.r + 0.28), Math.min(1, c.g + 0.26), Math.min(1, c.b + 0.22));
-          else if (lum < 0.32) c.offsetHSL(0, 0, 0.12);
-          else if (lum < 0.45) c.offsetHSL(0, 0, 0.05);
-        }
-        // Prefer lit mats in tower so ambient/fluo hit (Basic stays readable via color lift)
-        if (mat.isMeshBasicMaterial && mat.color) {
-          /* keep Basic but color already lifted */
-        } else if (mat.isMeshStandardMaterial) {
+        if (mat.isMeshStandardMaterial) {
           mat.metalness = Math.min(mat.metalness || 0, 0.05);
           mat.roughness = Math.max(mat.roughness || 0.8, 0.85);
         }
-        if ("emissive" in mat && mat.emissive && mat.emissive.isColor) {
-          const lum = 0.2126 * mat.color.r + 0.7152 * mat.color.g + 0.0722 * mat.color.b;
-          if (lum < 0.25 && mat.emissiveIntensity != null && mat.emissiveIntensity < 0.08) {
-            mat.emissive.setHex(0x2a3038);
-            mat.emissiveIntensity = 0.12;
-          }
+        mat.needsUpdate = true;
+      }
+    });
+  }
+
+  function brightenTowerMats(root) {
+    /* Graybox / void-fail only — do not wash Designer readable-grim mapped albedos. */
+    if (!root) return;
+    root.traverse((o) => {
+      if (!o.isMesh || !o.material) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const mat of mats) {
+        if (!mat || mat.map) continue;
+        if (mat.color && mat.color.isColor) {
+          const c = mat.color;
+          const lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+          if (lum < 0.18) c.setRGB(Math.min(1, c.r + 0.28), Math.min(1, c.g + 0.26), Math.min(1, c.b + 0.22));
+          else if (lum < 0.32) c.offsetHSL(0, 0, 0.1);
         }
         mat.needsUpdate = true;
       }
@@ -408,13 +411,13 @@ export function createTower(opts) {
     try {
       const sc = await loadModel(pathFor("tower_plaza"));
       sc.name = "tower_plaza";
-      /* Keep grayPlaza under GLB — kit floor often doesn't cover plaza_spawn (z≈7); hiding = full black. */
-      grayPlaza.visible = true;
+      /* Readable-grim kits include floor — hide gray (z-fight); PlazaDeck under as void insurance. */
+      grayPlaza.visible = false;
       plaza.add(sc);
       collectNamed(sc, hooks);
-      brightenTowerMats(sc);
-      brightenTowerMats(grayPlaza);
-      console.info("[tower] tower_plaza OK");
+      if (forceNearest) forceNearest(sc);
+      nearestTowerMaps(sc);
+      console.info("[tower] tower_plaza OK (readable-grim)");
     } catch (e) {
       console.warn("[tower] plaza GLB soft-fail", e && e.message ? e.message : e);
     }
@@ -422,11 +425,12 @@ export function createTower(opts) {
     try {
       const sc = await loadModel(pathFor("tower_lobby"));
       sc.name = "tower_lobby";
-      grayLobby.visible = true;
+      grayLobby.visible = false;
       lobby.add(sc);
       collectNamed(sc, hooks);
-      brightenTowerMats(sc);
-      console.info("[tower] tower_lobby OK");
+      if (forceNearest) forceNearest(sc);
+      nearestTowerMaps(sc);
+      console.info("[tower] tower_lobby OK (readable-grim)");
     } catch (e) {
       console.warn("[tower] lobby GLB soft-fail", e && e.message ? e.message : e);
     }
@@ -434,11 +438,12 @@ export function createTower(opts) {
     try {
       const sc = await loadModel(pathFor("elevator_car"));
       sc.name = "elevator_car";
-      grayElev.visible = true;
+      grayElev.visible = false;
       elevator.add(sc);
       collectNamed(sc, hooks);
-      brightenTowerMats(sc);
-      console.info("[tower] elevator_car OK");
+      if (forceNearest) forceNearest(sc);
+      nearestTowerMaps(sc);
+      console.info("[tower] elevator_car OK (readable-grim)");
     } catch (e) {
       console.warn("[tower] elevator GLB soft-fail", e && e.message ? e.message : e);
     }
@@ -462,6 +467,8 @@ export function createTower(opts) {
           sc.position.copy(wp);
         }
         parent.add(sc);
+        if (forceNearest) forceNearest(sc);
+        nearestTowerMaps(sc);
         console.info("[tower] prop", prop, "OK");
       } catch (_) {}
     }
