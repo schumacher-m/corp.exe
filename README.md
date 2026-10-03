@@ -1,5 +1,7 @@
 # corp.exe
 
+*Concluded, 100% Grok Bot Experiment*
+
 Cubicle simulator -- PS1 office, Win95 desktop on a CRT, Jimbo, doom-mail, Appear Active, cubicle farm, incident pager.
 
 ## Do not open `index.html` via file://
